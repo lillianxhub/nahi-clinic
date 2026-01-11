@@ -3,11 +3,24 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --text: #FFFFFF;
+  --primary: #3F7C87;
+  --secondary: #A5DBDD;
+  --bg-light: #EEF1F7;
+  --text-muted: #7E7E7E;
 }
 
+/* map css var → tailwind token */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-light: var(--bg-light);
+  --color-muted: var(--text-muted);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
