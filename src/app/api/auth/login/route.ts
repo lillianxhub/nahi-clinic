@@ -3,9 +3,9 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
     try {
-        const { username, password } = await req.json();
+        const { username, password_hash } = await req.json();
 
-        if (!username || !password) {
+        if (!username || !password_hash) {
             return NextResponse.json(
                 { message: "กรุณากรอก username และ password" },
                 { status: 400 }
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
         // ตรวจสอบ username/password ใน DB แบบตรง ๆ
         const user = await prisma.user.findFirst({
-            where: { username, password },
+            where: { username, password_hash },
         });
 
         if (!user) {

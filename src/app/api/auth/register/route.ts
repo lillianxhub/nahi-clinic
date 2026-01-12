@@ -3,10 +3,9 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
     try {
-        const { username, password, fullname, role, clinic_id } =
-            await req.json();
+        const { username, password_hash } = await req.json();
 
-        if (!username || !password || !fullname || !role || !clinic_id) {
+        if (!username || !password_hash) {
             return NextResponse.json(
                 { message: "กรุณากรอกข้อมูลให้ครบทุกช่อง" },
                 { status: 400 }
@@ -27,12 +26,7 @@ export async function POST(req: Request) {
         const newUser = await prisma.user.create({
             data: {
                 username,
-                password,
-                fullname,
-                role,
-                clinic: {
-                    connect: { clinic_id },
-                },
+                password_hash,
             },
         });
 
@@ -41,8 +35,6 @@ export async function POST(req: Request) {
             user: {
                 id: newUser.user_id,
                 username: newUser.username,
-                fullname: newUser.fullname,
-                role: newUser.role,
             },
         });
     } catch (error: any) {
