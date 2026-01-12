@@ -1,168 +1,239 @@
 import { PrismaClient } from "/generated/prisma/client";
 
 import prisma from "../src/lib/prisma";
+function daysAgo(days: number) {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d;
+}
+
+function randomInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 async function main() {
-    // -----------------------------
-    // 1️⃣ สร้าง clinic อันเดียว
-    // -----------------------------
-    const clinic = await prisma.clinic.create({
-        data: {
-            clinic_name: "คลินิกบ้านสุขภาพ",
-            address: "123 ถนนสุขภาพ กรุงเทพฯ",
-            phone: "081-234-5678",
-            open_time: new Date("1970-01-01T08:00:00"),
-            close_time: new Date("1970-01-01T17:00:00"),
-        },
+    console.log("🌱 เริ่ม Seed ข้อมูลจำนวนมาก...");
+
+    // =========================
+    // หมวดหมู่ยา
+    // =========================
+    await prisma.drug_Category.createMany({
+        data: [
+            { category_name: "ยาปฏิชีวนะ" },
+            { category_name: "ยาแก้ปวด" },
+            { category_name: "ยาลดไข้" },
+            { category_name: "ยาแก้อักเสบ" },
+            { category_name: "วิตามิน" },
+            { category_name: "ยาแก้แพ้" },
+        ],
     });
 
-    // -----------------------------
-    // 2️⃣ สร้าง patients
-    // -----------------------------
-    const patient1 = await prisma.patient.create({
-        data: {
-            national_id: "1101700123456",
-            firstname: "สมชาย",
-            lastname: "ใจดี",
-            gender: "ชาย",
-            birthdate: new Date("1980-03-15"),
-            phone: "081-111-2222",
-            clinic_id: clinic.clinic_id,
-        },
-    });
+    const categories = await prisma.drug_Category.findMany();
 
-    const patient2 = await prisma.patient.create({
-        data: {
-            national_id: "1101700654321",
-            firstname: "สมหญิง",
-            lastname: "แสนดี",
-            gender: "หญิง",
-            birthdate: new Date("1990-07-20"),
-            phone: "082-333-4444",
-            clinic_id: clinic.clinic_id,
-        },
-    });
+    // =========================
+    // ยา (20 รายการ)
+    // =========================
+    const drugNames = [
+        "พาราเซตามอล",
+        "ไอบูโพรเฟน",
+        "แอสไพริน",
+        "อะม็อกซิซิลลิน",
+        "อะซิโทรมัยซิน",
+        "เซฟาเลกซิน",
+        "วิตามินซี",
+        "วิตามินบีรวม",
+        "คลอเฟนิรามีน",
+        "ลอราทาดีน",
+        "เซทิริซีน",
+        "ไดโคลฟีแนค",
+        "เมโทรนิดาโซล",
+        "โดมเพอริโดน",
+        "โอเมพราโซล",
+        "ฟลูโคนาโซล",
+        "ซิงค์",
+        "แคลเซียม",
+        "ฟ้าทะลายโจร",
+        "ยาแก้ไอ",
+    ];
 
-    // -----------------------------
-    // 3️⃣ สร้าง medicines
-    // -----------------------------
-    const medicine1 = await prisma.medicine.create({
-        data: {
-            medicine_name: "พาราเซตามอล",
-            stock: 100,
-            price: 2.5,
-            expire_date: new Date("2026-12-31"),
-            clinic_id: clinic.clinic_id,
-        },
-    });
+    for (const name of drugNames) {
+        await prisma.drug.create({
+            data: {
+                drug_name: name,
+                category_id:
+                    categories[randomInt(0, categories.length - 1)].category_id,
+                unit: "เม็ด",
+                sell_price: randomInt(5, 20),
+                min_stock: randomInt(50, 150),
+            },
+        });
+    }
 
-    const medicine2 = await prisma.medicine.create({
-        data: {
-            medicine_name: "ไอบูโพรเฟน",
-            stock: 50,
-            price: 3.0,
-            expire_date: new Date("2025-06-30"),
-            clinic_id: clinic.clinic_id,
-        },
-    });
+    const drugs = await prisma.drug.findMany();
 
-    // -----------------------------
-    // 4️⃣ สร้าง treatments
-    // -----------------------------
-    const treatment1 = await prisma.treatment.create({
-        data: {
-            treatment_date: new Date("2026-01-10"),
-            symptom: "ปวดหัว มีไข้",
-            diagnosis: "ไข้หวัดใหญ่",
-            total_cost: 250,
-            clinic_id: clinic.clinic_id,
-            patient_id: patient1.patient_id,
-            user_id: "00000000-0000-0000-0000-000000000000", // placeholder
-        },
-    });
+    // =========================
+    // LOT ยา (ยาแต่ละตัวมี 2 LOT)
+    // =========================
+    for (const drug of drugs) {
+        for (let i = 0; i < 2; i++) {
+            await prisma.drug_Lot.create({
+                data: {
+                    drug_id: drug.drug_id,
+                    lot_no: `LOT-${drug.drug_name}-${i + 1}`,
+                    received_date: daysAgo(randomInt(20, 40)),
+                    expire_date: daysAgo(-randomInt(90, 360)),
+                    qty_received: 500,
+                    qty_remaining: 500,
+                    buy_price: Number(drug.sell_price) * 0.5,
+                },
+            });
+        }
+    }
 
-    const treatment2 = await prisma.treatment.create({
-        data: {
-            treatment_date: new Date("2026-01-11"),
-            symptom: "ไอแห้ง เจ็บคอ",
-            diagnosis: "หลอดลมอักเสบ",
-            total_cost: 300,
-            clinic_id: clinic.clinic_id,
-            patient_id: patient2.patient_id,
-            user_id: "00000000-0000-0000-0000-000000000000", // placeholder
-        },
-    });
+    const lots = await prisma.drug_Lot.findMany();
 
-    // -----------------------------
-    // 5️⃣ TreatmentMedicine
-    // -----------------------------
-    await prisma.treatmentMedicine.create({
-        data: {
-            medicine_id: medicine1.medicine_id,
-            treatment_id: treatment1.treatment_id,
-            quantity: 2,
-            price: 5.0,
-        },
-    });
+    // =========================
+    // ผู้ป่วย (50 คน)
+    // =========================
+    const firstNames = [
+        "สมชาย",
+        "สมศรี",
+        "อนันต์",
+        "วิชัย",
+        "พรชัย",
+        "อรทัย",
+        "สุดา",
+        "มานพ",
+        "ธีรพล",
+        "กนก",
+    ];
+    const lastNames = [
+        "ใจดี",
+        "สุขใจ",
+        "มีสุข",
+        "ดีงาม",
+        "มั่นคง",
+        "วัฒนา",
+        "แสงทอง",
+    ];
 
-    await prisma.treatmentMedicine.create({
-        data: {
-            medicine_id: medicine2.medicine_id,
-            treatment_id: treatment2.treatment_id,
-            quantity: 1,
-            price: 3.0,
-        },
-    });
+    for (let i = 0; i < 50; i++) {
+        await prisma.patient.create({
+            data: {
+                first_name: firstNames[randomInt(0, firstNames.length - 1)],
+                last_name: lastNames[randomInt(0, lastNames.length - 1)],
+                gender: Math.random() > 0.5 ? "male" : "female",
+                phone: `08${randomInt(10000000, 99999999)}`,
+            },
+        });
+    }
 
-    // -----------------------------
-    // 6️⃣ MedicinePurchase
-    // -----------------------------
-    await prisma.medicinePurchase.create({
-        data: {
-            medicine_id: medicine1.medicine_id,
-            quantity: 50,
-            cost: 100,
-            purchase_date: new Date("2025-12-01"),
-        },
-    });
+    const patients = await prisma.patient.findMany();
 
-    await prisma.medicinePurchase.create({
-        data: {
-            medicine_id: medicine2.medicine_id,
-            quantity: 30,
-            cost: 90,
-            purchase_date: new Date("2025-12-05"),
-        },
-    });
+    // =========================
+    // การรักษา + การใช้ยา + รายรับ (ย้อนหลัง 14 วัน)
+    // =========================
+    const diagnoses = [
+        "ไข้หวัด",
+        "ไข้หวัดใหญ่",
+        "ปวดศีรษะ",
+        "ปวดกล้ามเนื้อ",
+        "อาหารเป็นพิษ",
+        "ท้องเสีย",
+        "ภูมิแพ้",
+        "เจ็บคอ",
+        "ติดเชื้อทางเดินหายใจ",
+    ];
 
-    // -----------------------------
-    // 7️⃣ Finance
-    // -----------------------------
-    await prisma.finance.create({
-        data: {
-            type: "INCOME",
-            amount: 5000,
-            date: new Date("2026-01-10"),
-            clinic_id: clinic.clinic_id,
-            user_id: "00000000-0000-0000-0000-000000000000", // placeholder
-        },
-    });
+    for (let day = 0; day < 14; day++) {
+        const visitsToday = randomInt(15, 30);
 
-    await prisma.finance.create({
-        data: {
-            type: "EXPENSE",
-            amount: 1500,
-            date: new Date("2026-01-11"),
-            clinic_id: clinic.clinic_id,
-            user_id: "00000000-0000-0000-0000-000000000000", // placeholder
-        },
-    });
+        for (let i = 0; i < visitsToday; i++) {
+            const patient = patients[randomInt(0, patients.length - 1)];
 
-    console.log("Seeder completed! Clinic:", clinic.clinic_name);
+            const visit = await prisma.visit.create({
+                data: {
+                    patient_id: patient.patient_id,
+                    visit_date: daysAgo(day),
+                    symptom: diagnoses[randomInt(0, diagnoses.length - 1)],
+                    diagnosis: diagnoses[randomInt(0, diagnoses.length - 1)],
+                },
+            });
+
+            // ค่าตรวจ
+            await prisma.visit_Detail.create({
+                data: {
+                    visit_id: visit.visit_id,
+                    item_type: "service",
+                    description: "ค่าตรวจรักษา",
+                    quantity: 1,
+                    unit_price: 150,
+                },
+            });
+
+            // ใช้ยา 1–3 รายการ
+            const drugCount = randomInt(1, 3);
+            for (let j = 0; j < drugCount; j++) {
+                const lot = lots[randomInt(0, lots.length - 1)];
+                const qty = randomInt(1, 5);
+
+                await prisma.drug_Usage.create({
+                    data: {
+                        visit_id: visit.visit_id,
+                        lot_id: lot.lot_id,
+                        quantity: qty,
+                        used_at: daysAgo(day),
+                    },
+                });
+
+                await prisma.drug_Lot.update({
+                    where: { lot_id: lot.lot_id },
+                    data: { qty_remaining: { decrement: qty } },
+                });
+            }
+
+            // รายรับ
+            await prisma.income.create({
+                data: {
+                    visit_id: visit.visit_id,
+                    income_date: daysAgo(day),
+                    amount: randomInt(200, 450),
+                    payment_method: Math.random() > 0.7 ? "transfer" : "cash",
+                },
+            });
+        }
+    }
+
+    // =========================
+    // ค่าใช้จ่าย (drug / utility / general)
+    // =========================
+    for (let day = 0; day < 14; day++) {
+        await prisma.expense.createMany({
+            data: [
+                {
+                    expense_date: daysAgo(day),
+                    expense_type: "utility",
+                    description: "ค่าน้ำ/ค่าไฟ",
+                    amount: randomInt(300, 800),
+                },
+                {
+                    expense_date: daysAgo(day),
+                    expense_type: "general",
+                    description: "ค่าใช้จ่ายทั่วไป",
+                    amount: randomInt(200, 600),
+                },
+            ],
+        });
+    }
+
+    console.log("✅ Seed ข้อมูลจำนวนมากเสร็จเรียบร้อย");
 }
 
 main()
-    .catch((e) => console.error(e))
+    .catch((e) => {
+        console.error("❌ เกิดข้อผิดพลาด:", e);
+        process.exit(1);
+    })
     .finally(async () => {
         await prisma.$disconnect();
     });
