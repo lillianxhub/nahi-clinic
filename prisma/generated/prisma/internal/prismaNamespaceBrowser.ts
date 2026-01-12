@@ -51,14 +51,17 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  Clinic: 'Clinic',
   User: 'User',
   Patient: 'Patient',
-  Treatment: 'Treatment',
-  Medicine: 'Medicine',
-  TreatmentMedicine: 'TreatmentMedicine',
-  MedicinePurchase: 'MedicinePurchase',
-  Finance: 'Finance'
+  Visit: 'Visit',
+  Visit_Detail: 'Visit_Detail',
+  Drug_Category: 'Drug_Category',
+  Drug: 'Drug',
+  Drug_Lot: 'Drug_Lot',
+  Drug_Usage: 'Drug_Usage',
+  Income: 'Income',
+  Expense: 'Expense',
+  Expense_Drug_Lot: 'Expense_Drug_Lot'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -77,26 +80,14 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const ClinicScalarFieldEnum = {
-  clinic_id: 'clinic_id',
-  clinic_name: 'clinic_name',
-  address: 'address',
-  phone: 'phone',
-  open_time: 'open_time',
-  close_time: 'close_time'
-} as const
-
-export type ClinicScalarFieldEnum = (typeof ClinicScalarFieldEnum)[keyof typeof ClinicScalarFieldEnum]
-
-
 export const UserScalarFieldEnum = {
   user_id: 'user_id',
   username: 'username',
-  password: 'password',
-  email: 'email',
-  role: 'role',
-  fullname: 'fullname',
-  clinic_id: 'clinic_id'
+  password_hash: 'password_hash',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -104,76 +95,161 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 
 export const PatientScalarFieldEnum = {
   patient_id: 'patient_id',
-  national_id: 'national_id',
-  firstname: 'firstname',
-  lastname: 'lastname',
+  hospital_number: 'hospital_number',
+  first_name: 'first_name',
+  last_name: 'last_name',
   gender: 'gender',
-  birthdate: 'birthdate',
+  birth_date: 'birth_date',
   phone: 'phone',
-  clinic_id: 'clinic_id'
+  address: 'address',
+  allergy: 'allergy',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
 export type PatientScalarFieldEnum = (typeof PatientScalarFieldEnum)[keyof typeof PatientScalarFieldEnum]
 
 
-export const TreatmentScalarFieldEnum = {
-  treatment_id: 'treatment_id',
-  treatment_date: 'treatment_date',
+export const VisitScalarFieldEnum = {
+  visit_id: 'visit_id',
+  patient_id: 'patient_id',
+  visit_date: 'visit_date',
   symptom: 'symptom',
   diagnosis: 'diagnosis',
-  total_cost: 'total_cost',
-  clinic_id: 'clinic_id',
-  patient_id: 'patient_id',
-  user_id: 'user_id'
+  note: 'note',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
-export type TreatmentScalarFieldEnum = (typeof TreatmentScalarFieldEnum)[keyof typeof TreatmentScalarFieldEnum]
+export type VisitScalarFieldEnum = (typeof VisitScalarFieldEnum)[keyof typeof VisitScalarFieldEnum]
 
 
-export const MedicineScalarFieldEnum = {
-  medicine_id: 'medicine_id',
-  medicine_name: 'medicine_name',
-  stock: 'stock',
-  price: 'price',
+export const Visit_DetailScalarFieldEnum = {
+  visit_detail_id: 'visit_detail_id',
+  visit_id: 'visit_id',
+  item_type: 'item_type',
+  drug_id: 'drug_id',
+  description: 'description',
+  quantity: 'quantity',
+  unit_price: 'unit_price',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
+} as const
+
+export type Visit_DetailScalarFieldEnum = (typeof Visit_DetailScalarFieldEnum)[keyof typeof Visit_DetailScalarFieldEnum]
+
+
+export const Drug_CategoryScalarFieldEnum = {
+  category_id: 'category_id',
+  category_name: 'category_name',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
+} as const
+
+export type Drug_CategoryScalarFieldEnum = (typeof Drug_CategoryScalarFieldEnum)[keyof typeof Drug_CategoryScalarFieldEnum]
+
+
+export const DrugScalarFieldEnum = {
+  drug_id: 'drug_id',
+  drug_name: 'drug_name',
+  category_id: 'category_id',
+  unit: 'unit',
+  sell_price: 'sell_price',
+  min_stock: 'min_stock',
+  status: 'status',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
+} as const
+
+export type DrugScalarFieldEnum = (typeof DrugScalarFieldEnum)[keyof typeof DrugScalarFieldEnum]
+
+
+export const Drug_LotScalarFieldEnum = {
+  lot_id: 'lot_id',
+  drug_id: 'drug_id',
+  lot_no: 'lot_no',
+  received_date: 'received_date',
   expire_date: 'expire_date',
-  clinic_id: 'clinic_id'
+  qty_received: 'qty_received',
+  qty_remaining: 'qty_remaining',
+  buy_price: 'buy_price',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
-export type MedicineScalarFieldEnum = (typeof MedicineScalarFieldEnum)[keyof typeof MedicineScalarFieldEnum]
+export type Drug_LotScalarFieldEnum = (typeof Drug_LotScalarFieldEnum)[keyof typeof Drug_LotScalarFieldEnum]
 
 
-export const TreatmentMedicineScalarFieldEnum = {
-  tm_id: 'tm_id',
+export const Drug_UsageScalarFieldEnum = {
+  usage_id: 'usage_id',
+  visit_id: 'visit_id',
+  lot_id: 'lot_id',
   quantity: 'quantity',
-  price: 'price',
-  medicine_id: 'medicine_id',
-  treatment_id: 'treatment_id'
+  used_at: 'used_at',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
-export type TreatmentMedicineScalarFieldEnum = (typeof TreatmentMedicineScalarFieldEnum)[keyof typeof TreatmentMedicineScalarFieldEnum]
+export type Drug_UsageScalarFieldEnum = (typeof Drug_UsageScalarFieldEnum)[keyof typeof Drug_UsageScalarFieldEnum]
 
 
-export const MedicinePurchaseScalarFieldEnum = {
-  purchase_id: 'purchase_id',
-  quantity: 'quantity',
-  cost: 'cost',
-  purchase_date: 'purchase_date',
-  medicine_id: 'medicine_id'
-} as const
-
-export type MedicinePurchaseScalarFieldEnum = (typeof MedicinePurchaseScalarFieldEnum)[keyof typeof MedicinePurchaseScalarFieldEnum]
-
-
-export const FinanceScalarFieldEnum = {
-  finance_id: 'finance_id',
-  type: 'type',
+export const IncomeScalarFieldEnum = {
+  income_id: 'income_id',
+  visit_id: 'visit_id',
+  income_date: 'income_date',
   amount: 'amount',
-  date: 'date',
-  clinic_id: 'clinic_id',
-  user_id: 'user_id'
+  payment_method: 'payment_method',
+  receipt_no: 'receipt_no',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
 } as const
 
-export type FinanceScalarFieldEnum = (typeof FinanceScalarFieldEnum)[keyof typeof FinanceScalarFieldEnum]
+export type IncomeScalarFieldEnum = (typeof IncomeScalarFieldEnum)[keyof typeof IncomeScalarFieldEnum]
+
+
+export const ExpenseScalarFieldEnum = {
+  expense_id: 'expense_id',
+  expense_date: 'expense_date',
+  expense_type: 'expense_type',
+  description: 'description',
+  amount: 'amount',
+  receipt_no: 'receipt_no',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
+} as const
+
+export type ExpenseScalarFieldEnum = (typeof ExpenseScalarFieldEnum)[keyof typeof ExpenseScalarFieldEnum]
+
+
+export const Expense_Drug_LotScalarFieldEnum = {
+  id: 'id',
+  expense_id: 'expense_id',
+  lot_id: 'lot_id',
+  is_active: 'is_active',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  deleted_at: 'deleted_at'
+} as const
+
+export type Expense_Drug_LotScalarFieldEnum = (typeof Expense_Drug_LotScalarFieldEnum)[keyof typeof Expense_Drug_LotScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -182,16 +258,6 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
-
-
-export const ClinicOrderByRelevanceFieldEnum = {
-  clinic_id: 'clinic_id',
-  clinic_name: 'clinic_name',
-  address: 'address',
-  phone: 'phone'
-} as const
-
-export type ClinicOrderByRelevanceFieldEnum = (typeof ClinicOrderByRelevanceFieldEnum)[keyof typeof ClinicOrderByRelevanceFieldEnum]
 
 
 export const NullsOrder = {
@@ -205,10 +271,7 @@ export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 export const UserOrderByRelevanceFieldEnum = {
   user_id: 'user_id',
   username: 'username',
-  password: 'password',
-  email: 'email',
-  fullname: 'fullname',
-  clinic_id: 'clinic_id'
+  password_hash: 'password_hash'
 } as const
 
 export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
@@ -216,60 +279,97 @@ export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnu
 
 export const PatientOrderByRelevanceFieldEnum = {
   patient_id: 'patient_id',
-  national_id: 'national_id',
-  firstname: 'firstname',
-  lastname: 'lastname',
-  gender: 'gender',
+  hospital_number: 'hospital_number',
+  first_name: 'first_name',
+  last_name: 'last_name',
   phone: 'phone',
-  clinic_id: 'clinic_id'
+  address: 'address',
+  allergy: 'allergy'
 } as const
 
 export type PatientOrderByRelevanceFieldEnum = (typeof PatientOrderByRelevanceFieldEnum)[keyof typeof PatientOrderByRelevanceFieldEnum]
 
 
-export const TreatmentOrderByRelevanceFieldEnum = {
-  treatment_id: 'treatment_id',
+export const VisitOrderByRelevanceFieldEnum = {
+  visit_id: 'visit_id',
+  patient_id: 'patient_id',
   symptom: 'symptom',
   diagnosis: 'diagnosis',
-  clinic_id: 'clinic_id',
-  patient_id: 'patient_id',
-  user_id: 'user_id'
+  note: 'note'
 } as const
 
-export type TreatmentOrderByRelevanceFieldEnum = (typeof TreatmentOrderByRelevanceFieldEnum)[keyof typeof TreatmentOrderByRelevanceFieldEnum]
+export type VisitOrderByRelevanceFieldEnum = (typeof VisitOrderByRelevanceFieldEnum)[keyof typeof VisitOrderByRelevanceFieldEnum]
 
 
-export const MedicineOrderByRelevanceFieldEnum = {
-  medicine_id: 'medicine_id',
-  medicine_name: 'medicine_name',
-  clinic_id: 'clinic_id'
+export const Visit_DetailOrderByRelevanceFieldEnum = {
+  visit_detail_id: 'visit_detail_id',
+  visit_id: 'visit_id',
+  drug_id: 'drug_id',
+  description: 'description'
 } as const
 
-export type MedicineOrderByRelevanceFieldEnum = (typeof MedicineOrderByRelevanceFieldEnum)[keyof typeof MedicineOrderByRelevanceFieldEnum]
+export type Visit_DetailOrderByRelevanceFieldEnum = (typeof Visit_DetailOrderByRelevanceFieldEnum)[keyof typeof Visit_DetailOrderByRelevanceFieldEnum]
 
 
-export const TreatmentMedicineOrderByRelevanceFieldEnum = {
-  tm_id: 'tm_id',
-  medicine_id: 'medicine_id',
-  treatment_id: 'treatment_id'
+export const Drug_CategoryOrderByRelevanceFieldEnum = {
+  category_id: 'category_id',
+  category_name: 'category_name'
 } as const
 
-export type TreatmentMedicineOrderByRelevanceFieldEnum = (typeof TreatmentMedicineOrderByRelevanceFieldEnum)[keyof typeof TreatmentMedicineOrderByRelevanceFieldEnum]
+export type Drug_CategoryOrderByRelevanceFieldEnum = (typeof Drug_CategoryOrderByRelevanceFieldEnum)[keyof typeof Drug_CategoryOrderByRelevanceFieldEnum]
 
 
-export const MedicinePurchaseOrderByRelevanceFieldEnum = {
-  purchase_id: 'purchase_id',
-  medicine_id: 'medicine_id'
+export const DrugOrderByRelevanceFieldEnum = {
+  drug_id: 'drug_id',
+  drug_name: 'drug_name',
+  category_id: 'category_id',
+  unit: 'unit'
 } as const
 
-export type MedicinePurchaseOrderByRelevanceFieldEnum = (typeof MedicinePurchaseOrderByRelevanceFieldEnum)[keyof typeof MedicinePurchaseOrderByRelevanceFieldEnum]
+export type DrugOrderByRelevanceFieldEnum = (typeof DrugOrderByRelevanceFieldEnum)[keyof typeof DrugOrderByRelevanceFieldEnum]
 
 
-export const FinanceOrderByRelevanceFieldEnum = {
-  finance_id: 'finance_id',
-  clinic_id: 'clinic_id',
-  user_id: 'user_id'
+export const Drug_LotOrderByRelevanceFieldEnum = {
+  lot_id: 'lot_id',
+  drug_id: 'drug_id',
+  lot_no: 'lot_no'
 } as const
 
-export type FinanceOrderByRelevanceFieldEnum = (typeof FinanceOrderByRelevanceFieldEnum)[keyof typeof FinanceOrderByRelevanceFieldEnum]
+export type Drug_LotOrderByRelevanceFieldEnum = (typeof Drug_LotOrderByRelevanceFieldEnum)[keyof typeof Drug_LotOrderByRelevanceFieldEnum]
+
+
+export const Drug_UsageOrderByRelevanceFieldEnum = {
+  usage_id: 'usage_id',
+  visit_id: 'visit_id',
+  lot_id: 'lot_id'
+} as const
+
+export type Drug_UsageOrderByRelevanceFieldEnum = (typeof Drug_UsageOrderByRelevanceFieldEnum)[keyof typeof Drug_UsageOrderByRelevanceFieldEnum]
+
+
+export const IncomeOrderByRelevanceFieldEnum = {
+  income_id: 'income_id',
+  visit_id: 'visit_id',
+  receipt_no: 'receipt_no'
+} as const
+
+export type IncomeOrderByRelevanceFieldEnum = (typeof IncomeOrderByRelevanceFieldEnum)[keyof typeof IncomeOrderByRelevanceFieldEnum]
+
+
+export const ExpenseOrderByRelevanceFieldEnum = {
+  expense_id: 'expense_id',
+  description: 'description',
+  receipt_no: 'receipt_no'
+} as const
+
+export type ExpenseOrderByRelevanceFieldEnum = (typeof ExpenseOrderByRelevanceFieldEnum)[keyof typeof ExpenseOrderByRelevanceFieldEnum]
+
+
+export const Expense_Drug_LotOrderByRelevanceFieldEnum = {
+  id: 'id',
+  expense_id: 'expense_id',
+  lot_id: 'lot_id'
+} as const
+
+export type Expense_Drug_LotOrderByRelevanceFieldEnum = (typeof Expense_Drug_LotOrderByRelevanceFieldEnum)[keyof typeof Expense_Drug_LotOrderByRelevanceFieldEnum]
 

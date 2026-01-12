@@ -8,12 +8,15 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Clinic'
 export type * from './models/User'
 export type * from './models/Patient'
-export type * from './models/Treatment'
-export type * from './models/Medicine'
-export type * from './models/TreatmentMedicine'
-export type * from './models/MedicinePurchase'
-export type * from './models/Finance'
+export type * from './models/Visit'
+export type * from './models/Visit_Detail'
+export type * from './models/Drug_Category'
+export type * from './models/Drug'
+export type * from './models/Drug_Lot'
+export type * from './models/Drug_Usage'
+export type * from './models/Income'
+export type * from './models/Expense'
+export type * from './models/Expense_Drug_Lot'
 export type * from './commonInputTypes'

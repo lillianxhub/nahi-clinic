@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "mysql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n}\n\nenum Role {\n  ADMIN\n  STAFF\n}\n\nenum FinanceType {\n  INCOME\n  EXPENSE\n}\n\nmodel Clinic {\n  clinic_id   String   @id @default(uuid())\n  clinic_name String\n  address     String\n  phone       String\n  open_time   DateTime @db.Time\n  close_time  DateTime @db.Time\n\n  users      User[]\n  patients   Patient[]\n  treatments Treatment[]\n  medicines  Medicine[]\n  finances   Finance[]\n}\n\nmodel User {\n  user_id  String  @id @default(uuid())\n  username String  @unique\n  password String\n  email    String?\n  role     Role\n  fullname String\n\n  clinic_id String\n  clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])\n\n  treatments Treatment[]\n  finances   Finance[]\n}\n\nmodel Patient {\n  patient_id  String   @id @default(uuid())\n  national_id String   @unique\n  firstname   String\n  lastname    String\n  gender      String\n  birthdate   DateTime\n  phone       String\n\n  clinic_id String\n  clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])\n\n  treatments Treatment[]\n}\n\nmodel Treatment {\n  treatment_id   String   @id @default(uuid())\n  treatment_date DateTime\n  symptom        String   @db.Text\n  diagnosis      String   @db.Text\n  total_cost     Decimal  @db.Decimal(10, 2)\n\n  clinic_id  String\n  patient_id String\n  user_id    String\n\n  clinic  Clinic  @relation(fields: [clinic_id], references: [clinic_id])\n  patient Patient @relation(fields: [patient_id], references: [patient_id])\n  user    User    @relation(fields: [user_id], references: [user_id])\n\n  medicines TreatmentMedicine[]\n}\n\nmodel Medicine {\n  medicine_id   String   @id @default(uuid())\n  medicine_name String\n  stock         Int\n  price         Decimal  @db.Decimal(10, 2)\n  expire_date   DateTime\n\n  clinic_id String\n  clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])\n\n  treatments TreatmentMedicine[]\n  purchases  MedicinePurchase[]\n}\n\nmodel TreatmentMedicine {\n  tm_id    String  @id @default(uuid())\n  quantity Int\n  price    Decimal @db.Decimal(10, 2)\n\n  medicine_id  String\n  treatment_id String\n\n  medicine  Medicine  @relation(fields: [medicine_id], references: [medicine_id])\n  treatment Treatment @relation(fields: [treatment_id], references: [treatment_id])\n}\n\nmodel MedicinePurchase {\n  purchase_id   String   @id @default(uuid())\n  quantity      Int\n  cost          Decimal  @db.Decimal(10, 2)\n  purchase_date DateTime\n\n  medicine_id String\n  medicine    Medicine @relation(fields: [medicine_id], references: [medicine_id])\n}\n\nmodel Finance {\n  finance_id String      @id @default(uuid())\n  type       FinanceType\n  amount     Decimal     @db.Decimal(10, 2)\n  date       DateTime\n\n  clinic_id String\n  user_id   String\n\n  clinic Clinic @relation(fields: [clinic_id], references: [clinic_id])\n  user   User   @relation(fields: [user_id], references: [user_id])\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n}\n\n//////////////////////////////////////////////////\n// ENUMS\n//////////////////////////////////////////////////\n\nenum Gender {\n  male\n  female\n  other\n}\n\nenum ItemType {\n  drug\n  service\n}\n\nenum DrugStatus {\n  active\n  inactive\n}\n\nenum PaymentMethod {\n  cash\n  transfer\n  credit\n}\n\nenum ExpenseType {\n  drug\n  utility\n  general\n}\n\n//////////////////////////////////////////////////\n// MODELS\n//////////////////////////////////////////////////\n\nmodel User {\n  user_id       String    @id @default(uuid()) @db.Char(36)\n  username      String    @unique @db.VarChar(100)\n  password_hash String    @db.VarChar(255)\n  is_active     Boolean   @default(true)\n  created_at    DateTime  @default(now())\n  updated_at    DateTime?\n  deleted_at    DateTime?\n\n  @@map(\"users\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Patient {\n  patient_id      String    @id @default(uuid()) @db.Char(36)\n  hospital_number String?   @db.VarChar(50)\n  first_name      String    @db.VarChar(100)\n  last_name       String    @db.VarChar(100)\n  gender          Gender?\n  birth_date      DateTime?\n  phone           String?   @db.VarChar(50)\n  address         String?   @db.VarChar(255)\n  allergy         String?   @db.VarChar(255)\n  is_active       Boolean   @default(true)\n  created_at      DateTime  @default(now())\n  updated_at      DateTime?\n  deleted_at      DateTime?\n\n  visits Visit[]\n\n  @@map(\"patients\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Visit {\n  visit_id   String    @id @default(uuid()) @db.Char(36)\n  patient_id String    @db.Char(36)\n  visit_date DateTime\n  symptom    String?   @db.Text\n  diagnosis  String?   @db.Text\n  note       String?   @db.Text\n  is_active  Boolean   @default(true)\n  created_at DateTime  @default(now())\n  updated_at DateTime?\n  deleted_at DateTime?\n\n  patient      Patient        @relation(fields: [patient_id], references: [patient_id])\n  visitDetails Visit_Detail[]\n  drugUsages   Drug_Usage[]\n  incomes      Income[]\n\n  @@map(\"visits\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Visit_Detail {\n  visit_detail_id String    @id @default(uuid()) @db.Char(36)\n  visit_id        String    @db.Char(36)\n  item_type       ItemType\n  drug_id         String?   @db.Char(36)\n  description     String?   @db.VarChar(255)\n  quantity        Int\n  unit_price      Decimal   @db.Decimal(10, 2)\n  is_active       Boolean   @default(true)\n  created_at      DateTime  @default(now())\n  updated_at      DateTime?\n  deleted_at      DateTime?\n\n  visit Visit @relation(fields: [visit_id], references: [visit_id])\n  drug  Drug? @relation(fields: [drug_id], references: [drug_id])\n\n  @@map(\"visit_details\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Drug_Category {\n  category_id   String    @id @default(uuid()) @db.Char(36)\n  category_name String    @db.VarChar(100)\n  is_active     Boolean   @default(true)\n  created_at    DateTime  @default(now())\n  updated_at    DateTime?\n  deleted_at    DateTime?\n\n  drugs Drug[]\n\n  @@map(\"drug_categories\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Drug {\n  drug_id     String     @id @default(uuid()) @db.Char(36)\n  drug_name   String     @db.VarChar(150)\n  category_id String     @db.Char(36)\n  unit        String     @db.VarChar(50)\n  sell_price  Decimal    @db.Decimal(10, 2)\n  min_stock   Int        @default(0)\n  status      DrugStatus @default(active)\n  is_active   Boolean    @default(true)\n  created_at  DateTime   @default(now())\n  updated_at  DateTime?\n  deleted_at  DateTime?\n\n  category   Drug_Category  @relation(fields: [category_id], references: [category_id])\n  lots       Drug_Lot[]\n  visitItems Visit_Detail[]\n\n  @@map(\"drugs\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Drug_Lot {\n  lot_id        String    @id @default(uuid()) @db.Char(36)\n  drug_id       String    @db.Char(36)\n  lot_no        String?   @db.VarChar(100)\n  received_date DateTime\n  expire_date   DateTime\n  qty_received  Int\n  qty_remaining Int\n  buy_price     Decimal   @db.Decimal(10, 2)\n  is_active     Boolean   @default(true)\n  created_at    DateTime  @default(now())\n  updated_at    DateTime?\n  deleted_at    DateTime?\n\n  drug        Drug               @relation(fields: [drug_id], references: [drug_id])\n  usages      Drug_Usage[]\n  expenseLots Expense_Drug_Lot[]\n\n  @@map(\"drug_lots\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Drug_Usage {\n  usage_id   String    @id @default(uuid()) @db.Char(36)\n  visit_id   String    @db.Char(36)\n  lot_id     String    @db.Char(36)\n  quantity   Int\n  used_at    DateTime\n  is_active  Boolean   @default(true)\n  created_at DateTime  @default(now())\n  updated_at DateTime?\n  deleted_at DateTime?\n\n  visit Visit    @relation(fields: [visit_id], references: [visit_id])\n  lot   Drug_Lot @relation(fields: [lot_id], references: [lot_id])\n\n  @@map(\"drug_usages\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Income {\n  income_id      String        @id @default(uuid()) @db.Char(36)\n  visit_id       String        @db.Char(36)\n  income_date    DateTime\n  amount         Decimal       @db.Decimal(10, 2)\n  payment_method PaymentMethod\n  receipt_no     String?       @db.VarChar(100)\n  is_active      Boolean       @default(true)\n  created_at     DateTime      @default(now())\n  updated_at     DateTime?\n  deleted_at     DateTime?\n\n  visit Visit @relation(fields: [visit_id], references: [visit_id])\n\n  @@map(\"incomes\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Expense {\n  expense_id   String      @id @default(uuid()) @db.Char(36)\n  expense_date DateTime\n  expense_type ExpenseType\n  description  String?     @db.VarChar(255)\n  amount       Decimal     @db.Decimal(10, 2)\n  receipt_no   String?     @db.VarChar(100)\n  is_active    Boolean     @default(true)\n  created_at   DateTime    @default(now())\n  updated_at   DateTime?\n  deleted_at   DateTime?\n\n  drugLots Expense_Drug_Lot[]\n\n  @@map(\"expenses\")\n}\n\n//////////////////////////////////////////////////\n\nmodel Expense_Drug_Lot {\n  id         String    @id @default(uuid()) @db.Char(36)\n  expense_id String    @db.Char(36)\n  lot_id     String    @db.Char(36)\n  is_active  Boolean   @default(true)\n  created_at DateTime  @default(now())\n  updated_at DateTime?\n  deleted_at DateTime?\n\n  expense Expense  @relation(fields: [expense_id], references: [expense_id])\n  lot     Drug_Lot @relation(fields: [lot_id], references: [lot_id])\n\n  @@unique([expense_id, lot_id])\n  @@map(\"expense_drug_lots\")\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Clinic\":{\"fields\":[{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"address\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"open_time\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"close_time\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"ClinicToUser\"},{\"name\":\"patients\",\"kind\":\"object\",\"type\":\"Patient\",\"relationName\":\"ClinicToPatient\"},{\"name\":\"treatments\",\"kind\":\"object\",\"type\":\"Treatment\",\"relationName\":\"ClinicToTreatment\"},{\"name\":\"medicines\",\"kind\":\"object\",\"type\":\"Medicine\",\"relationName\":\"ClinicToMedicine\"},{\"name\":\"finances\",\"kind\":\"object\",\"type\":\"Finance\",\"relationName\":\"ClinicToFinance\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"user_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"Role\"},{\"name\":\"fullname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic\",\"kind\":\"object\",\"type\":\"Clinic\",\"relationName\":\"ClinicToUser\"},{\"name\":\"treatments\",\"kind\":\"object\",\"type\":\"Treatment\",\"relationName\":\"TreatmentToUser\"},{\"name\":\"finances\",\"kind\":\"object\",\"type\":\"Finance\",\"relationName\":\"FinanceToUser\"}],\"dbName\":null},\"Patient\":{\"fields\":[{\"name\":\"patient_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"national_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastname\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"gender\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"birthdate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic\",\"kind\":\"object\",\"type\":\"Clinic\",\"relationName\":\"ClinicToPatient\"},{\"name\":\"treatments\",\"kind\":\"object\",\"type\":\"Treatment\",\"relationName\":\"PatientToTreatment\"}],\"dbName\":null},\"Treatment\":{\"fields\":[{\"name\":\"treatment_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"treatment_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"symptom\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"diagnosis\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"total_cost\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patient_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic\",\"kind\":\"object\",\"type\":\"Clinic\",\"relationName\":\"ClinicToTreatment\"},{\"name\":\"patient\",\"kind\":\"object\",\"type\":\"Patient\",\"relationName\":\"PatientToTreatment\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TreatmentToUser\"},{\"name\":\"medicines\",\"kind\":\"object\",\"type\":\"TreatmentMedicine\",\"relationName\":\"TreatmentToTreatmentMedicine\"}],\"dbName\":null},\"Medicine\":{\"fields\":[{\"name\":\"medicine_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"medicine_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stock\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"expire_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic\",\"kind\":\"object\",\"type\":\"Clinic\",\"relationName\":\"ClinicToMedicine\"},{\"name\":\"treatments\",\"kind\":\"object\",\"type\":\"TreatmentMedicine\",\"relationName\":\"MedicineToTreatmentMedicine\"},{\"name\":\"purchases\",\"kind\":\"object\",\"type\":\"MedicinePurchase\",\"relationName\":\"MedicineToMedicinePurchase\"}],\"dbName\":null},\"TreatmentMedicine\":{\"fields\":[{\"name\":\"tm_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"quantity\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"medicine_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"treatment_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"medicine\",\"kind\":\"object\",\"type\":\"Medicine\",\"relationName\":\"MedicineToTreatmentMedicine\"},{\"name\":\"treatment\",\"kind\":\"object\",\"type\":\"Treatment\",\"relationName\":\"TreatmentToTreatmentMedicine\"}],\"dbName\":null},\"MedicinePurchase\":{\"fields\":[{\"name\":\"purchase_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"quantity\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"cost\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"purchase_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"medicine_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"medicine\",\"kind\":\"object\",\"type\":\"Medicine\",\"relationName\":\"MedicineToMedicinePurchase\"}],\"dbName\":null},\"Finance\":{\"fields\":[{\"name\":\"finance_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"FinanceType\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"clinic_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"clinic\",\"kind\":\"object\",\"type\":\"Clinic\",\"relationName\":\"ClinicToFinance\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"FinanceToUser\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"user_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password_hash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"users\"},\"Patient\":{\"fields\":[{\"name\":\"patient_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"hospital_number\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"first_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"last_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"gender\",\"kind\":\"enum\",\"type\":\"Gender\"},{\"name\":\"birth_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"address\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"allergy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"visits\",\"kind\":\"object\",\"type\":\"Visit\",\"relationName\":\"PatientToVisit\"}],\"dbName\":\"patients\"},\"Visit\":{\"fields\":[{\"name\":\"visit_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patient_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visit_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"symptom\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"diagnosis\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"note\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"patient\",\"kind\":\"object\",\"type\":\"Patient\",\"relationName\":\"PatientToVisit\"},{\"name\":\"visitDetails\",\"kind\":\"object\",\"type\":\"Visit_Detail\",\"relationName\":\"VisitToVisit_Detail\"},{\"name\":\"drugUsages\",\"kind\":\"object\",\"type\":\"Drug_Usage\",\"relationName\":\"Drug_UsageToVisit\"},{\"name\":\"incomes\",\"kind\":\"object\",\"type\":\"Income\",\"relationName\":\"IncomeToVisit\"}],\"dbName\":\"visits\"},\"Visit_Detail\":{\"fields\":[{\"name\":\"visit_detail_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visit_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"item_type\",\"kind\":\"enum\",\"type\":\"ItemType\"},{\"name\":\"drug_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"quantity\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"unit_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"visit\",\"kind\":\"object\",\"type\":\"Visit\",\"relationName\":\"VisitToVisit_Detail\"},{\"name\":\"drug\",\"kind\":\"object\",\"type\":\"Drug\",\"relationName\":\"DrugToVisit_Detail\"}],\"dbName\":\"visit_details\"},\"Drug_Category\":{\"fields\":[{\"name\":\"category_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"drugs\",\"kind\":\"object\",\"type\":\"Drug\",\"relationName\":\"DrugToDrug_Category\"}],\"dbName\":\"drug_categories\"},\"Drug\":{\"fields\":[{\"name\":\"drug_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"drug_name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"unit\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sell_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"min_stock\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"DrugStatus\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"category\",\"kind\":\"object\",\"type\":\"Drug_Category\",\"relationName\":\"DrugToDrug_Category\"},{\"name\":\"lots\",\"kind\":\"object\",\"type\":\"Drug_Lot\",\"relationName\":\"DrugToDrug_Lot\"},{\"name\":\"visitItems\",\"kind\":\"object\",\"type\":\"Visit_Detail\",\"relationName\":\"DrugToVisit_Detail\"}],\"dbName\":\"drugs\"},\"Drug_Lot\":{\"fields\":[{\"name\":\"lot_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"drug_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lot_no\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"received_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expire_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"qty_received\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"qty_remaining\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"buy_price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"drug\",\"kind\":\"object\",\"type\":\"Drug\",\"relationName\":\"DrugToDrug_Lot\"},{\"name\":\"usages\",\"kind\":\"object\",\"type\":\"Drug_Usage\",\"relationName\":\"Drug_LotToDrug_Usage\"},{\"name\":\"expenseLots\",\"kind\":\"object\",\"type\":\"Expense_Drug_Lot\",\"relationName\":\"Drug_LotToExpense_Drug_Lot\"}],\"dbName\":\"drug_lots\"},\"Drug_Usage\":{\"fields\":[{\"name\":\"usage_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visit_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lot_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"quantity\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"used_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"visit\",\"kind\":\"object\",\"type\":\"Visit\",\"relationName\":\"Drug_UsageToVisit\"},{\"name\":\"lot\",\"kind\":\"object\",\"type\":\"Drug_Lot\",\"relationName\":\"Drug_LotToDrug_Usage\"}],\"dbName\":\"drug_usages\"},\"Income\":{\"fields\":[{\"name\":\"income_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visit_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"income_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"payment_method\",\"kind\":\"enum\",\"type\":\"PaymentMethod\"},{\"name\":\"receipt_no\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"visit\",\"kind\":\"object\",\"type\":\"Visit\",\"relationName\":\"IncomeToVisit\"}],\"dbName\":\"incomes\"},\"Expense\":{\"fields\":[{\"name\":\"expense_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expense_date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expense_type\",\"kind\":\"enum\",\"type\":\"ExpenseType\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"receipt_no\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"drugLots\",\"kind\":\"object\",\"type\":\"Expense_Drug_Lot\",\"relationName\":\"ExpenseToExpense_Drug_Lot\"}],\"dbName\":\"expenses\"},\"Expense_Drug_Lot\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expense_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lot_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"created_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updated_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"deleted_at\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expense\",\"kind\":\"object\",\"type\":\"Expense\",\"relationName\":\"ExpenseToExpense_Drug_Lot\"},{\"name\":\"lot\",\"kind\":\"object\",\"type\":\"Drug_Lot\",\"relationName\":\"Drug_LotToExpense_Drug_Lot\"}],\"dbName\":\"expense_drug_lots\"}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -58,8 +58,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Clinics
-   * const clinics = await prisma.clinic.findMany()
+   * // Fetch zero or more Users
+   * const users = await prisma.user.findMany()
    * ```
    * 
    * Read more in our [docs](https://pris.ly/d/client).
@@ -80,8 +80,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Clinics
- * const clinics = await prisma.clinic.findMany()
+ * // Fetch zero or more Users
+ * const users = await prisma.user.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -175,16 +175,6 @@ export interface PrismaClient<
   }>>
 
       /**
-   * `prisma.clinic`: Exposes CRUD operations for the **Clinic** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Clinics
-    * const clinics = await prisma.clinic.findMany()
-    * ```
-    */
-  get clinic(): Prisma.ClinicDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
@@ -205,54 +195,94 @@ export interface PrismaClient<
   get patient(): Prisma.PatientDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.treatment`: Exposes CRUD operations for the **Treatment** model.
+   * `prisma.visit`: Exposes CRUD operations for the **Visit** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Treatments
-    * const treatments = await prisma.treatment.findMany()
+    * // Fetch zero or more Visits
+    * const visits = await prisma.visit.findMany()
     * ```
     */
-  get treatment(): Prisma.TreatmentDelegate<ExtArgs, { omit: OmitOpts }>;
+  get visit(): Prisma.VisitDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.medicine`: Exposes CRUD operations for the **Medicine** model.
+   * `prisma.visit_Detail`: Exposes CRUD operations for the **Visit_Detail** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Medicines
-    * const medicines = await prisma.medicine.findMany()
+    * // Fetch zero or more Visit_Details
+    * const visit_Details = await prisma.visit_Detail.findMany()
     * ```
     */
-  get medicine(): Prisma.MedicineDelegate<ExtArgs, { omit: OmitOpts }>;
+  get visit_Detail(): Prisma.Visit_DetailDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.treatmentMedicine`: Exposes CRUD operations for the **TreatmentMedicine** model.
+   * `prisma.drug_Category`: Exposes CRUD operations for the **Drug_Category** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more TreatmentMedicines
-    * const treatmentMedicines = await prisma.treatmentMedicine.findMany()
+    * // Fetch zero or more Drug_Categories
+    * const drug_Categories = await prisma.drug_Category.findMany()
     * ```
     */
-  get treatmentMedicine(): Prisma.TreatmentMedicineDelegate<ExtArgs, { omit: OmitOpts }>;
+  get drug_Category(): Prisma.Drug_CategoryDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.medicinePurchase`: Exposes CRUD operations for the **MedicinePurchase** model.
+   * `prisma.drug`: Exposes CRUD operations for the **Drug** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more MedicinePurchases
-    * const medicinePurchases = await prisma.medicinePurchase.findMany()
+    * // Fetch zero or more Drugs
+    * const drugs = await prisma.drug.findMany()
     * ```
     */
-  get medicinePurchase(): Prisma.MedicinePurchaseDelegate<ExtArgs, { omit: OmitOpts }>;
+  get drug(): Prisma.DrugDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.finance`: Exposes CRUD operations for the **Finance** model.
+   * `prisma.drug_Lot`: Exposes CRUD operations for the **Drug_Lot** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Finances
-    * const finances = await prisma.finance.findMany()
+    * // Fetch zero or more Drug_Lots
+    * const drug_Lots = await prisma.drug_Lot.findMany()
     * ```
     */
-  get finance(): Prisma.FinanceDelegate<ExtArgs, { omit: OmitOpts }>;
+  get drug_Lot(): Prisma.Drug_LotDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.drug_Usage`: Exposes CRUD operations for the **Drug_Usage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Drug_Usages
+    * const drug_Usages = await prisma.drug_Usage.findMany()
+    * ```
+    */
+  get drug_Usage(): Prisma.Drug_UsageDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.income`: Exposes CRUD operations for the **Income** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Incomes
+    * const incomes = await prisma.income.findMany()
+    * ```
+    */
+  get income(): Prisma.IncomeDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.expense`: Exposes CRUD operations for the **Expense** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Expenses
+    * const expenses = await prisma.expense.findMany()
+    * ```
+    */
+  get expense(): Prisma.ExpenseDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.expense_Drug_Lot`: Exposes CRUD operations for the **Expense_Drug_Lot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Expense_Drug_Lots
+    * const expense_Drug_Lots = await prisma.expense_Drug_Lot.findMany()
+    * ```
+    */
+  get expense_Drug_Lot(): Prisma.Expense_Drug_LotDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {
