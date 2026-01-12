@@ -1,25 +1,29 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
-  output = "../src/generated/prisma"
+  output   = "generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
 }
 
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum FinanceType {
+  INCOME
+  EXPENSE
+}
+
 model Clinic {
-  clinic_id   Int      @id @default(autoincrement())
+  clinic_id   String   @id @default(uuid())
   clinic_name String
   address     String
   phone       String
-  open_time   String
-  close_time  String
+  open_time   DateTime @db.Time
+  close_time  DateTime @db.Time
 
   users      User[]
   patients   Patient[]
@@ -29,13 +33,14 @@ model Clinic {
 }
 
 model User {
-  user_id   Int    @id @default(autoincrement())
+  user_id   String @id @default(uuid())
   username  String @unique
   password  String
+  email     String?
   role      Role
   fullname  String
 
-  clinic_id Int
+  clinic_id String
   clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])
 
   treatments Treatment[]
@@ -43,7 +48,7 @@ model User {
 }
 
 model Patient {
-  patient_id  Int    @id @default(autoincrement())
+  patient_id  String @id @default(uuid())
   national_id String @unique
   firstname   String
   lastname    String
@@ -51,22 +56,22 @@ model Patient {
   birthdate   DateTime
   phone       String
 
-  clinic_id Int
+  clinic_id String
   clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])
 
   treatments Treatment[]
 }
 
 model Treatment {
-  treatment_id   Int      @id @default(autoincrement())
+  treatment_id   String   @id @default(uuid())
   treatment_date DateTime
   symptom        String   @db.Text
   diagnosis      String   @db.Text
   total_cost     Decimal  @db.Decimal(10, 2)
 
-  clinic_id  Int
-  patient_id Int
-  user_id    Int
+  clinic_id  String
+  patient_id String
+  user_id    String
 
   clinic  Clinic  @relation(fields: [clinic_id], references: [clinic_id])
   patient Patient @relation(fields: [patient_id], references: [patient_id])
@@ -76,13 +81,13 @@ model Treatment {
 }
 
 model Medicine {
-  medicine_id   Int      @id @default(autoincrement())
+  medicine_id   String   @id @default(uuid())
   medicine_name String
   stock         Int
   price         Decimal  @db.Decimal(10, 2)
   expire_date   DateTime
 
-  clinic_id Int
+  clinic_id String
   clinic    Clinic @relation(fields: [clinic_id], references: [clinic_id])
 
   treatments TreatmentMedicine[]
@@ -90,46 +95,36 @@ model Medicine {
 }
 
 model TreatmentMedicine {
-  tm_id        Int     @id @default(autoincrement())
+  tm_id        String  @id @default(uuid())
   quantity     Int
   price        Decimal @db.Decimal(10, 2)
 
-  medicine_id  Int
-  treatment_id Int
+  medicine_id  String
+  treatment_id String
 
   medicine  Medicine  @relation(fields: [medicine_id], references: [medicine_id])
   treatment Treatment @relation(fields: [treatment_id], references: [treatment_id])
 }
 
 model MedicinePurchase {
-  purchase_id   Int      @id @default(autoincrement())
+  purchase_id   String   @id @default(uuid())
   quantity      Int
   cost          Decimal  @db.Decimal(10, 2)
   purchase_date DateTime
 
-  medicine_id Int
+  medicine_id String
   medicine    Medicine @relation(fields: [medicine_id], references: [medicine_id])
 }
 
 model Finance {
-  finance_id Int     @id @default(autoincrement())
-  type       FinanceType 
-  amount     Decimal @db.Decimal(10, 2)
+  finance_id String   @id @default(uuid())
+  type       FinanceType
+  amount     Decimal  @db.Decimal(10, 2)
   date       DateTime
 
-  clinic_id Int
-  user_id   Int
+  clinic_id String
+  user_id   String
 
   clinic Clinic @relation(fields: [clinic_id], references: [clinic_id])
   user   User   @relation(fields: [user_id], references: [user_id])
-}
-
-enum FinanceType {
-  INCOME
-  EXPENSE
-}
-
-enum Role {
-  ADMIN
-  STAFF
 }
