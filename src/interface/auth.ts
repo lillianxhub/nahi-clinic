@@ -1,6 +1,6 @@
 export interface LoginRequest {
   username: string;
-  password: string;
+  password_hash: string;
 }
 
 export interface LoginResponse {

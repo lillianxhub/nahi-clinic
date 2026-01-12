@@ -47,7 +47,7 @@ export default function Sidebar() {
                 </div>
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="ml-auto hover:bg-white/10 p-1 rounded"
+                    className="cursor-pointer ml-auto hover:bg-white/10 p-1 rounded"
                     aria-label="Toggle sidebar"
                 >
                     {collapsed ? <ChevronRight /> : <ChevronLeft />}

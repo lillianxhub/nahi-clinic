@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [password_hash, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -22,7 +22,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            await login({ username, password });
+            await login({ username, password_hash });
 
             router.push("/dashboard")
         } catch (error: unknown) {
@@ -64,7 +64,7 @@ export default function LoginPage() {
                     <input
                         type={showPassword ? "text" : "password"}
                         placeholder="รหัสผ่าน"
-                        value={password}
+                        value={password_hash}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
                         className="w-full rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
                 <button
                     onClick={handleLogin}
-                    disabled={loading || !username || !password}
+                    disabled={loading || !username || !password_hash}
                     className="cursor-pointer w-full rounded-lg py-3 bg-secondary text-black font-semibold hover:opacity-90 transition"
                 >
                     {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
