@@ -29,8 +29,8 @@ export * from "./enums"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Clinics
- * const clinics = await prisma.clinic.findMany()
+ * // Fetch zero or more Users
+ * const users = await prisma.user.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -39,11 +39,6 @@ export const PrismaClient = $Class.getPrismaClientClass()
 export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts extends Prisma.PrismaClientOptions["omit"] = Prisma.PrismaClientOptions["omit"], ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = $Class.PrismaClient<LogOpts, OmitOpts, ExtArgs>
 export { Prisma }
 
-/**
- * Model Clinic
- * 
- */
-export type Clinic = Prisma.ClinicModel
 /**
  * Model User
  * 
@@ -55,27 +50,47 @@ export type User = Prisma.UserModel
  */
 export type Patient = Prisma.PatientModel
 /**
- * Model Treatment
+ * Model Visit
  * 
  */
-export type Treatment = Prisma.TreatmentModel
+export type Visit = Prisma.VisitModel
 /**
- * Model Medicine
+ * Model Visit_Detail
  * 
  */
-export type Medicine = Prisma.MedicineModel
+export type Visit_Detail = Prisma.Visit_DetailModel
 /**
- * Model TreatmentMedicine
+ * Model Drug_Category
  * 
  */
-export type TreatmentMedicine = Prisma.TreatmentMedicineModel
+export type Drug_Category = Prisma.Drug_CategoryModel
 /**
- * Model MedicinePurchase
+ * Model Drug
  * 
  */
-export type MedicinePurchase = Prisma.MedicinePurchaseModel
+export type Drug = Prisma.DrugModel
 /**
- * Model Finance
+ * Model Drug_Lot
  * 
  */
-export type Finance = Prisma.FinanceModel
+export type Drug_Lot = Prisma.Drug_LotModel
+/**
+ * Model Drug_Usage
+ * 
+ */
+export type Drug_Usage = Prisma.Drug_UsageModel
+/**
+ * Model Income
+ * 
+ */
+export type Income = Prisma.IncomeModel
+/**
+ * Model Expense
+ * 
+ */
+export type Expense = Prisma.ExpenseModel
+/**
+ * Model Expense_Drug_Lot
+ * 
+ */
+export type Expense_Drug_Lot = Prisma.Expense_Drug_LotModel

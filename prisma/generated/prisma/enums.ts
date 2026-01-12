@@ -9,17 +9,44 @@
 * 🟢 You can import this file directly.
 */
 
-export const Role = {
-  ADMIN: 'ADMIN',
-  STAFF: 'STAFF'
+export const Gender = {
+  male: 'male',
+  female: 'female',
+  other: 'other'
 } as const
 
-export type Role = (typeof Role)[keyof typeof Role]
+export type Gender = (typeof Gender)[keyof typeof Gender]
 
 
-export const FinanceType = {
-  INCOME: 'INCOME',
-  EXPENSE: 'EXPENSE'
+export const ItemType = {
+  drug: 'drug',
+  service: 'service'
 } as const
 
-export type FinanceType = (typeof FinanceType)[keyof typeof FinanceType]
+export type ItemType = (typeof ItemType)[keyof typeof ItemType]
+
+
+export const DrugStatus = {
+  active: 'active',
+  inactive: 'inactive'
+} as const
+
+export type DrugStatus = (typeof DrugStatus)[keyof typeof DrugStatus]
+
+
+export const PaymentMethod = {
+  cash: 'cash',
+  transfer: 'transfer',
+  credit: 'credit'
+} as const
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
+export const ExpenseType = {
+  drug: 'drug',
+  utility: 'utility',
+  general: 'general'
+} as const
+
+export type ExpenseType = (typeof ExpenseType)[keyof typeof ExpenseType]
