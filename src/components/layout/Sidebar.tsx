@@ -32,7 +32,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`min-h-screen bg-primary text-white flex flex-col transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}
+            className={`flex min-h-screen bg-primary text-white flex flex-col transition-all duration-300 ${collapsed ? "w-20" : "w-72"}`}
         >
             <div className="px-4 h-25 border-b border-white/20 flex items-center justify-between">
                 <div className="overflow-hidden">

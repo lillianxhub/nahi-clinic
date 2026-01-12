@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { ApiError, LoginRequest, LoginResponse } from "@/interface/auth";
 import Toast, { ToastType } from "@/components/Toast";
+import { login } from "@/services/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
 
     const [toast, setToast] = useState<{
         message: string;
@@ -20,40 +21,10 @@ export default function LoginPage() {
     const handleLogin = async () => {
         setLoading(true);
 
-        const payload: LoginRequest = {
-            username,
-            password,
-        };
-
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                }
-            );
+            await login({ username, password });
 
-            const data: LoginResponse | ApiError = await res.json();
-
-            if (!res.ok) {
-                const errorData = data as ApiError;
-                throw new Error(errorData.message);
-            }
-
-            const successData = data as LoginResponse;
-
-            // localStorage.setItem("token", successData.token);
-
-            setToast({
-                message: "เข้าสู่ระบบสำเร็จ",
-                type: "success",
-            });
-
-            console.log("login success", successData);
+            router.push("/dashboard")
         } catch (error: unknown) {
             let message = "เกิดข้อผิดพลาด";
 

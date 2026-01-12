@@ -30,3 +30,9 @@ body {
     color: var(--foreground);
     font-family: Arial, Helvetica, sans-serif;
 }
+
+*,
+::before,
+::after {
+    border-color: #D9D9D9;
+}

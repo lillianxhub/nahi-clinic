@@ -5,7 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
 }
 
 datasource db {
@@ -31,7 +32,7 @@ model User {
   user_id   Int    @id @default(autoincrement())
   username  String @unique
   password  String
-  role      String
+  role      Role
   fullname  String
 
   clinic_id Int
@@ -126,4 +127,9 @@ model Finance {
 enum FinanceType {
   INCOME
   EXPENSE
+}
+
+enum Role {
+  ADMIN
+  STAFF
 }
