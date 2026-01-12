@@ -1,53 +1,57 @@
-import { buildInclude } from "@/utils/buildInclude";
-import { MEDICINE_INCLUDES, MEDICINE_ORDER_FIELDS } from "@/constants/medicine";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getPagination } from "@/utils/pagination";
+import { MEDICINE_ORDER_FIELDS } from "@/constants/medicine";
+
+type MedicineOrderKey = keyof typeof MEDICINE_ORDER_FIELDS;
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+  try {
+    const { searchParams } = new URL(req.url);
 
-  const page = Number(searchParams.get("page") ?? 1);
-  const pageSize = Number(searchParams.get("pageSize") ?? 10);
+    const { page, pageSize, skip, take } = getPagination(searchParams);
 
-  const skip = (page - 1) * pageSize;
-  const take = pageSize;
+    const orderKey = searchParams.get("orderBy");
+    const direction =
+      searchParams.get("order") === "desc" ? "desc" : "asc";
 
-  const include = buildInclude(MEDICINE_INCLUDES, searchParams.get("join"));
+    let orderBy: Record<string, "asc" | "desc"> | undefined;
 
-  type MedicineOrderKey = keyof typeof MEDICINE_ORDER_FIELDS;
+    if (orderKey && orderKey in MEDICINE_ORDER_FIELDS) {
+      const key = orderKey as MedicineOrderKey;
+      orderBy = {
+        [MEDICINE_ORDER_FIELDS[key]]: direction,
+      };
+    }
 
-  const orderKey = searchParams.get("orderBy");
-  const direction = searchParams.get("order") === "desc" ? "desc" : "asc";
+    const [data, total] = await Promise.all([
+      prisma.drug.findMany({
+        skip,
+        take,
+        orderBy,
+        include: {
+          category: true,
+        },
+      }),
+      prisma.drug.count(),
+    ]);
 
-  let orderBy = undefined;
-
-  if (orderKey && orderKey in MEDICINE_ORDER_FIELDS) {
-    const key = orderKey as MedicineOrderKey;
-
-    orderBy = {
-      [MEDICINE_ORDER_FIELDS[key]]: direction,
-    };
-  }
-
-  const [data, total] = await Promise.all([
-    prisma.drug.findMany({
-      include,
-      orderBy,
-      skip,
-      take,
-    }),
-    prisma.drug.count(),
-  ]);
-
-  return NextResponse.json({
-    data,
-    meta: {
-      pagination: {
-        page,
-        pageSize,
-        pageCount: Math.ceil(total / pageSize),
-        total,
+    return NextResponse.json({
+      data,
+      meta: {
+        pagination: {
+          page,
+          pageSize,
+          pageCount: Math.ceil(total / pageSize),
+          total,
+        },
       },
-    },
-  });
+    });
+  } catch (error: any) {
+    console.error("Get medicine error:", error);
+    return NextResponse.json(
+      { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
+      { status: 500 }
+    );
+  }
 }
