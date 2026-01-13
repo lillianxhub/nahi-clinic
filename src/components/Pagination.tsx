@@ -39,7 +39,7 @@ export default function Pagination({
             <button
                 onClick={() => onChange(page - 1)}
                 disabled={page === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border disabled:opacity-40"
+                className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg border disabled:opacity-40"
             >
                 <ChevronLeft size={16} />
             </button>
@@ -51,7 +51,7 @@ export default function Pagination({
                     </span>
                 ) : (
                     <button
-                        key={p}
+                        key={`page-${p}-${i}`}
                         onClick={() => onChange(p)}
                         className={`w-8 h-8 flex items-center justify-center rounded-lg border text-sm cursor-pointer
               ${p === page
@@ -69,7 +69,7 @@ export default function Pagination({
             <button
                 onClick={() => onChange(page + 1)}
                 disabled={page === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border disabled:opacity-40"
+                className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg border disabled:opacity-40"
             >
                 <ChevronRight size={16} />
             </button>
