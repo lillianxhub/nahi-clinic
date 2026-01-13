@@ -1,8 +1,3 @@
-export interface ResponseData<T> {
-  data: T;
-  meta: { pagination: Pagination };
-}
-
 export interface Pagination {
   page: number;
   pageSize: number;

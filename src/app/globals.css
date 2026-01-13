@@ -1,28 +1,50 @@
 @import "tailwindcss";
 
 :root {
-    --background: #ffffff;
+    --background: #EEF1F7;
     --foreground: #171717;
 
     --text: #ffffff;
-    --primary: #3f7c87;
-    --secondary: #a5dbdd;
-    --bg-light: #eef1f7;
+
+    --primary: #3F7C87;
+    --primary-dark: #2F5C67;
+    --primary-light: #5A9AA8;
+
+    --secondary: #A5DBDD;
+    --secondary-light: #C8E6E8;
+
+    --bg-card: #ffffff;
+    --bg-light: #EEF1F7;
+
     --text-muted: #7e7e7e;
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --info: #3B82F6;
 }
 
 /* map css var → tailwind token */
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
+    --color-text: var(--text);
 
     --color-primary: var(--primary);
+    --color-primary-dark: var(--primary-dark);
+    --color-primary-light: var(--primary-light);
+
     --color-secondary: var(--secondary);
+    --color-secondary-light: var(--secondary-light);
+
+    --color-card: var(--bg-card);
     --color-light: var(--bg-light);
     --color-muted: var(--text-muted);
 
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-danger: var(--danger);
+    --color-info: var(--info);
 }
 
 body {
@@ -34,5 +56,5 @@ body {
 *,
 ::before,
 ::after {
-    border-color: #D9D9D9;
+    border-color: #E5E7EB;
 }
