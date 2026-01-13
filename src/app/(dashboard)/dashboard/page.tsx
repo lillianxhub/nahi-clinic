@@ -1,74 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Pagination from "@/components/Pagination";
 import DataTable, { Column } from "@/components/table/Table";
 import { MedicineStock } from "@/interface/medicine";
+import { Users, DollarSign, Package, AlertCircle } from "lucide-react";
 import {
-    Users,
-    DollarSign,
-    Package,
-    AlertCircle,
-    TrendingUp,
-    TrendingDown,
-} from "lucide-react";
-import {
-    AreaChart,
-    Area,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    BarChart,
-    Bar,
-    PieLabelRenderProps,
 } from "recharts";
 import Badge from "@/components/Badge";
 import RevenueExpenseChart from "@/components/charts/RevenueExpenseChart";
 import PieWithLegend from "@/components/charts/PieWithLegend";
 
-/* ---------- mock data ---------- */
-
-const revenueData = [
-    { date: "6/1", รายรับ: 15000, รายจ่าย: 8000 },
-    { date: "7/1", รายรับ: 18000, รายจ่าย: 9000 },
-    { date: "8/1", รายรับ: 22000, รายจ่าย: 7500 },
-    { date: "9/1", รายรับ: 19000, รายจ่าย: 8500 },
-    { date: "10/1", รายรับ: 25000, รายจ่าย: 10000 },
-    { date: "11/1", รายรับ: 21000, รายจ่าย: 9500 },
-    { date: "12/1", รายรับ: 28000, รายจ่าย: 11000 },
-];
-
-const patientData = [
-    { date: "6/1", จำนวน: 18 },
-    { date: "7/1", จำนวน: 22 },
-    { date: "8/1", จำนวน: 25 },
-    { date: "9/1", จำนวน: 20 },
-    { date: "10/1", จำนวน: 28 },
-    { date: "11/1", จำนวน: 24 },
-    { date: "12/1", จำนวน: 23 },
-];
-
-const treatmentData = [
-    { name: "ตรวจรักษาทั่วไป", value: 45, color: "#3F7C87" },
-    { name: "โรคเรื้อรัง", value: 25, color: "#5A9AA8" },
-    { name: "ฉีดวัคซีน", value: 15, color: "#A5DBDD" },
-    { name: "อื่นๆ", value: 15, color: "#C8E6E8" },
-];
-
-const medicines: MedicineStock[] = [
-    { id: 1, name: "Paracetamol 500mg", stock: 25, min: 100 },
-    { id: 2, name: "Amoxicillin 250mg", stock: 15, min: 50 },
-    { id: 3, name: "Ibuprofen 400mg", stock: 8, min: 75 },
-    { id: 4, name: "Cetirizine 10mg", stock: 30, min: 100 },
-    { id: 5, name: "Metformin 500mg", stock: 12, min: 80 },
-    { id: 6, name: "Cetirizine 10mg", stock: 30, min: 100 },
-    { id: 7, name: "Metformin 500mg", stock: 12, min: 80 },
-];
+/* =========================
+   Table Columns
+========================= */
 
 const columns: Column<MedicineStock>[] = [
     {
@@ -97,11 +49,13 @@ const columns: Column<MedicineStock>[] = [
             }
 
             return <Badge label="ใกล้หมด" variant="warning" />;
-
         },
     },
 ];
-/* ---------- components ---------- */
+
+/* =========================
+   Components
+========================= */
 
 function StatCard({
     icon: Icon,
@@ -116,7 +70,6 @@ function StatCard({
         <div className="bg-white rounded-xl p-6 border shadow-sm">
             <div className="flex justify-between mb-4">
                 <Icon className="text-primary" />
-
             </div>
             <p className="text-muted text-sm">{title}</p>
             <h3 className="text-2xl font-bold text-primary">{value}</h3>
@@ -124,57 +77,90 @@ function StatCard({
     );
 }
 
-const renderPieLabel = ({
-    percent,
-}: PieLabelRenderProps): string => {
-    if (percent === undefined) return "";
-    return `${Math.round(percent * 100)}%`;
-};
-
+/* =========================
+   Page
+========================= */
 
 export default function DashboardPage() {
     const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [dashboard, setDashboard] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                const res = await fetch("/api/dashboard");
+                const data = await res.json();
+                setDashboard(data);
+            } catch (error) {
+                console.error("Load dashboard error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboard();
+    }, []);
+
+    if (loading) {
+        return <div className="p-6">Loading...</div>;
+    }
+
+    if (!dashboard) {
+        return <div className="p-6 text-red-500">โหลดข้อมูลไม่สำเร็จ</div>;
+    }
+
     return (
         <div className="space-y-6">
-            {/* Stat cards */}
+            {/* ================= Stat Cards ================= */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={Users} title="ผู้ป่วยวันนี้" value="23" />
-                <StatCard icon={DollarSign} title="รายรับวันนี้" value="฿28,500" />
-                <StatCard icon={Package} title="ยาในคลัง" value="156" />
-                <StatCard icon={AlertCircle} title="ยาใกล้หมด" value="5" />
+                <StatCard
+                    icon={Users}
+                    title="ผู้ป่วยวันนี้"
+                    value={dashboard.stats.todayPatients.toString()}
+                />
+                <StatCard
+                    icon={DollarSign}
+                    title="รายรับวันนี้"
+                    value={`฿${dashboard.stats.todayIncome.toLocaleString()}`}
+                />
+                <StatCard
+                    icon={Package}
+                    title="ยาในคลัง"
+                    value={dashboard.stats.totalDrugStock.toString()}
+                />
+                <StatCard
+                    icon={AlertCircle}
+                    title="ยาใกล้หมด"
+                    value={dashboard.stats.lowStockCount.toString()}
+                />
             </div>
 
-            {/* Charts row */}
+            {/* ================= Revenue / Expense ================= */}
             <div className="bg-white border rounded-xl p-6">
                 <h3 className="text-lg font-bold text-primary mb-4">
                     รายรับ - รายจ่าย
                 </h3>
-                <RevenueExpenseChart data={revenueData} />
+                <RevenueExpenseChart data={dashboard.charts.revenueExpense} />
             </div>
 
+            {/* ================= Charts ================= */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* สัดส่วนการรักษา */}
+                {/* Treatment Pie */}
                 <div className="bg-white border rounded-xl p-6">
                     <h3 className="text-lg font-bold text-primary mb-4">
                         สัดส่วนการรักษา
                     </h3>
-
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Chart */}
-                        <div className="flex-1">
-                            <PieWithLegend data={treatmentData} />
-                        </div>
-                    </div>
+                    <PieWithLegend data={dashboard.charts.treatment} />
                 </div>
 
-
-                {/* จำนวนผู้ป่วยรายวัน */}
+                {/* Patient Chart */}
                 <div className="bg-white border rounded-xl p-6">
                     <h3 className="text-lg font-bold text-primary mb-4">
                         จำนวนผู้ป่วยล่าสุด
                     </h3>
                     <ResponsiveContainer width="100%" height={260}>
-                        <BarChart data={patientData}>
+                        <BarChart data={dashboard.charts.patient}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
@@ -189,24 +175,26 @@ export default function DashboardPage() {
                 </div>
             </div>
 
+            {/* ================= Low Stock Table ================= */}
             <div className="bg-white border rounded-xl p-6">
                 <h3 className="text-lg font-bold text-primary mb-4">
                     รายการยาที่ต้องสั่งเพิ่ม
                 </h3>
+
                 <DataTable
                     columns={columns}
-                    data={medicines}
+                    data={dashboard.tables.lowStock}
                     rowKey={(row) => row.id}
                     page={page}
                     pageSize={5}
                 />
+
                 <Pagination
                     page={page}
-                    totalPages={Math.ceil(medicines.length / 5)}
+                    totalPages={Math.ceil(dashboard.tables.lowStock.length / 5)}
                     onChange={setPage}
                 />
             </div>
-
-        </div >
+        </div>
     );
 }

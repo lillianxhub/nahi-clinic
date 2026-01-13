@@ -8,12 +8,10 @@ type MedicineOrderKey = keyof typeof MEDICINE_ORDER_FIELDS;
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-
     const { page, pageSize, skip, take } = getPagination(searchParams);
 
     const orderKey = searchParams.get("orderBy");
-    const direction =
-      searchParams.get("order") === "desc" ? "desc" : "asc";
+    const direction = searchParams.get("order") === "desc" ? "desc" : "asc";
 
     let orderBy: Record<string, "asc" | "desc"> | undefined;
 
@@ -24,20 +22,45 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    const [data, total] = await Promise.all([
+    const [data, total, lowStockCount] = await Promise.all([
       prisma.drug.findMany({
         skip,
         take,
         orderBy,
         include: {
           category: true,
+          lots: true,
         },
       }),
+
       prisma.drug.count(),
+
+      (async () => {
+        const drugs = await prisma.drug.findMany({
+          select: {
+            min_stock: true,
+            lots: {
+              select: { qty_remaining: true },
+            },
+          },
+          where: { is_active: true },
+        });
+
+        return drugs.filter((drug) => {
+          const totalQty = drug.lots.reduce(
+            (sum, lot) => sum + lot.qty_remaining,
+            0
+          );
+          return totalQty <= drug.min_stock;
+        }).length;
+      })(),
     ]);
 
     return NextResponse.json({
       data,
+      summary: {
+        lowStockCount,
+      },
       meta: {
         pagination: {
           page,
