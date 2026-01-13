@@ -11,9 +11,14 @@ export async function GET(req: Request) {
         const { page, pageSize, skip, take } = getPagination(searchParams);
 
         const orderBy = getOrderBy(searchParams);
-        const include = getInclude(searchParams, ["visits"]);
+        const include = getInclude(searchParams, [
+            "patient",
+            "visitDetails",
+            "drugUsages",
+            "incomes",
+        ]);
 
-        const patients = await prisma.patient.findMany({
+        const visit = await prisma.visit.findMany({
             skip,
             take,
             orderBy,
@@ -21,14 +26,14 @@ export async function GET(req: Request) {
             where: { deleted_at: null },
         });
 
-        const total = await prisma.patient.count({
+        const total = await prisma.visit.count({
             where: { deleted_at: null },
         });
 
         const pageCount = Math.ceil(total / pageSize);
 
         return NextResponse.json({
-            data: patients,
+            data: visit,
             meta: {
                 pagination: {
                     page,
@@ -51,18 +56,17 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const patient = await prisma.patient.create({
+        const visit = await prisma.visit.create({
             data: {
-                first_name: body.first_name,
-                last_name: body.last_name,
-                gender: body.gender,
-                phone: body.phone,
-                address: body.address,
-                birth_date: body.birth_date,
+                patient_id: body.patient_id,
+                visit_date: body.visit_date,
+                symptom: body.symptom,
+                diagnosis: body.diagnosis,
+                note: body.note,
             },
         });
 
-        return NextResponse.json(patient, { status: 201 });
+        return NextResponse.json(visit, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

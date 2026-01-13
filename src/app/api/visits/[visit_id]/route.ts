@@ -1,35 +1,43 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+import { getInclude } from "@/utils/prismaQuery";
+
 type Params = {
     params: {
-        patient_id: string;
+        visit_id: string;
     };
 };
 
 export async function GET(req: Request, { params }: Params) {
     try {
-        const { patient_id } = await params;
+        const { visit_id } = await params;
 
-        const patient = await prisma.patient.findUnique({
+        const searchParams = new URL(req.url).searchParams;
+        const include = getInclude(searchParams, [
+            "patient",
+            "visitDetails",
+            "drugUsages",
+            "incomes",
+        ]);
+
+        const visit = await prisma.visit.findUnique({
             where: {
-                patient_id,
+                visit_id,
             },
-            include: {
-                visits: true,
-            },
+            include,
         });
 
-        if (!patient) {
+        if (!visit) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลผู้ป่วย" },
                 { status: 404 }
             );
         }
 
-        return NextResponse.json({ data: patient });
+        return NextResponse.json({ data: visit });
     } catch (error: any) {
-        console.error("Get patient by id error:", error);
+        console.error("Get visit by id error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 }
@@ -39,27 +47,24 @@ export async function GET(req: Request, { params }: Params) {
 
 export async function PUT(req: Request, { params }: Params) {
     try {
-        const { patient_id } = await params;
+        const { visit_id } = await params;
         const body = await req.json();
 
-        const UpdatePatient = await prisma.patient.update({
+        const Updatevisit = await prisma.visit.update({
             where: {
-                patient_id
+                visit_id,
             },
             data: {
-                first_name: body.first_name,
-                last_name: body.last_name,
-                gender: body.gender,
-                phone: body.phone,
-                address: body.address,
-                birth_date: body.birth_date,
+                visit_date: body.visit_date,
+                symptom: body.symptom,
+                diagnosis: body.diagnosis,
+                note: body.note,
             },
         });
-        
-        return NextResponse.json({ data: UpdatePatient });
 
+        return NextResponse.json({ data: Updatevisit });
     } catch (error: any) {
-        console.error("Update patient by id error: ", error);
+        console.error("Update visit by id error: ", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 }
@@ -67,22 +72,22 @@ export async function PUT(req: Request, { params }: Params) {
     }
 }
 
-export async function DELETE(req: Request, { params }: Params ) {
+export async function DELETE(req: Request, { params }: Params) {
     try {
-        const { patient_id } = await params;
+        const { visit_id } = await params;
 
-        const deletedPatient = await prisma.patient.update({
+        const deletedvisit = await prisma.visit.update({
             where: {
-                patient_id,
+                visit_id,
             },
             data: {
                 deleted_at: new Date(),
             },
         });
-        
-        return NextResponse.json({ data: deletedPatient });
+
+        return NextResponse.json({ data: deletedvisit });
     } catch (error: any) {
-        console.error("Delete patient by id error: ", error);
+        console.error("Delete visit by id error: ", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 }
