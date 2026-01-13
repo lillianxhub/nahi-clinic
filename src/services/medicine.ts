@@ -10,11 +10,11 @@ export const medicineService = {
     const query = buildQuery(params);
 
     return apiClient.get<ResponseData<Medicine[], MedicineSummary>>(
-      `/api/medicine${query}`
+      `/api/medicines${query}`
     );
   },
 
   async getMedicineDetail(drug_id: string): Promise<{ data: Medicine }> {
-    return apiClient.get<{ data: Medicine }>(`/api/medicine/${drug_id}`);
+    return apiClient.get<{ data: Medicine }>(`/api/medicines/${drug_id}`);
   },
 };
