@@ -1,23 +1,31 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+import { getPagination } from "@/utils/pagination";
+import { getOrderBy, getInclude } from "@/utils/prismaQuery";
+
 export async function GET(req: Request) {
     try {
         const searchParams = new URL(req.url).searchParams;
 
-        const page = Number(searchParams.get("page")) || 1;
-        const pageSize = Number(searchParams.get("pageSize")) || 10;
-        const skip = (page - 1) * pageSize;
+        const { page, pageSize, skip, take } = getPagination(searchParams);
+
+        const orderBy = getOrderBy(searchParams);
+        const include = getInclude(searchParams, ["visits"]);
 
         const patients = await prisma.patient.findMany({
             skip,
-            take: pageSize,
-            orderBy: {
-                created_at: "desc",
-            },
+            take,
+            orderBy,
+            include,
+            where: { deleted_at: null },
         });
 
-        const total = await prisma.patient.count();
+        const total = await prisma.patient.count({
+            where: { deleted_at: null },
+        });
+
+        const pageCount = Math.ceil(total / pageSize);
 
         return NextResponse.json({
             data: patients,
@@ -25,7 +33,7 @@ export async function GET(req: Request) {
                 pagination: {
                     page,
                     pageSize,
-                    pageCount: Math.ceil(total / pageSize),
+                    pageCount,
                     total,
                 },
             },
@@ -36,5 +44,26 @@ export async function GET(req: Request) {
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 }
         );
+    }
+}
+
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+
+        const patient = await prisma.patient.create({
+            data: {
+                first_name: body.first_name,
+                last_name: body.last_name,
+                gender: body.gender,
+                phone: body.phone,
+                address: body.address,
+                birth_date: body.birth_date,
+            },
+        });
+
+        return NextResponse.json(patient, { status: 201 });
+    } catch (error: any) {
+        return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
