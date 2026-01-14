@@ -44,7 +44,7 @@ export async function PUT(req: Request, { params }: Params) {
 
         const UpdatePatient = await prisma.patient.update({
             where: {
-                patient_id
+                patient_id,
             },
             data: {
                 first_name: body.first_name,
@@ -55,9 +55,8 @@ export async function PUT(req: Request, { params }: Params) {
                 birth_date: body.birth_date,
             },
         });
-        
-        return NextResponse.json({ data: UpdatePatient });
 
+        return NextResponse.json({ data: UpdatePatient });
     } catch (error: any) {
         console.error("Update patient by id error: ", error);
         return NextResponse.json(
@@ -67,7 +66,7 @@ export async function PUT(req: Request, { params }: Params) {
     }
 }
 
-export async function DELETE(req: Request, { params }: Params ) {
+export async function DELETE(req: Request, { params }: Params) {
     try {
         const { patient_id } = await params;
 
@@ -79,7 +78,7 @@ export async function DELETE(req: Request, { params }: Params ) {
                 deleted_at: new Date(),
             },
         });
-        
+
         return NextResponse.json({ data: deletedPatient });
     } catch (error: any) {
         console.error("Delete patient by id error: ", error);
