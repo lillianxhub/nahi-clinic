@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Pagination from "@/components/Pagination";
 import DataTable, { Column } from "@/components/table/Table";
-import { MedicineStock } from "@/interface/medicine";
 import { Users, DollarSign, Package, AlertCircle } from "lucide-react";
 import {
     ResponsiveContainer,
@@ -17,12 +16,14 @@ import {
 import Badge from "@/components/Badge";
 import RevenueExpenseChart from "@/components/charts/RevenueExpenseChart";
 import PieWithLegend from "@/components/charts/PieWithLegend";
+import { dashboardService } from "@/services/dashboard";
+import { DashboardStats, LowStockItem, RevenueExpenseChartData } from "@/interface/dashboard";
 
 /* =========================
    Table Columns
 ========================= */
 
-const columns: Column<MedicineStock>[] = [
+const columns: Column<LowStockItem>[] = [
     {
         key: "name",
         header: "ชื่อยา",
@@ -38,7 +39,7 @@ const columns: Column<MedicineStock>[] = [
         align: "center",
     },
     {
-        key: "status",
+        key: "stock", // Using stock as key for status render logic
         header: "สถานะ",
         align: "center",
         render: (row) => {
@@ -84,14 +85,28 @@ function StatCard({
 export default function DashboardPage() {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
-    const [dashboard, setDashboard] = useState<any>(null);
+    
+    // Data States
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [revenueExpense, setRevenueExpense] = useState<RevenueExpenseChartData[]>([]);
+    const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+    
+    // Mock Data for missing endpoints or skipped charts
+    const [treatmentData] = useState<any[]>([]); 
+    const [patientData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const res = await fetch("/api/dashboard");
-                const data = await res.json();
-                setDashboard(data);
+                const [statsRes, revenueRes, lowStockRes] = await Promise.all([
+                    dashboardService.getStats(),
+                    dashboardService.getRevenueExpenseChart(),
+                    dashboardService.getLowStockTable(),
+                ]);
+
+                setStats(statsRes.data);
+                setRevenueExpense(revenueRes.data);
+                setLowStock(lowStockRes.data);
             } catch (error) {
                 console.error("Load dashboard error:", error);
             } finally {
@@ -106,7 +121,7 @@ export default function DashboardPage() {
         return <div className="p-6">Loading...</div>;
     }
 
-    if (!dashboard) {
+    if (!stats) {
         return <div className="p-6 text-red-500">โหลดข้อมูลไม่สำเร็จ</div>;
     }
 
@@ -117,22 +132,22 @@ export default function DashboardPage() {
                 <StatCard
                     icon={Users}
                     title="ผู้ป่วยวันนี้"
-                    value={dashboard.stats.todayPatients.toString()}
+                    value={stats.todayPatients.toString()}
                 />
                 <StatCard
                     icon={DollarSign}
                     title="รายรับวันนี้"
-                    value={`฿${dashboard.stats.todayIncome.toLocaleString()}`}
+                    value={`฿${stats.todayIncome.toLocaleString()}`}
                 />
                 <StatCard
                     icon={Package}
                     title="ยาในคลัง"
-                    value={dashboard.stats.totalDrugStock.toString()}
+                    value={stats.totalDrugStock.toString()}
                 />
                 <StatCard
                     icon={AlertCircle}
                     title="ยาใกล้หมด"
-                    value={dashboard.stats.lowStockCount.toString()}
+                    value={stats.lowStockCount.toString()}
                 />
             </div>
 
@@ -141,7 +156,7 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-bold text-primary mb-4">
                     รายรับ - รายจ่าย
                 </h3>
-                <RevenueExpenseChart data={dashboard.charts.revenueExpense} />
+                <RevenueExpenseChart data={revenueExpense} />
             </div>
 
             {/* ================= Charts ================= */}
@@ -151,7 +166,10 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-bold text-primary mb-4">
                         สัดส่วนการรักษา
                     </h3>
-                    <PieWithLegend data={dashboard.charts.treatment} />
+                    <div className="h-[260px] flex items-center justify-center text-muted">
+                        Coming soon
+                    </div>
+                   {/* <PieWithLegend data={treatmentData} /> */}
                 </div>
 
                 {/* Patient Chart */}
@@ -159,8 +177,12 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-bold text-primary mb-4">
                         จำนวนผู้ป่วยล่าสุด
                     </h3>
+                     <div className="h-[260px] flex items-center justify-center text-muted">
+                        Coming soon
+                    </div>
+                    {/* 
                     <ResponsiveContainer width="100%" height={260}>
-                        <BarChart data={dashboard.charts.patient}>
+                        <BarChart data={patientData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
@@ -171,7 +193,8 @@ export default function DashboardPage() {
                                 radius={[6, 6, 0, 0]}
                             />
                         </BarChart>
-                    </ResponsiveContainer>
+                    </ResponsiveContainer> 
+                    */}
                 </div>
             </div>
 
@@ -183,7 +206,7 @@ export default function DashboardPage() {
 
                 <DataTable
                     columns={columns}
-                    data={dashboard.tables.lowStock}
+                    data={lowStock}
                     rowKey={(row) => row.id}
                     page={page}
                     pageSize={5}
@@ -191,7 +214,7 @@ export default function DashboardPage() {
 
                 <Pagination
                     page={page}
-                    totalPages={Math.ceil(dashboard.tables.lowStock.length / 5)}
+                    totalPages={Math.ceil(lowStock.length / 5)}
                     onChange={setPage}
                 />
             </div>
