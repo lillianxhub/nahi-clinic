@@ -1,5 +1,3 @@
-import { PrismaClient } from "/generated/prisma/client";
-
 import prisma from "../src/lib/prisma";
 function daysAgo(days: number) {
     const d = new Date();
