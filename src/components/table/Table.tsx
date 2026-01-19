@@ -19,17 +19,7 @@ export default function DataTable<T>({
     columns,
     data,
     rowKey,
-    page,
-    pageSize,
 }: DataTableProps<T>) {
-    const start =
-        page && pageSize ? (page - 1) * pageSize : 0;
-
-    const end =
-        page && pageSize ? start + pageSize : data.length;
-
-    const pageData =
-        page && pageSize ? data.slice(start, end) : data;
     return (
         <div className="overflow-hidden rounded-xl border border-[#E6EFEF] bg-white">
             <table className="w-full border-collapse">
@@ -38,15 +28,15 @@ export default function DataTable<T>({
                     <tr className="bg-[#3F7C87] text-white">
                         {columns.map((col) => (
                             <th
-                                key={col.header}
+                                key={String(col.key)}
                                 className={`px-4 py-3 text-sm font-semibold
-                                    ${col.align === "center"
+                  ${col.align === "center"
                                         ? "text-center"
                                         : col.align === "right"
                                             ? "text-right"
                                             : "text-left"
                                     }
-                                `}
+                `}
                             >
                                 {col.header}
                             </th>
@@ -56,7 +46,7 @@ export default function DataTable<T>({
 
                 {/* Body */}
                 <tbody>
-                    {pageData.map((row, index) => (
+                    {data.map((row, index) => (
                         <tr
                             key={rowKey(row)}
                             className={index % 2 === 0 ? "bg-[#E6EFEF]" : "bg-white"}
@@ -65,7 +55,7 @@ export default function DataTable<T>({
                                 <td
                                     key={String(col.key)}
                                     className={`px-4 py-3 text-sm
-                                        ${col.align === "center"
+                    ${col.align === "center"
                                             ? "text-center"
                                             : col.align === "right"
                                                 ? "text-right"
