@@ -17,7 +17,7 @@ import Badge from "@/components/Badge";
 import RevenueExpenseChart from "@/components/charts/RevenueExpenseChart";
 import PieWithLegend from "@/components/charts/PieWithLegend";
 import { dashboardService } from "@/services/dashboard";
-import { DashboardStats, LowStockItem, RevenueExpenseChartData } from "@/interface/dashboard";
+import { DashboardStats, LowStockItem, PatientChartData, RevenueExpenseChartData } from "@/interface/dashboard";
 
 /* =========================
    Table Columns
@@ -90,23 +90,25 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [revenueExpense, setRevenueExpense] = useState<RevenueExpenseChartData[]>([]);
     const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+    const [patientData, setPatientData] = useState<PatientChartData[]>([]);
     
     // Mock Data for missing endpoints or skipped charts
     const [treatmentData] = useState<any[]>([]); 
-    const [patientData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const [statsRes, revenueRes, lowStockRes] = await Promise.all([
+                const [statsRes, revenueRes, lowStockRes, patientRes] = await Promise.all([
                     dashboardService.getStats(),
                     dashboardService.getRevenueExpenseChart(),
                     dashboardService.getLowStockTable(),
+                    dashboardService.getPatientChart(),
                 ]);
 
                 setStats(statsRes.data);
                 setRevenueExpense(revenueRes.data);
                 setLowStock(lowStockRes.data);
+                setPatientData(patientRes.data);
             } catch (error) {
                 console.error("Load dashboard error:", error);
             } finally {
@@ -177,24 +179,20 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-bold text-primary mb-4">
                         จำนวนผู้ป่วยล่าสุด
                     </h3>
-                     <div className="h-[260px] flex items-center justify-center text-muted">
-                        Coming soon
-                    </div>
-                    {/* 
+                    
                     <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={patientData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip formatter={(value) => [value, "จำนวน"]} />
                             <Bar
-                                dataKey="จำนวน"
+                                dataKey="count"
                                 fill="#3F7C87"
                                 radius={[6, 6, 0, 0]}
                             />
                         </BarChart>
                     </ResponsiveContainer> 
-                    */}
                 </div>
             </div>
 

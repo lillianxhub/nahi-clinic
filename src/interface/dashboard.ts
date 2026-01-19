@@ -17,3 +17,8 @@ export interface LowStockItem {
     stock: number;
     min: number;
 }
+
+export interface PatientChartData {
+    date: string;
+    count: number;
+}

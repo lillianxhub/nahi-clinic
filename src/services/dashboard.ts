@@ -2,6 +2,7 @@ import { apiClient } from "./apiClient";
 import {
     DashboardStats,
     LowStockItem,
+    PatientChartData,
     RevenueExpenseChartData,
 } from "@/interface/dashboard";
 
@@ -18,5 +19,9 @@ export const dashboardService = {
 
     async getLowStockTable(): Promise<{ data: LowStockItem[] }> {
         return apiClient.get<{ data: LowStockItem[] }>("/api/dashboard/table");
+    },
+
+    async getPatientChart(): Promise<{ data: PatientChartData[] }> {
+        return apiClient.get<{ data: PatientChartData[] }>("/api/dashboard/patient-chart");
     },
 };
