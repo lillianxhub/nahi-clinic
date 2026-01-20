@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { getPagination } from "@/utils/pagination";
 import { MEDICINE_ORDER_FIELDS } from "@/constants/medicine";
 

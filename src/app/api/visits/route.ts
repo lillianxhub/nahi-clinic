@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 import { getPagination } from "@/utils/pagination";
 import { getOrderBy, getInclude } from "@/utils/prismaQuery";
