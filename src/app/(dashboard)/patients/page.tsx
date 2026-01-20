@@ -1,63 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Pagination from "@/components/Pagination";
 import { Patient } from "@/interface/patient";
 import { Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Badge from "@/components/Badge";
 import DataTable, { Column } from "@/components/table/Table";
-
-const patients: Patient[] = [
-    {
-        id: 1,
-        citizenId: "1103700123456",
-        fullName: "นางสาวมาลี สุขสันต์",
-        gender: "หญิง",
-        birthDate: "1998-04-12",
-        phone: "081-234-5678",
-    },
-    {
-        id: 2,
-        citizenId: "1103700654321",
-        fullName: "นายวิชัย กล้าหาญ",
-        gender: "ชาย",
-        birthDate: "1992-09-30",
-        phone: "089-456-7890",
-    },
-];
+import AddPatientModal from "@/components/patient/AddPatientModal";
+import { patientService } from "@/services/patient";
+import { GenderLabelTH } from "@/constants/gender";
 
 
 const columns: Column<Patient>[] = [
     {
-        key: "citizenId",
-        header: "รหัสบัตร",
+        key: "hospital_number",
+        header: "HN",
+        align: "center",
+        render: (row) => row.hospital_number ?? "-",
     },
     {
-        key: "fullName",
-        header: "ชื่อ-นามสกุล",
+        key: "first_name",
+        header: "ชื่อจริง",
+    },
+    {
+        key: "last_name",
+        header: "นามสกุล",
     },
     {
         key: "gender",
         header: "เพศ",
         align: "center",
-        // render: (row) => (
-        //     <Badge
-        //         label={row.gender}
-        //         variant={row.gender === "ชาย" ? "info" : "success"}
-        //     />
-        // ),
-    },
-    {
-        key: "birthDate",
-        header: "วันเกิด",
-        align: "center",
-        render: (row) =>
-            new Date(row.birthDate).toLocaleDateString("th-TH"),
+        render: (row) => GenderLabelTH[row.gender],
     },
     {
         key: "phone",
         header: "เบอร์โทร",
         align: "center",
+        render: (row) => row.phone ?? "-",
     },
     {
         key: "action",
@@ -65,13 +44,13 @@ const columns: Column<Patient>[] = [
         align: "center",
         render: () => (
             <div className="flex justify-center gap-3">
-                <button className="text-primary hover:opacity-70 cursor-pointer">
+                <button className="cursor-pointer text-primary hover:opacity-70">
                     <Eye size={18} />
                 </button>
-                <button className="text-blue-600 hover:opacity-70 cursor-pointer">
+                <button className="cursor-pointer text-blue-600 hover:opacity-70">
                     <Pencil size={18} />
                 </button>
-                <button className="text-red-600 hover:opacity-70 cursor-pointer">
+                <button className="cursor-pointer text-red-600 hover:opacity-70">
                     <Trash2 size={18} />
                 </button>
             </div>
@@ -81,13 +60,33 @@ const columns: Column<Patient>[] = [
 
 export default function PatientsPage() {
     const [search, setSearch] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [patients, setPatients] = useState<Patient[]>([]);
     const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [openAdd, setOpenAdd] = useState(false);
 
-    const filteredPatients = patients.filter(
-        (p) =>
-            p.fullName.includes(search) ||
-            p.citizenId.includes(search)
-    );
+    const fetchPatients = async () => {
+        try {
+            setLoading(true);
+            const res = await patientService.getPatients({
+                page,
+                pageSize: 10,
+            });
+
+            setPatients(res.data);
+            setTotalPages(res.meta.pagination.pageCount);
+        } catch (error) {
+            console.error("โหลดข้อมูลผู้ป่วยไม่สำเร็จ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPatients();
+    }, [page]);
+
 
     return (
         <div className="space-y-6">
@@ -108,7 +107,10 @@ export default function PatientsPage() {
                 </div>
 
                 {/* Add Button */}
-                <button className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 cursor-pointer">
+                <button
+                    onClick={() => setOpenAdd(true)}
+                    className="cursor-pointer flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90"
+                >
                     <Plus size={18} />
                     เพิ่มผู้ป่วยใหม่
                 </button>
@@ -117,16 +119,25 @@ export default function PatientsPage() {
             {/* Table */}
             <DataTable
                 columns={columns}
-                data={filteredPatients}
+                data={patients}
                 rowKey={(row) => row.id}
                 page={page}
-                pageSize={5}
+                pageSize={10}
             />
 
             <Pagination
                 page={page}
-                totalPages={Math.ceil(filteredPatients.length / 5)}
+                totalPages={totalPages}
                 onChange={setPage}
+            />
+
+            <AddPatientModal
+                open={openAdd}
+                onClose={() => setOpenAdd(false)}
+                onSuccess={() => {
+                    setPage(1);
+                    fetchPatients();
+                }}
             />
         </div>
     );
