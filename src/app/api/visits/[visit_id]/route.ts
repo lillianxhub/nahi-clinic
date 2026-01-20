@@ -45,7 +45,7 @@ export async function GET(req: Request, { params }: Params) {
     }
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PATCH(req: Request, { params }: Params) {
     try {
         const { visit_id } = await params;
         const body = await req.json();
