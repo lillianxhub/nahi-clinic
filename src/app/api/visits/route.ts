@@ -61,8 +61,6 @@ export async function POST(req: Request) {
                 patient_id: body.patient_id,
                 visit_date: body.visit_date,
                 symptom: body.symptom,
-                diagnosis: body.diagnosis,
-                note: body.note,
             },
         });
 
