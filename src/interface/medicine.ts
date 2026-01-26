@@ -26,7 +26,7 @@ export interface Medicine {
   unit: string;
   sell_price: number;
   status: "active" | "inactive";
-
+  min_stock: number;
   category: DrugCategory;
 
   stock: MedicineStock;

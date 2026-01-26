@@ -44,6 +44,7 @@ export default function MedicinesPage() {
 
     const withComputed = useMemo(() => {
         return medicines.map((m) => {
+            const minQuantity = m.min_stock;
             const totalQty =
                 m.lots?.reduce((sum, lot) => sum + lot.qty_remaining, 0) ?? 0;
 
@@ -52,7 +53,7 @@ export default function MedicinesPage() {
                     ?.map((l) => new Date(l.expire_date))
                     .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
 
-            const isLowStock = totalQty <= 30;
+            const isLowStock = totalQty <= minQuantity;
 
             return {
                 ...m,
