@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 import { getInclude } from "@/utils/prismaQuery";
 
@@ -45,7 +45,7 @@ export async function GET(req: Request, { params }: Params) {
     }
 }
 
-export async function PUT(req: Request, { params }: Params) {
+export async function PATCH(req: Request, { params }: Params) {
     try {
         const { visit_id } = await params;
         const body = await req.json();

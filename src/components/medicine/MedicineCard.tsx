@@ -18,6 +18,9 @@ export default function MedicineCard({
     onDelete,
     onClick,
 }: Props) {
+    
+    const minQuantity = medicine.min_stock;
+
     const totalQuantity =
         medicine.lots?.reduce((sum, lot) => sum + lot.qty_remaining, 0) ?? 0;
 
@@ -27,7 +30,8 @@ export default function MedicineCard({
             .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
 
     const isOutOfStock = totalQuantity === 0;
-    const isLowStock = totalQuantity > 0 && totalQuantity <= 30;
+
+    const isLowStock = totalQuantity > 0 && totalQuantity <= minQuantity;
 
     const getBackgroundColor = () => {
         if (isOutOfStock) return "bg-danger/15 border-red-200";

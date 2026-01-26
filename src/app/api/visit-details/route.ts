@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { getPagination } from "@/utils/pagination";
 import { getOrderBy, getInclude } from "@/utils/prismaQuery";
 
@@ -12,13 +11,12 @@ export async function GET(req: Request) {
 
         const orderBy = getOrderBy(searchParams);
         const include = getInclude(searchParams, [
-            "patient",
-            "visitDetails",
-            "drugUsages",
-            "incomes",
+            "visit",
+            "drug",
+            "income",
         ]);
 
-        const visit = await prisma.visit.findMany({
+        const visitDetail = await prisma.visit_Detail.findMany({
             skip,
             take,
             orderBy,
@@ -26,14 +24,14 @@ export async function GET(req: Request) {
             where: { deleted_at: null },
         });
 
-        const total = await prisma.visit.count({
+        const total = await prisma.visit_Detail.count({
             where: { deleted_at: null },
         });
 
         const pageCount = Math.ceil(total / pageSize);
 
         return NextResponse.json({
-            data: visit,
+            data: visitDetail,
             meta: {
                 pagination: {
                     page,
@@ -44,7 +42,7 @@ export async function GET(req: Request) {
             },
         });
     } catch (error: any) {
-        console.error("Register error:", error);
+        console.error("Get visit detail error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 }
@@ -56,15 +54,17 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const visit = await prisma.visit.create({
+        const visitDetail = await prisma.visit_Detail.create({
             data: {
-                patient_id: body.patient_id,
-                visit_date: body.visit_date,
-                symptom: body.symptom,
-            },
-        });
+                visit_id: body.visit_id,
+                item_type: body.item_type,
+                description: body.description,
+                unit_price: body.unit_price,
+                quantity: body.quantity,
+            }
+        })
 
-        return NextResponse.json(visit, { status: 201 });
+        return NextResponse.json(visitDetail, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
