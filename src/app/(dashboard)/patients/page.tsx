@@ -10,7 +10,6 @@ import AddPatientModal from "@/components/patient/AddPatientModal";
 import { patientService } from "@/services/patient";
 import { GenderLabelTH } from "@/constants/gender";
 
-
 const columns: Column<Patient>[] = [
     {
         key: "hospital_number",
@@ -86,7 +85,6 @@ export default function PatientsPage() {
     useEffect(() => {
         fetchPatients();
     }, [page]);
-
 
     return (
         <div className="space-y-6">
