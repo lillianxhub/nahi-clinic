@@ -44,3 +44,39 @@ export async function GET() {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { expense_date, expense_type, amount, description, receipt_no } = body;
+
+    // 1. Validation: ตรวจสอบค่าที่จำเป็น
+    if (!expense_date || !amount || !expense_type) {
+      return NextResponse.json(
+        { error: "กรุณากรอกข้อมูลที่จำเป็น (วันที่, ประเภท, จำนวนเงิน)" },
+        { status: 400 }
+      );
+    }
+
+    // 2. สร้างรายการ Expense ใหม่ลง Database
+    const newExpense = await prisma.expense.create({
+      data: {
+        expense_date: new Date(expense_date),
+        expense_type: expense_type,
+        amount: Number(amount),
+        description: description || undefined,
+        receipt_no: receipt_no || undefined,
+        is_active: true,
+      },
+    });
+
+    return NextResponse.json(newExpense, { status: 201 });
+
+  } catch (error) {
+    console.error("Error creating expense:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error },
+      { status: 500 }
+    );
+  }
+}
