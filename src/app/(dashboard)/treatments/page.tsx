@@ -18,7 +18,9 @@ export default function TreatmentsPage() {
                         className="pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                 </div>
-                <button className="px-4 py-2 bg-btn-green/60 text-black rounded hover:bg-btn-green-hover/70 transition">บันทึกการรักษา</button>
+                <button className="px-4 py-2 bg-btn-green/60 text-black rounded hover:bg-btn-green-hover/70 transition">
+                    บันทึกการรักษา
+                </button>
             </div>
         </div>
     );
