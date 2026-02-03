@@ -1,5 +1,5 @@
-import { prisma } from "../lib/prisma";
-import { ItemType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { ItemType, PaymentMethod} from "../../generated/prisma/client";
 
 export class StockNotEnoughError extends Error {
     constructor(message: string = "Stock not enough") {
@@ -14,7 +14,7 @@ export async function createVisitWithTreatment(input: {
     diagnosis?: string;
     services: { description: string; price: number }[];
     drugs: { lot_id: string; quantity: number; sell_price: number }[];
-    payment_method: "cash" | "transfer" | "credit";
+    payment_method: PaymentMethod;
 }) {
     return await prisma.$transaction(async (tx) => {
         // -------------------------------------------------------
