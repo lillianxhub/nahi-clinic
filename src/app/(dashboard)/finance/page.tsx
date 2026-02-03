@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     DollarSign, TrendingUp, TrendingDown, Calendar, Search,
     Filter, Download, Plus, Edit, Trash2, X, Check,
@@ -13,6 +13,8 @@ import {
 } from 'recharts';
 import PieWithLegend from "@/components/charts/PieWithLegend";
 import TransactionsTable from "@/components/finance/TransactionsTable";
+import { financeService } from "@/services/finance";
+
 
 function StatCard({
     icon: Icon,
@@ -60,6 +62,33 @@ export default function FinancePage() {
     const [filterType, setFilterType] = useState('all');
     const [dateRange, setDateRange] = useState('month');
     const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    useEffect(() => {
+        const testService = async () => {
+            console.log("--- Finance Service Test ---");
+            try {
+                const summary = await financeService.getSummaryStats();
+                console.log("Summary Stats:", summary);
+
+                const chart = await financeService.getBarChartData("year");
+                console.log("Bar Chart Data:", chart);
+
+                const incomeStats = await financeService.getIncomeStats();
+                console.log("Income Stats:", incomeStats);
+
+                const expenseStats = await financeService.getExpenseStats();
+                console.log("Expense Stats:", expenseStats);
+
+                const table = await financeService.getTransactionsTable({ page: 1, limit: 10 });
+                console.log("Transactions Table:", table);
+            } catch (error) {
+                console.error("Finance Service Test Error:", error);
+            }
+            console.log("----------------------------");
+        };
+
+        testService();
+    }, []);
 
     // ข้อมูลสรุป
     const summaryData = {
@@ -253,7 +282,6 @@ export default function FinancePage() {
                     </div>
                     <TransactionsTable data={transactions} />
                 </div>
-
             </div>
 
 
