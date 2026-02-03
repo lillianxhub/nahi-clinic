@@ -15,16 +15,16 @@ import {
 import { buildQuery, QueryParams } from "@/utils/query";
 
 export const financeService = {
-  // --- Basic Income & Expense (Original) ---
-  async getIncomes(month?: number, year?: number): Promise<IncomeApiResponse> {
-    const query = buildQuery({ month, year });
-    return apiClient.get<IncomeApiResponse>(`/api/incomes${query}`);
-  },
+  // --- Basic Income & Expense (Original) --- doesn't use yet
+  // async getIncomes(month?: number, year?: number): Promise<IncomeApiResponse> {
+  //   const query = buildQuery({ month, year });
+  //   return apiClient.get<IncomeApiResponse>(`/api/incomes${query}`);
+  // },
 
-  async getExpenses(month?: number, year?: number): Promise<ExpenseApiResponse> {
-    const query = buildQuery({ month, year });
-    return apiClient.get<ExpenseApiResponse>(`/api/expenses${query}`);
-  },
+  // async getExpenses(month?: number, year?: number): Promise<ExpenseApiResponse> {
+  //   const query = buildQuery({ month, year });
+  //   return apiClient.get<ExpenseApiResponse>(`/api/expenses${query}`);
+  // },
 
   // --- Extended Finance APIs (api/finance/*) ---
   
