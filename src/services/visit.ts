@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export class StockNotEnoughError extends Error {
     constructor(message: string = "Stock not enough") {
