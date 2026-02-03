@@ -344,20 +344,23 @@ export default function FinancePage() {
                             </div>
 
                             {/* Description */}
-                            <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: '#3F7C87' }}
-                                >
-                                    รายละเอียด
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="รายละเอียดเพิ่มเติม"
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none resize-none"
-                                    style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
-                                />
-                            </div>
+                            
+                            {transactionType === 'expense' && (
+                                <div>
+                                    <label
+                                        className="block text-sm font-medium mb-2"
+                                        style={{ color: '#3F7C87' }}
+                                    >
+                                        รายละเอียด
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        placeholder="รายละเอียดเพิ่มเติม"
+                                        className="w-full px-4 py-3 border-2 rounded-lg outline-none resize-none"
+                                        style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                    />
+                                </div>
+                            )}
 
                             {/* Status */}
                             <div>
