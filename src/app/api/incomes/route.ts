@@ -42,7 +42,7 @@ export async function GET(req: Request) {
         console.error("Register error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -58,8 +58,8 @@ export async function POST(req: Request) {
                 amount: body.amount,
                 payment_method: body.payment_method,
                 receipt_no: body.receipt_no,
-            }
-        })
+            },
+        });
 
         return NextResponse.json(income, { status: 201 });
     } catch (error: any) {

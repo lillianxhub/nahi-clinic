@@ -13,6 +13,9 @@
     --secondary: #A5DBDD;
     --secondary-light: #C8E6E8;
 
+    --btn-green: #5dcf76;
+    --btn-green-hover: #48B868;
+
     --bg-card: #ffffff;
     --bg-light: #EEF1F7;
 
@@ -36,6 +39,9 @@
 
     --color-secondary: var(--secondary);
     --color-secondary-light: var(--secondary-light);
+
+    --color-btn-green: var(--btn-green);
+    --color-btn-green-hover: var(--btn-green-hover);
 
     --color-card: var(--bg-card);
     --color-light: var(--bg-light);
