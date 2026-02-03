@@ -154,24 +154,14 @@ export default function DashboardPage() {
             </div>
 
             {/* ================= Revenue / Expense ================= */}
-            <div className="bg-white border rounded-xl p-6">
-                <h3 className="text-lg font-bold text-primary mb-4">
-                    รายรับ - รายจ่าย
-                </h3>
-                <RevenueExpenseChart data={revenueExpense} />
-            </div>
 
             {/* ================= Charts ================= */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Treatment Pie */}
                 <div className="bg-white border rounded-xl p-6">
                     <h3 className="text-lg font-bold text-primary mb-4">
-                        สัดส่วนการรักษา
+                        รายรับ - รายจ่าย
                     </h3>
-                    <div className="h-[260px] flex items-center justify-center text-muted">
-                        Coming soon
-                    </div>
-                   {/* <PieWithLegend data={treatmentData} /> */}
+                    <RevenueExpenseChart data={revenueExpense} />
                 </div>
 
                 {/* Patient Chart */}
@@ -202,19 +192,28 @@ export default function DashboardPage() {
                     รายการยาที่ต้องสั่งเพิ่ม
                 </h3>
 
-                <DataTable
-                    columns={columns}
-                    data={lowStock}
-                    rowKey={(row) => row.id}
-                    page={page}
-                    pageSize={5}
-                />
+                {lowStock.length > 0 ? (
+                    <>
+                        <DataTable
+                            columns={columns}
+                            data={lowStock}
+                            rowKey={(row) => row.id}
+                            page={page}
+                            pageSize={5}
+                        />
 
-                <Pagination
-                    page={page}
-                    totalPages={Math.ceil(lowStock.length / 5)}
-                    onChange={setPage}
-                />
+                        <Pagination
+                            page={page}
+                            totalPages={Math.ceil(lowStock.length / 5)}
+                            onChange={setPage}
+                        />
+                    </>
+                ) : (
+                    <div className="py-12 text-center text-muted border-2 border-dashed border-gray-100 rounded-xl">
+                        <Package className="mx-auto mb-2 opacity-20" size={48} />
+                        <p>ไม่มีรายการยาใกล้หมด</p>
+                    </div>
+                )}
             </div>
         </div>
     );
