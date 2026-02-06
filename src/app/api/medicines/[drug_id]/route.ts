@@ -2,48 +2,85 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-  params: {
-    drug_id: string;
-  };
+    params: {
+        drug_id: string;
+    };
 };
 
 export async function GET(req: Request, { params }: Params) {
-  try {
-    const { drug_id } = await params;
+    try {
+        const { drug_id } = await params;
 
-    if (!drug_id) {
-      return NextResponse.json(
-        { message: "drug_id ไม่ถูกต้อง" },
-        { status: 400 }
-      );
+        if (!drug_id) {
+            return NextResponse.json(
+                { message: "drug_id ไม่ถูกต้อง" },
+                { status: 400 },
+            );
+        }
+
+        const drug = await prisma.drug.findUnique({
+            where: {
+                drug_id,
+            },
+            include: {
+                category: true,
+                lots: {
+                    orderBy: {
+                        expire_date: "asc",
+                    },
+                },
+            },
+        });
+
+        if (!drug) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลยา" },
+                { status: 404 },
+            );
+        }
+
+        return NextResponse.json({
+            data: drug,
+        });
+    } catch (error) {
+        console.error("Get medicine detail error:", error);
+        return NextResponse.json(
+            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
+            { status: 500 },
+        );
     }
+}
 
-    const drug = await prisma.drug.findUnique({
-      where: {
-        drug_id,
-      },
-      include: {
-        category: true,
-        lots: {
-          orderBy: {
-            expire_date: "asc",
-          },
-        },
-      },
-    });
+export async function PATCH(req: Request, { params }: Params) {
+    try {
+        const { drug_id } = await params;
+        const body = await req.json();
 
-    if (!drug) {
-      return NextResponse.json({ message: "ไม่พบข้อมูลยา" }, { status: 404 });
+        const updatedDrug = await prisma.drug.update({
+            where: { drug_id },
+            data: {
+                drug_name: body.drug_name,
+                category_id: body.category_id,
+                unit: body.unit,
+                sell_price: body.sell_price,
+                min_stock: body.min_stock,
+                status: body.status,
+                is_active: body.is_active,
+            },
+            include: {
+                category: true,
+            },
+        });
+
+        return NextResponse.json({ data: updatedDrug });
+    } catch (error: any) {
+        console.error("Update medicine error:", error);
+        return NextResponse.json(
+            {
+                message: "เกิดข้อผิดพลาดในการแก้ไขข้อมูลยา",
+                error: error.message,
+            },
+            { status: 500 },
+        );
     }
-
-    return NextResponse.json({
-      data: drug,
-    });
-  } catch (error) {
-    console.error("Get medicine detail error:", error);
-    return NextResponse.json(
-      { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
-      { status: 500 }
-    );
-  }
 }
