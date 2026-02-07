@@ -15,6 +15,7 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const menuItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },
@@ -29,6 +30,7 @@ const menuItems = [
 export default function Sidebar() {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
+    const { user, logout } = useAuth();
 
     return (
         <aside
@@ -64,9 +66,10 @@ export default function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={`flex items-center gap-3 px-3 py-3 rounded-lg transition
-                                ${isActive
-                                    ? "bg-secondary text-black"
-                                    : "hover:bg-white/10"
+                                ${
+                                    isActive
+                                        ? "bg-secondary text-black"
+                                        : "hover:bg-white/10"
                                 }
                                 ${collapsed ? "justify-center" : ""}
                             `}
@@ -81,7 +84,7 @@ export default function Sidebar() {
 
             {/* Footer */}
             <div className="px-3 py-4 border-t border-white/20">
-                <div
+                {/* <div
                     className={`flex items-center gap-3 rounded-lg px-3 py-3 mb-3 bg-white/20
                         ${collapsed ? "justify-center" : ""}
                     `}
@@ -89,11 +92,16 @@ export default function Sidebar() {
                     <User size={20} />
                     {!collapsed && (
                         <div className="text-sm leading-tight">
+                            <p className="font-semibold">
+                                {user?.username || "Guest"}
+                            </p>
+                            <p className="text-xs opacity-70">ผู้ดูแลระบบ</p>
                         </div>
                     )}
-                </div>
+                </div> */}
 
                 <button
+                    onClick={logout}
                     className={`flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/10 w-full cursor-pointer
                         ${collapsed ? "justify-center" : ""}
                     `}
