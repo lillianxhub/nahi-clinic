@@ -6,75 +6,103 @@ import { MEDICINE_ORDER_FIELDS } from "@/constants/medicine";
 type MedicineOrderKey = keyof typeof MEDICINE_ORDER_FIELDS;
 
 export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const { page, pageSize, skip, take } = getPagination(searchParams);
+    try {
+        const { searchParams } = new URL(req.url);
+        const { page, pageSize, skip, take } = getPagination(searchParams);
 
-    const orderKey = searchParams.get("orderBy");
-    const direction = searchParams.get("order") === "desc" ? "desc" : "asc";
+        const orderKey = searchParams.get("orderBy");
+        const direction = searchParams.get("order") === "desc" ? "desc" : "asc";
 
-    let orderBy: Record<string, "asc" | "desc"> | undefined;
+        let orderBy: Record<string, "asc" | "desc"> | undefined;
 
-    if (orderKey && orderKey in MEDICINE_ORDER_FIELDS) {
-      const key = orderKey as MedicineOrderKey;
-      orderBy = {
-        [MEDICINE_ORDER_FIELDS[key]]: direction,
-      };
-    }
+        if (orderKey && orderKey in MEDICINE_ORDER_FIELDS) {
+            const key = orderKey as MedicineOrderKey;
+            orderBy = {
+                [MEDICINE_ORDER_FIELDS[key]]: direction,
+            };
+        }
 
-    const [data, total, lowStockCount] = await Promise.all([
-      prisma.drug.findMany({
-        skip,
-        take,
-        orderBy,
-        include: {
-          category: true,
-          lots: true,
-        },
-      }),
+        const [data, total, lowStockCount] = await Promise.all([
+            prisma.drug.findMany({
+                skip,
+                take,
+                orderBy,
+                include: {
+                    category: true,
+                    lots: true,
+                },
+            }),
 
-      prisma.drug.count(),
+            prisma.drug.count(),
 
-      (async () => {
-        const drugs = await prisma.drug.findMany({
-          select: {
-            min_stock: true,
-            lots: {
-              select: { qty_remaining: true },
+            (async () => {
+                const drugs = await prisma.drug.findMany({
+                    select: {
+                        min_stock: true,
+                        lots: {
+                            select: { qty_remaining: true },
+                        },
+                    },
+                    where: { is_active: true },
+                });
+
+                return drugs.filter((drug) => {
+                    const totalQty = drug.lots.reduce(
+                        (sum, lot) => sum + lot.qty_remaining,
+                        0,
+                    );
+                    return totalQty <= drug.min_stock;
+                }).length;
+            })(),
+        ]);
+
+        return NextResponse.json({
+            data,
+            summary: {
+                lowStockCount,
             },
-          },
-          where: { is_active: true },
+            meta: {
+                pagination: {
+                    page,
+                    pageSize,
+                    pageCount: Math.ceil(total / pageSize),
+                    total,
+                },
+            },
+        });
+    } catch (error: any) {
+        console.error("Get medicine error:", error);
+        return NextResponse.json(
+            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
+            { status: 500 },
+        );
+    }
+}
+
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+
+        const drug = await prisma.drug.create({
+            data: {
+                drug_name: body.drug_name,
+                category_id: body.category_id,
+                unit: body.unit,
+                sell_price: body.sell_price,
+                min_stock: body.min_stock || 0,
+                status: body.status || "active",
+            },
+            include: {
+                category: true,
+            },
         });
 
-        return drugs.filter((drug) => {
-          const totalQty = drug.lots.reduce(
-            (sum, lot) => sum + lot.qty_remaining,
-            0
-          );
-          return totalQty <= drug.min_stock;
-        }).length;
-      })(),
-    ]);
-
-    return NextResponse.json({
-      data,
-      summary: {
-        lowStockCount,
-      },
-      meta: {
-        pagination: {
-          page,
-          pageSize,
-          pageCount: Math.ceil(total / pageSize),
-          total,
-        },
-      },
-    });
-  } catch (error: any) {
-    console.error("Get medicine error:", error);
-    return NextResponse.json(
-      { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-      { status: 500 }
-    );
-  }
+        return NextResponse.json(drug, { status: 201 });
+    } catch (error: any) {
+        console.error("Create medicine error:", error);
+        return NextResponse.json(
+            { message: "เกิดข้อผิดพลาดในการเพิ่มยา", error: error.message },
+            { status: 500 },
+        );
+    }
 }

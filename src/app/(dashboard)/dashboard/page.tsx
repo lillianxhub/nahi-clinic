@@ -17,7 +17,12 @@ import Badge from "@/components/Badge";
 import RevenueExpenseChart from "@/components/charts/RevenueExpenseChart";
 import PieWithLegend from "@/components/charts/PieWithLegend";
 import { dashboardService } from "@/services/dashboard";
-import { DashboardStats, LowStockItem, PatientChartData, RevenueExpenseChartData } from "@/interface/dashboard";
+import {
+    DashboardStats,
+    LowStockItem,
+    PatientChartData,
+    RevenueExpenseChartData,
+} from "@/interface/dashboard";
 
 /* =========================
    Table Columns
@@ -85,25 +90,29 @@ function StatCard({
 export default function DashboardPage() {
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
-    
+
     // Data States
     const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [revenueExpense, setRevenueExpense] = useState<RevenueExpenseChartData[]>([]);
+    const [revenueExpense, setRevenueExpense] = useState<
+        RevenueExpenseChartData[]
+    >([]);
     const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
     const [patientData, setPatientData] = useState<PatientChartData[]>([]);
-    
+    const [chartFilter, setChartFilter] = useState("week");
+
     // Mock Data for missing endpoints or skipped charts
-    const [treatmentData] = useState<any[]>([]); 
+    const [treatmentData] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const [statsRes, revenueRes, lowStockRes, patientRes] = await Promise.all([
-                    dashboardService.getStats(),
-                    dashboardService.getRevenueExpenseChart(),
-                    dashboardService.getLowStockTable(),
-                    dashboardService.getPatientChart(),
-                ]);
+                const [statsRes, revenueRes, lowStockRes, patientRes] =
+                    await Promise.all([
+                        dashboardService.getStats(),
+                        dashboardService.getRevenueExpenseChart(chartFilter),
+                        dashboardService.getLowStockTable(),
+                        dashboardService.getPatientChart(),
+                    ]);
 
                 setStats(statsRes.data);
                 setRevenueExpense(revenueRes.data);
@@ -117,7 +126,7 @@ export default function DashboardPage() {
         };
 
         fetchDashboard();
-    }, []);
+    }, [chartFilter]);
 
     if (loading) {
         return <div className="p-6">Loading...</div>;
@@ -158,18 +167,29 @@ export default function DashboardPage() {
             {/* ================= Charts ================= */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white border rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-primary mb-4">
-                        รายรับ - รายจ่าย
-                    </h3>
+                    <div className="flex justify-between">
+                        <h3 className="text-lg font-bold text-primary mb-4">
+                            รายรับ - รายจ่าย
+                        </h3>
+                        <select
+                            value={chartFilter}
+                            onChange={(e) => setChartFilter(e.target.value)}
+                            className="text-sm border rounded-lg px-2 py-1 outline-none"
+                        >
+                            <option value="week">7 วันล่าสุด</option>
+                            <option value="month">เดือน</option>
+                            <option value="year">ปี</option>
+                        </select>
+                    </div>
                     <RevenueExpenseChart data={revenueExpense} />
                 </div>
 
                 {/* Patient Chart */}
                 <div className="bg-white border rounded-xl p-6">
                     <h3 className="text-lg font-bold text-primary mb-4">
-                        จำนวนผู้ป่วยล่าสุด
+                        จำนวนผู้ป่วย 7 วันล่าสุด
                     </h3>
-                    
+
                     <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={patientData}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -179,10 +199,11 @@ export default function DashboardPage() {
                             <Bar
                                 dataKey="count"
                                 fill="#3F7C87"
-                                radius={[6, 6, 0, 0]}
+                                radius={[5, 5, 0, 0]}
+                                barSize={35}
                             />
                         </BarChart>
-                    </ResponsiveContainer> 
+                    </ResponsiveContainer>
                 </div>
             </div>
 
@@ -210,7 +231,10 @@ export default function DashboardPage() {
                     </>
                 ) : (
                     <div className="py-12 text-center text-muted border-2 border-dashed border-gray-100 rounded-xl">
-                        <Package className="mx-auto mb-2 opacity-20" size={48} />
+                        <Package
+                            className="mx-auto mb-2 opacity-20"
+                            size={48}
+                        />
                         <p>ไม่มีรายการยาใกล้หมด</p>
                     </div>
                 )}

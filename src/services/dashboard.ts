@@ -7,9 +7,11 @@ import {
 } from "@/interface/dashboard";
 
 export const dashboardService = {
-    async getRevenueExpenseChart(): Promise<{ data: RevenueExpenseChartData[] }> {
+    async getRevenueExpenseChart(
+        filter?: string,
+    ): Promise<{ data: RevenueExpenseChartData[] }> {
         return apiClient.get<{ data: RevenueExpenseChartData[] }>(
-            "/api/dashboard/revenueExpense-chart"
+            `/api/dashboard/revenueExpense-chart${filter ? `?filter=${filter}` : ""}`,
         );
     },
 
@@ -22,6 +24,8 @@ export const dashboardService = {
     },
 
     async getPatientChart(): Promise<{ data: PatientChartData[] }> {
-        return apiClient.get<{ data: PatientChartData[] }>("/api/dashboard/patient-chart");
+        return apiClient.get<{ data: PatientChartData[] }>(
+            "/api/dashboard/patient-chart",
+        );
     },
 };

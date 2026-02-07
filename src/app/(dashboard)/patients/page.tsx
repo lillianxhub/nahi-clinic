@@ -9,8 +9,10 @@ import DataTable, { Column } from "@/components/table/Table";
 import AddPatientModal from "@/components/patient/AddPatientModal";
 import { patientService } from "@/services/patient";
 import { GenderLabelTH } from "@/constants/gender";
+import { useRouter } from "next/navigation";
+import { useDebounce } from "@/hooks/useDebounce";
 
-const columns: Column<Patient>[] = [
+const getColumns = (onView: (id: string) => void): Column<Patient>[] => [
     {
         key: "hospital_number",
         header: "HN",
@@ -41,9 +43,12 @@ const columns: Column<Patient>[] = [
         key: "action",
         header: "จัดการ",
         align: "center",
-        render: () => (
+        render: (row) => (
             <div className="flex justify-center gap-3">
-                <button className="cursor-pointer text-primary hover:opacity-70">
+                <button
+                    onClick={() => onView(row.patient_id)}
+                    className="cursor-pointer text-primary hover:opacity-70"
+                >
                     <Eye size={18} />
                 </button>
                 <button className="cursor-pointer text-blue-600 hover:opacity-70">
@@ -58,7 +63,9 @@ const columns: Column<Patient>[] = [
 ];
 
 export default function PatientsPage() {
+    const router = useRouter();
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search, 500);
     const [loading, setLoading] = useState(true);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [page, setPage] = useState(1);
@@ -71,6 +78,7 @@ export default function PatientsPage() {
             const res = await patientService.getPatients({
                 page,
                 pageSize: 10,
+                q: debouncedSearch,
             });
 
             setPatients(res.data);
@@ -83,8 +91,12 @@ export default function PatientsPage() {
     };
 
     useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch]);
+
+    useEffect(() => {
         fetchPatients();
-    }, [page]);
+    }, [page, debouncedSearch]);
 
     return (
         <div className="space-y-6">
@@ -116,9 +128,9 @@ export default function PatientsPage() {
 
             {/* Table */}
             <DataTable
-                columns={columns}
+                columns={getColumns((id) => router.push(`/patients/${id}`))}
                 data={patients}
-                rowKey={(row) => row.id}
+                rowKey={(row) => row.patient_id}
                 page={page}
                 pageSize={10}
             />

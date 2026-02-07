@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
+import { signJWT } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
     try {
@@ -8,21 +11,53 @@ export async function POST(req: Request) {
         if (!username || !password_hash) {
             return NextResponse.json(
                 { message: "กรุณากรอก username และ password" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
-        // ตรวจสอบ username/password ใน DB แบบตรง ๆ
-        const user = await prisma.user.findFirst({
-            where: { username, password_hash },
+        // ตรวจสอบ username ใน DB
+        const user = await prisma.user.findUnique({
+            where: { username },
         });
 
-        if (!user) {
+        if (!user || user.deleted_at) {
             return NextResponse.json(
                 { message: "ไม่พบผู้ใช้งาน หรือ password ไม่ถูกต้อง" },
-                { status: 401 }
+                { status: 401 },
             );
         }
+
+        // ตรวจสอบ password
+        const isPasswordValid = await bcrypt.compare(
+            password_hash,
+            user.password_hash,
+        );
+
+        // fallback to plain text for existing users (migration path)
+        const isPlainValid = password_hash === user.password_hash;
+
+        if (!isPasswordValid && !isPlainValid) {
+            return NextResponse.json(
+                { message: "ไม่พบผู้ใช้งาน หรือ password ไม่ถูกต้อง" },
+                { status: 401 },
+            );
+        }
+
+        // Generate JWT
+        const token = await signJWT({
+            userId: user.user_id,
+            username: user.username,
+        });
+
+        // Set Cookie
+        const cookieStore = await cookies();
+        cookieStore.set("auth_token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24, // 24 hours
+            path: "/",
+        });
 
         return NextResponse.json({
             message: "Login สำเร็จ",
@@ -35,7 +70,7 @@ export async function POST(req: Request) {
         console.error("Login error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

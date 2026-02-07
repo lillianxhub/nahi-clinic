@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Toast, { ToastType } from "@/components/Toast";
-import { login } from "@/services/auth";
+import { login as loginService } from "@/services/auth";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
+    console.log("LoginPage rendering, calling useAuth...");
     const [username, setUsername] = useState("");
     const [password_hash, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { login } = useAuth();
 
     const [toast, setToast] = useState<{
         message: string;
@@ -22,9 +25,12 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            await login({ username, password_hash });
+            const response = await loginService({ username, password_hash });
 
-            router.push("/dashboard")
+            login({
+                id: response.user.id,
+                username: response.user.username,
+            });
         } catch (error: unknown) {
             let message = "เกิดข้อผิดพลาด";
 
@@ -40,7 +46,6 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
-
 
     return (
         <>
@@ -76,7 +81,11 @@ export default function LoginPage() {
                         disabled={loading}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-primary cursor-pointer"
                     >
-                        {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                        {showPassword ? (
+                            <Eye size={20} />
+                        ) : (
+                            <EyeOff size={20} />
+                        )}
                     </button>
                 </div>
 
@@ -87,17 +96,14 @@ export default function LoginPage() {
                 >
                     {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
                 </button>
-
             </div>
-            {
-                toast && (
-                    <Toast
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => setToast(null)}
-                    />
-                )
-            }
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </>
     );
 }

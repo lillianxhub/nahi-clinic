@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
     try {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
         if (!username || !password_hash) {
             return NextResponse.json(
                 { message: "กรุณากรอกข้อมูลให้ครบทุกช่อง" },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -19,14 +20,16 @@ export async function POST(req: Request) {
         if (existingUser) {
             return NextResponse.json(
                 { message: "Username นี้มีอยู่แล้ว" },
-                { status: 400 }
+                { status: 400 },
             );
         }
+
+        const hashedPassword = await bcrypt.hash(password_hash, 10);
 
         const newUser = await prisma.user.create({
             data: {
                 username,
-                password_hash,
+                password_hash: hashedPassword,
             },
         });
 
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
         console.error("Register error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
