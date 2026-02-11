@@ -7,7 +7,7 @@ import Badge from "@/components/Badge";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
 interface Transaction {
-    id: number;
+    id: string;
     date: string;
     type: string;
     category: string;
@@ -28,16 +28,18 @@ export default function TransactionsTable({ data }: { data: Transaction[] }) {
             header: "จำนวนเงิน",
             align: "right",
             render: (row) =>
-                `${row.type === "income" ? "+" : "-"}฿${row.amount.toLocaleString()}`
+                `${row.type === "income" ? "+" : "-"}฿${row.amount.toLocaleString()}`,
         },
         {
             key: "status",
             header: "สถานะ",
             align: "center",
             render: (row) =>
-                row.status === "completed"
-                    ? <Badge label="เสร็จสิ้น" variant="success" />
-                    : <Badge label="รอดำเนินการ" variant="warning" />
+                row.status === "completed" ? (
+                    <Badge label="เสร็จสิ้น" variant="success" />
+                ) : (
+                    <Badge label="รอดำเนินการ" variant="warning" />
+                ),
         },
         {
             key: "actions",
@@ -55,8 +57,8 @@ export default function TransactionsTable({ data }: { data: Transaction[] }) {
                         <Trash2 size={16} className="text-red-600" />
                     </button>
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     return (

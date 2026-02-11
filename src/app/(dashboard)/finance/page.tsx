@@ -2,19 +2,54 @@
 
 import { useState, useEffect } from "react";
 import {
-    DollarSign, TrendingUp, TrendingDown, Calendar, Search,
-    Filter, Download, Plus, Edit, Trash2, X, Check,
-    ArrowUpRight, ArrowDownRight, FileText, Menu, Home,
-    Users, Package, Settings, BarChart3, Eye
-} from 'lucide-react';
+    DollarSign,
+    TrendingUp,
+    TrendingDown,
+    Calendar,
+    Search,
+    Filter,
+    Download,
+    Plus,
+    Edit,
+    Trash2,
+    X,
+    Check,
+    ArrowUpRight,
+    ArrowDownRight,
+    FileText,
+    Menu,
+    Home,
+    Users,
+    Package,
+    Settings,
+    BarChart3,
+    Eye,
+} from "lucide-react";
 import {
-    LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
-} from 'recharts';
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend,
+} from "recharts";
 import PieWithLegend from "@/components/charts/PieWithLegend";
 import TransactionsTable from "@/components/finance/TransactionsTable";
 import { financeService } from "@/services/finance";
-
+import {
+    FinanceSummaryStats,
+    FinanceBarChartItem,
+    IncomeStatItem,
+    ExpenseStatItem,
+    TransactionItem,
+} from "@/interface/finance";
 
 function StatCard({
     icon: Icon,
@@ -23,7 +58,7 @@ function StatCard({
     subtitle,
     trend,
     trendValue,
-    color
+    color,
 }: {
     icon: any;
     title: string;
@@ -34,35 +69,139 @@ function StatCard({
     color?: string;
 }) {
     return (
-        <div className="bg-white rounded-xl p-6 shadow-sm border transition-all hover:shadow-md" style={{ borderColor: '#E5E7EB' }}>
+        <div
+            className="bg-white rounded-xl p-6 shadow-sm border transition-all hover:shadow-md"
+            style={{ borderColor: "#E5E7EB" }}
+        >
             <div className="flex items-start justify-between mb-4">
-                <div className="rounded-xl p-3" style={{ backgroundColor: `${color}10` }}>
+                <div
+                    className="rounded-xl p-3"
+                    style={{ backgroundColor: `${color}10` }}
+                >
                     <Icon size={24} style={{ color }} />
                 </div>
                 {trend && (
-                    <div className={`flex items-center gap-1 text-sm font-medium ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                        {trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                    <div
+                        className={`flex items-center gap-1 text-sm font-medium ${trend === "up" ? "text-green-600" : "text-red-600"}`}
+                    >
+                        {trend === "up" ? (
+                            <TrendingUp size={16} />
+                        ) : (
+                            <TrendingDown size={16} />
+                        )}
                         <span>{trendValue}</span>
                     </div>
                 )}
             </div>
             <div>
-                <p className="text-sm mb-1" style={{ color: '#7E7E7E' }}>{title}</p>
-                <h3 className="text-3xl font-bold mb-1" style={{ color }}>{value}</h3>
-                {subtitle && <p className="text-sm" style={{ color: '#7E7E7E' }}>{subtitle}</p>}
+                <p className="text-sm mb-1" style={{ color: "#7E7E7E" }}>
+                    {title}
+                </p>
+                <h3 className="text-3xl font-bold mb-1" style={{ color }}>
+                    {value}
+                </h3>
+                {subtitle && (
+                    <p className="text-sm" style={{ color: "#7E7E7E" }}>
+                        {subtitle}
+                    </p>
+                )}
             </div>
         </div>
-    )
+    );
 }
-
 
 export default function FinancePage() {
     const [showAddModal, setShowAddModal] = useState(false);
-    const [transactionType, setTransactionType] = useState('income');
-    const [filterType, setFilterType] = useState('all');
-    const [dateRange, setDateRange] = useState('month');
+    const [transactionType, setTransactionType] = useState("income");
+    const [filterType, setFilterType] = useState("all");
+    const [dateRange, setDateRange] = useState<"week" | "month" | "year">(
+        "year",
+    );
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
+    const [loading, setLoading] = useState(true);
+    const [summary, setSummary] = useState<FinanceSummaryStats | null>(null);
+    const [chartData, setChartData] = useState<FinanceBarChartItem[]>([]);
+    const [incomeStats, setIncomeStats] = useState<IncomeStatItem[]>([]);
+    const [expenseStats, setExpenseStats] = useState<ExpenseStatItem[]>([]);
+    const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+
+    const [formData, setFormData] = useState({
+        date: new Date().toISOString().split("T")[0],
+        category: "",
+        amount: "",
+        description: "",
+        status: "completed",
+    });
+
+    const handleSave = async () => {
+        try {
+            if (transactionType === "income") {
+                await financeService.createIncome({
+                    income_date: formData.date,
+                    amount: Number(formData.amount),
+                    payment_method: "cash", // Default or map from category
+                    visit_id: "", // Need a way to select visit if required, but for now empty
+                });
+            } else {
+                let expenseType = "general";
+                if (formData.category === "ค่ายา/เวชภัณฑ์")
+                    expenseType = "drug";
+                if (formData.category === "ค่าเช่า/สาธารณูปโภค")
+                    expenseType = "utility";
+
+                await financeService.createExpense({
+                    expense_date: formData.date,
+                    expense_type: expenseType as any,
+                    amount: Number(formData.amount),
+                    description: formData.description,
+                });
+            }
+            setShowAddModal(false);
+            fetchData();
+            // Reset form
+            setFormData({
+                date: new Date().toISOString().split("T")[0],
+                category: "",
+                amount: "",
+                description: "",
+                status: "completed",
+            });
+        } catch (error) {
+            console.error("Failed to save transaction:", error);
+            alert("ไม่สามารถบันทึกข้อมูลได้");
+        }
+    };
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [summaryRes, chartRes, incomeRes, expenseRes, tableRes] =
+                await Promise.all([
+                    financeService.getSummaryStats(),
+                    financeService.getBarChartData(dateRange),
+                    financeService.getIncomeStats(),
+                    financeService.getExpenseStats(),
+                    financeService.getTransactionsTable({ page: 1, limit: 10 }),
+                ]);
+
+            setSummary(summaryRes.data);
+            setChartData(chartRes);
+            setIncomeStats(incomeRes.data);
+            setExpenseStats(expenseRes.data);
+            setTransactions(tableRes.data);
+        } catch (error) {
+            console.error("Failed to fetch finance data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [dateRange]);
+
+    /*
     useEffect(() => {
         const testService = async () => {
             console.log("--- Finance Service Test ---");
@@ -89,7 +228,9 @@ export default function FinancePage() {
 
         testService();
     }, []);
+    */
 
+    /*
     // ข้อมูลสรุป
     const summaryData = {
         totalIncome: 285000,
@@ -130,27 +271,57 @@ export default function FinancePage() {
         { id: 1, date: '2024-01-12', type: 'income', category: 'ค่าตรวจรักษา', description: 'ผู้ป่วย: นางสาวมาลี สุขสันต์', amount: 1500, status: 'completed' },
         { id: 2, date: '2024-01-12', type: 'income', category: 'ค่ายา', description: 'ขายยา: Paracetamol, Amoxicillin', amount: 850, status: 'completed' },
         { id: 3, date: '2024-01-12', type: 'expense', category: 'ค่ายา/เวชภัณฑ์', description: 'สั่งซื้อยา: บริษัท ABC จำกัด', amount: 12500, status: 'completed' },
-        { id: 4, date: '2024-01-11', type: 'income', category: 'วัคซีน', description: 'ฉีดวัคซีนไข้หวัดใหญ่', amount: 1200, status: 'completed' },
+        { id: 4, date: '2024-01-11', type: 'วัคซีน', description: 'ฉีดวัคซีนไข้หวัดใหญ่', amount: 1200, status: 'completed' },
         { id: 5, date: '2024-01-11', type: 'expense', category: 'ค่าเช่า/สาธารณูปโภค', description: 'ค่าไฟฟ้าประจำเดือน', amount: 3500, status: 'completed' },
         { id: 6, date: '2024-01-11', type: 'income', category: 'ค่าตรวจรักษา', description: 'ผู้ป่วย: นายวิชัย กล้าหาญ', amount: 2000, status: 'completed' },
         { id: 7, date: '2024-01-10', type: 'expense', category: 'เงินเดือนพนักงาน', description: 'เงินเดือนครึ่งเดือน', amount: 25000, status: 'pending' },
         { id: 8, date: '2024-01-10', type: 'income', category: 'ค่าบริการ', description: 'ค่าใบรับรองแพทย์', amount: 300, status: 'completed' },
     ]);
+    */
 
     const menuItems = [
-        { icon: Home, label: 'Dashboard', active: false },
-        { icon: Users, label: 'ผู้ป่วย', active: false },
-        { icon: Package, label: 'คลังยา', active: false },
-        { icon: DollarSign, label: 'รายรับ-รายจ่าย', active: true },
-        { icon: FileText, label: 'บันทึกการรักษา', active: false },
-        { icon: BarChart3, label: 'รายงาน', active: false },
-        { icon: Settings, label: 'ตั้งค่า', active: false },
+        { icon: Home, label: "Dashboard", active: false },
+        { icon: Users, label: "ผู้ป่วย", active: false },
+        { icon: Package, label: "คลังยา", active: false },
+        { icon: DollarSign, label: "รายรับ-รายจ่าย", active: true },
+        { icon: FileText, label: "บันทึกการรักษา", active: false },
+        { icon: BarChart3, label: "รายงาน", active: false },
+        { icon: Settings, label: "ตั้งค่า", active: false },
     ];
 
-    const filteredTransactions = transactions.filter(t => {
-        if (filterType === 'all') return true;
+    const incomeColors = ["#3F7C87", "#5A9AA8", "#A5DBDD", "#C8E6E8"];
+    const formattedIncomeDistribution = incomeStats.map((item, index) => ({
+        name:
+            item.type === "drug"
+                ? "เวชภัณฑ์"
+                : item.type === "service"
+                  ? "บริการ"
+                  : item.type,
+        value: item.percentage,
+        amount: item.amount,
+        color: incomeColors[index % incomeColors.length],
+    }));
+
+    const expenseColors = ["#EF4444", "#F59E0B", "#10B981", "#3B82F6"];
+    const formattedExpenseDistribution = expenseStats.map((item, index) => ({
+        name: item.type,
+        value: item.percentage,
+        amount: item.amount,
+        color: expenseColors[index % expenseColors.length],
+    }));
+
+    const filteredTransactions = transactions.filter((t) => {
+        if (filterType === "all") return true;
         return t.type === filterType;
     });
+
+    if (loading && !summary) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                กำลังโหลดข้อมูล...
+            </div>
+        );
+    }
 
     return (
         <>
@@ -161,29 +332,29 @@ export default function FinancePage() {
                     <StatCard
                         icon={ArrowUpRight}
                         title="รายรับทั้งหมด"
-                        value="฿285,000"
+                        value={`฿${(summary?.monthIncome || 0).toLocaleString()}`}
                         subtitle="เดือนนี้"
                         color="#10B981"
                     />
                     <StatCard
                         icon={ArrowDownRight}
                         title="รายจ่ายทั้งหมด"
-                        value="฿142,500"
+                        value={`฿${(summary?.monthExpense || 0).toLocaleString()}`}
                         subtitle="เดือนนี้"
                         color="#EF4444"
                     />
                     <StatCard
                         icon={DollarSign}
                         title="กำไรสุทธิ"
-                        value="฿142,500"
+                        value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
                         subtitle="เดือนนี้"
                         color="#3F7C87"
                     />
                     <StatCard
                         icon={TrendingUp}
                         title="อัตรากำไร"
-                        value="50%"
-                        subtitle="เพิ่มขึ้น 5%"
+                        value={`${summary?.profitRate || 0}%`}
+                        subtitle="ของเดือนนี้"
                         color="#F59E0B"
                     />
                 </div>
@@ -191,57 +362,136 @@ export default function FinancePage() {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     {/* Revenue Trend */}
-                    <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-sm" style={{ borderColor: '#E5E7EB' }}>
+                    <div
+                        className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-sm"
+                        style={{ borderColor: "#E5E7EB" }}
+                    >
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold" style={{ color: '#3F7C87' }}>แนวโน้มรายรับ-รายจ่าย</h3>
+                            <h3
+                                className="text-lg font-bold"
+                                style={{ color: "#3F7C87" }}
+                            >
+                                แนวโน้มรายรับ-รายจ่าย
+                            </h3>
                             <select
                                 value={dateRange}
-                                onChange={(e) => setDateRange(e.target.value)}
+                                onChange={(e) =>
+                                    setDateRange(
+                                        e.target.value as
+                                            | "week"
+                                            | "month"
+                                            | "year",
+                                    )
+                                }
                                 className="px-3 py-2 border rounded-lg text-sm outline-none"
-                                style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                style={{
+                                    borderColor: "#E5E7EB",
+                                    color: "#3F7C87",
+                                }}
                             >
-                                <option value="week">7 วันล่าสุด</option>
-                                <option value="month">เดือนนี้</option>
-                                <option value="year">ปีนี้</option>
+                                <option value="week">วัน</option>
+                                <option value="month">เดือน</option>
+                                <option value="year">ปี</option>
                             </select>
                         </div>
                         <ResponsiveContainer width="100%" height={280}>
                             <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
-                                <XAxis dataKey="month" stroke="#7E7E7E" style={{ fontSize: '12px' }} />
-                                <YAxis stroke="#7E7E7E" style={{ fontSize: '12px' }} />
-                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E7EB', borderRadius: '8px' }} />
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#F3F4F6"
+                                />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#7E7E7E"
+                                    style={{ fontSize: "12px" }}
+                                />
+                                <YAxis
+                                    stroke="#7E7E7E"
+                                    style={{ fontSize: "12px" }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: "#fff",
+                                        border: "1px solid #E5E7EB",
+                                        borderRadius: "8px",
+                                    }}
+                                />
                                 <Legend />
-                                <Bar dataKey="รายรับ" fill="#3F7C87" radius={[8, 8, 0, 0]} />
-                                <Bar dataKey="รายจ่าย" fill="#91d9db" radius={[8, 8, 0, 0]} />
+                                <Bar
+                                    dataKey="income"
+                                    name="รายรับ"
+                                    fill="#3F7C87"
+                                    radius={[8, 8, 0, 0]}
+                                />
+                                <Bar
+                                    dataKey="expense"
+                                    name="รายจ่าย"
+                                    fill="#91d9db"
+                                    radius={[8, 8, 0, 0]}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
 
                     {/* Income Distribution */}
-                    <div className="bg-white border rounded-xl p-6 shadow-sm" style={{ borderColor: '#E5E7EB' }}>
-                        <h3 className="text-lg font-bold mb-6" style={{ color: '#3F7C87' }}>สัดส่วนรายรับ</h3>
-                        <PieWithLegend data={incomeDistribution} />
+                    <div
+                        className="bg-white border rounded-xl p-6 shadow-sm"
+                        style={{ borderColor: "#E5E7EB" }}
+                    >
+                        <h3
+                            className="text-lg font-bold mb-6"
+                            style={{ color: "#3F7C87" }}
+                        >
+                            สัดส่วนรายรับ
+                        </h3>
+                        <PieWithLegend data={formattedIncomeDistribution} />
                     </div>
                 </div>
 
                 {/* Expense Distribution */}
-                <div className="bg-white border rounded-xl p-6 shadow-sm mb-6" style={{ borderColor: '#E5E7EB' }}>
-                    <h3 className="text-lg font-bold mb-6" style={{ color: '#3F7C87' }}>สัดส่วนรายจ่าย</h3>
+                <div
+                    className="bg-white border rounded-xl p-6 shadow-sm mb-6"
+                    style={{ borderColor: "#E5E7EB" }}
+                >
+                    <h3
+                        className="text-lg font-bold mb-6"
+                        style={{ color: "#3F7C87" }}
+                    >
+                        สัดส่วนรายจ่าย
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {expenseDistribution.map((item, index) => (
-                            <div key={index} className="p-4 border rounded-lg" style={{ borderColor: '#F3F4F6' }}>
+                        {formattedExpenseDistribution.map((item, index) => (
+                            <div
+                                key={index}
+                                className="p-4 border rounded-lg"
+                                style={{ borderColor: "#F3F4F6" }}
+                            >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="flex-1">
-                                        <p className="text-sm pb-2">{item.name}</p>
-                                        <p className="font-bold text-primary">฿{item.amount.toLocaleString()}</p>
+                                        <p className="text-sm pb-2">
+                                            {item.name}
+                                        </p>
+                                        <p className="font-bold text-primary">
+                                            ฿{item.amount.toLocaleString()}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between text-xs mb-2">
-                                    <span className="text-muted">{item.value}% ของรายจ่าย</span>
+                                    <span className="text-muted">
+                                        {item.value}% ของรายจ่าย
+                                    </span>
                                 </div>
-                                <div className="w-full rounded-full h-2" style={{ backgroundColor: '#F3F4F6' }}>
-                                    <div className="h-2 rounded-full" style={{ width: `${item.value}%`, backgroundColor: item.color }}></div>
+                                <div
+                                    className="w-full rounded-full h-2"
+                                    style={{ backgroundColor: "#F3F4F6" }}
+                                >
+                                    <div
+                                        className="h-2 rounded-full"
+                                        style={{
+                                            width: `${item.value}%`,
+                                            backgroundColor: item.color,
+                                        }}
+                                    ></div>
                                 </div>
                             </div>
                         ))}
@@ -280,76 +530,168 @@ export default function FinancePage() {
                             </button>
                         </div>
                     </div>
-                    <TransactionsTable data={transactions} />
+                    <TransactionsTable data={filteredTransactions} />
                 </div>
             </div>
 
-
             {/* Add Transaction Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div
+                    className="fixed inset-0 flex items-center justify-center z-50"
+                    style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+                >
                     <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold" style={{ color: '#3F7C87' }}>เพิ่มรายการใหม่</h3>
+                            <h3
+                                className="text-xl font-bold"
+                                style={{ color: "#3F7C87" }}
+                            >
+                                เพิ่มรายการใหม่
+                            </h3>
                             <button onClick={() => setShowAddModal(false)}>
-                                <X size={24} style={{ color: '#7E7E7E' }} />
+                                <X size={24} style={{ color: "#7E7E7E" }} />
                             </button>
                         </div>
 
                         <div className="space-y-4">
                             {/* Transaction Type */}
                             <div>
-                                <label className="block text-sm font-medium mb-2" style={{ color: '#3F7C87' }}>ประเภทรายการ</label>
+                                <label
+                                    className="block text-sm font-medium mb-2"
+                                    style={{ color: "#3F7C87" }}
+                                >
+                                    ประเภทรายการ
+                                </label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        onClick={() => setTransactionType('income')}
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === 'income' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}
+                                        onClick={() =>
+                                            setTransactionType("income")
+                                        }
+                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "income" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
                                     >
-                                        <ArrowUpRight size={24} className="mx-auto mb-2" style={{ color: '#10B981' }} />
-                                        <p className="font-medium" style={{ color: transactionType === 'income' ? '#10B981' : '#7E7E7E' }}>รายรับ</p>
+                                        <ArrowUpRight
+                                            size={24}
+                                            className="mx-auto mb-2"
+                                            style={{ color: "#10B981" }}
+                                        />
+                                        <p
+                                            className="font-medium"
+                                            style={{
+                                                color:
+                                                    transactionType === "income"
+                                                        ? "#10B981"
+                                                        : "#7E7E7E",
+                                            }}
+                                        >
+                                            รายรับ
+                                        </p>
                                     </button>
                                     <button
-                                        onClick={() => setTransactionType('expense')}
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === 'expense' ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                                        onClick={() =>
+                                            setTransactionType("expense")
+                                        }
+                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "expense" ? "border-red-500 bg-red-50" : "border-gray-200"}`}
                                     >
-                                        <ArrowDownRight size={24} className="mx-auto mb-2" style={{ color: '#EF4444' }} />
-                                        <p className="font-medium" style={{ color: transactionType === 'expense' ? '#EF4444' : '#7E7E7E' }}>รายจ่าย</p>
+                                        <ArrowDownRight
+                                            size={24}
+                                            className="mx-auto mb-2"
+                                            style={{ color: "#EF4444" }}
+                                        />
+                                        <p
+                                            className="font-medium"
+                                            style={{
+                                                color:
+                                                    transactionType ===
+                                                    "expense"
+                                                        ? "#EF4444"
+                                                        : "#7E7E7E",
+                                            }}
+                                        >
+                                            รายจ่าย
+                                        </p>
                                     </button>
                                 </div>
                             </div>
 
                             {/* Date */}
                             <div>
-                                <label className="block text-sm font-medium mb-2" style={{ color: '#3F7C87' }}>วันที่</label>
+                                <label
+                                    className="block text-sm font-medium mb-2"
+                                    style={{ color: "#3F7C87" }}
+                                >
+                                    วันที่
+                                </label>
                                 <input
                                     type="date"
+                                    value={formData.date}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            date: e.target.value,
+                                        })
+                                    }
                                     className="w-full px-4 py-3 border-2 rounded-lg outline-none transition-all"
-                                    style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
-                                    onFocus={(e) => e.target.style.borderColor = '#3F7C87'}
-                                    onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                                    style={{
+                                        borderColor: "#E5E7EB",
+                                        color: "#3F7C87",
+                                    }}
+                                    onFocus={(e) =>
+                                        (e.target.style.borderColor = "#3F7C87")
+                                    }
+                                    onBlur={(e) =>
+                                        (e.target.style.borderColor = "#E5E7EB")
+                                    }
                                 />
                             </div>
 
                             {/* Category */}
                             <div>
-                                <label className="block text-sm font-medium mb-2" style={{ color: '#3F7C87' }}>หมวดหมู่</label>
-                                <select
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none"
-                                    style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                <label
+                                    className="block text-sm font-medium mb-2"
+                                    style={{ color: "#3F7C87" }}
                                 >
-                                    {transactionType === 'income' ? (
+                                    หมวดหมู่
+                                </label>
+                                <select
+                                    value={formData.category}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            category: e.target.value,
+                                        })
+                                    }
+                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none"
+                                    style={{
+                                        borderColor: "#E5E7EB",
+                                        color: "#3F7C87",
+                                    }}
+                                >
+                                    <option value="">เลือกหมวดหมู่</option>
+                                    {transactionType === "income" ? (
                                         <>
-                                            <option>ค่าตรวจรักษา</option>
-                                            <option>ค่ายา</option>
-                                            <option>ค่าบริการ</option>
-                                            <option>วัคซีน</option>
+                                            <option value="ค่าตรวจรักษา">
+                                                ค่าตรวจรักษา
+                                            </option>
+                                            <option value="ค่ายา">ค่ายา</option>
+                                            <option value="ค่าบริการ">
+                                                ค่าบริการ
+                                            </option>
+                                            <option value="วัคซีน">
+                                                วัคซีน
+                                            </option>
                                         </>
                                     ) : (
                                         <>
-                                            <option>ค่ายา/เวชภัณฑ์</option>
-                                            <option>เงินเดือนพนักงาน</option>
-                                            <option>ค่าเช่า/สาธารณูปโภค</option>
-                                            <option>อื่นๆ</option>
+                                            <option value="ค่ายา/เวชภัณฑ์">
+                                                ค่ายา/เวชภัณฑ์
+                                            </option>
+                                            <option value="เงินเดือนพนักงาน">
+                                                เงินเดือนพนักงาน
+                                            </option>
+                                            <option value="ค่าเช่า/สาธารณูปโภค">
+                                                ค่าเช่า/สาธารณูปโภค
+                                            </option>
+                                            <option value="อื่นๆ">อื่นๆ</option>
                                         </>
                                     )}
                                 </select>
@@ -359,33 +701,53 @@ export default function FinancePage() {
                             <div>
                                 <label
                                     className="block text-sm font-medium mb-2"
-                                    style={{ color: '#3F7C87' }}
+                                    style={{ color: "#3F7C87" }}
                                 >
                                     จำนวนเงิน
                                 </label>
                                 <input
                                     type="number"
+                                    value={formData.amount}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            amount: e.target.value,
+                                        })
+                                    }
                                     placeholder="กรอกจำนวนเงิน"
                                     className="w-full px-4 py-3 border-2 rounded-lg outline-none transition-all"
-                                    style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                    style={{
+                                        borderColor: "#E5E7EB",
+                                        color: "#3F7C87",
+                                    }}
                                 />
                             </div>
 
                             {/* Description */}
-                            
-                            {transactionType === 'expense' && (
+
+                            {transactionType === "expense" && (
                                 <div>
                                     <label
                                         className="block text-sm font-medium mb-2"
-                                        style={{ color: '#3F7C87' }}
+                                        style={{ color: "#3F7C87" }}
                                     >
                                         รายละเอียด
                                     </label>
                                     <textarea
                                         rows={3}
+                                        value={formData.description}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                description: e.target.value,
+                                            })
+                                        }
                                         placeholder="รายละเอียดเพิ่มเติม"
                                         className="w-full px-4 py-3 border-2 rounded-lg outline-none resize-none"
-                                        style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                        style={{
+                                            borderColor: "#E5E7EB",
+                                            color: "#3F7C87",
+                                        }}
                                     />
                                 </div>
                             )}
@@ -394,13 +756,23 @@ export default function FinancePage() {
                             <div>
                                 <label
                                     className="block text-sm font-medium mb-2"
-                                    style={{ color: '#3F7C87' }}
+                                    style={{ color: "#3F7C87" }}
                                 >
                                     สถานะ
                                 </label>
                                 <select
+                                    value={formData.status}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            status: e.target.value,
+                                        })
+                                    }
                                     className="w-full px-4 py-3 border-2 rounded-lg outline-none"
-                                    style={{ borderColor: '#E5E7EB', color: '#3F7C87' }}
+                                    style={{
+                                        borderColor: "#E5E7EB",
+                                        color: "#3F7C87",
+                                    }}
                                 >
                                     <option value="completed">เสร็จสิ้น</option>
                                     <option value="pending">รอดำเนินการ</option>
@@ -412,19 +784,19 @@ export default function FinancePage() {
                                 <button
                                     onClick={() => setShowAddModal(false)}
                                     className="flex items-center gap-2 px-5 py-2 rounded-lg border hover:bg-gray-50"
-                                    style={{ borderColor: '#E5E7EB', color: '#7E7E7E' }}
+                                    style={{
+                                        borderColor: "#E5E7EB",
+                                        color: "#7E7E7E",
+                                    }}
                                 >
                                     <X size={18} />
                                     ยกเลิก
                                 </button>
 
                                 <button
-                                    onClick={() => {
-                                        // mock submit
-                                        setShowAddModal(false);
-                                    }}
+                                    onClick={handleSave}
                                     className="flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90"
-                                    style={{ backgroundColor: '#3F7C87' }}
+                                    style={{ backgroundColor: "#3F7C87" }}
                                 >
                                     <Check size={18} />
                                     บันทึก
@@ -436,4 +808,4 @@ export default function FinancePage() {
             )}
         </>
     );
-};
+}
