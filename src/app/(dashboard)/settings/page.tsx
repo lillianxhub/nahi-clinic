@@ -1,6 +1,9 @@
 "use client";
 
+import usePageTitle from "@/hooks/usePageTitle";
+
 export default function SettingsPage() {
+    usePageTitle("Settings");
     return (
         <div className="space-y-6">
             {/*Header*/}

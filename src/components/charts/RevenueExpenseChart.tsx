@@ -37,8 +37,8 @@ export default function RevenueExpenseChart({ data }: { data: any[] }) {
                 <Area
                     type="monotone"
                     dataKey="รายจ่าย"
-                    stroke="#A5DBDD"
-                    fill="#A5DBDD20"
+                    stroke="#FF5B5D"
+                    fill="#FF5B5D20"
                 />
             </AreaChart>
         </ResponsiveContainer>

@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
             const key =
                 groupBy === "day"
-                    ? `${d.toLocaleDateString("th-TH", { month: "short" })} ${d.toLocaleDateString("th-TH", { day: "numeric" })}`
+                    ? `${d.toLocaleDateString("th-TH", { day: "numeric" })} ${d.toLocaleDateString("th-TH", { month: "short" })}`
                     : d.toLocaleDateString("th-TH", {
                           month: "short",
                           year: "numeric",
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
             const date = r.income_date;
             const key =
                 groupBy === "day"
-                    ? `${date.toLocaleDateString("th-TH", { month: "short" })} ${date.toLocaleDateString("th-TH", { day: "numeric" })}`
+                    ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
                     : date.toLocaleDateString("th-TH", {
                           month: "short",
                           year: "numeric",
@@ -87,7 +87,7 @@ export async function GET(req: Request) {
             const date = e.expense_date;
             const key =
                 groupBy === "day"
-                    ? `${date.toLocaleDateString("th-TH", { month: "short" })} ${date.toLocaleDateString("th-TH", { day: "numeric" })}`
+                    ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
                     : date.toLocaleDateString("th-TH", {
                           month: "short",
                           year: "numeric",

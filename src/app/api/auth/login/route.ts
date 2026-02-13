@@ -15,7 +15,7 @@ export async function POST(req: Request) {
             );
         }
 
-        // ตรวจสอบ username ใน DB
+        // Check username in DB
         const user = await prisma.user.findUnique({
             where: { username },
         });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             );
         }
 
-        // ตรวจสอบ password
+        // Check password
         const isPasswordValid = await bcrypt.compare(
             password_hash,
             user.password_hash,

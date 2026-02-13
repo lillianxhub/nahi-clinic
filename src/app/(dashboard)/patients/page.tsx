@@ -11,6 +11,7 @@ import { patientService } from "@/services/patient";
 import { GenderLabelTH } from "@/constants/gender";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
+import usePageTitle from "@/hooks/usePageTitle";
 
 const getColumns = (onView: (id: string) => void): Column<Patient>[] => [
     {
@@ -63,6 +64,7 @@ const getColumns = (onView: (id: string) => void): Column<Patient>[] => [
 ];
 
 export default function PatientsPage() {
+    usePageTitle("Patients");
     const router = useRouter();
     const [search, setSearch] = useState("");
     const debouncedSearch = useDebounce(search, 500);

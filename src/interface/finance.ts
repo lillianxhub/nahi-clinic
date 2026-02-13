@@ -84,6 +84,8 @@ export interface FinanceSummaryStats {
     monthExpense: number;
     netProfit: number;
     profitRate: number;
+    prevMonthNetProfit: number;
+    netProfitGrowth: number;
 }
 
 export interface FinanceSummaryStatsApiResponse {

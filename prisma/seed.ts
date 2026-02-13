@@ -23,13 +23,18 @@ function generateCitizenId() {
 
 async function main() {
     console.log("🧹 กำลังล้างข้อมูลเก่า...");
+    const drugUsageCount = await prisma.drug_Usage.count();
+    const expenseDrugLotCount = await prisma.expense_Drug_Lot.count();
+    console.log(`- ลบ Drug_Usage: ${drugUsageCount} รายการ`);
     await prisma.drug_Usage.deleteMany();
+    console.log(`- ลบ Expense_Drug_Lot: ${expenseDrugLotCount} รายการ`);
     await prisma.expense_Drug_Lot.deleteMany();
+
     await prisma.income.deleteMany();
     await prisma.visit_Detail.deleteMany();
+    await prisma.visit.deleteMany();
     await prisma.drug_Lot.deleteMany();
     await prisma.expense.deleteMany();
-    await prisma.visit.deleteMany();
     await prisma.drug.deleteMany();
     await prisma.drug_Category.deleteMany();
     await prisma.patient.deleteMany();
@@ -37,6 +42,7 @@ async function main() {
 
     console.log("🚀 เริ่มต้นการ Seed ข้อมูลระดับ 1 ปี (365 วัน)...");
 
+    // 1. admin user data
     const adminExists = await prisma.user.findFirst({
         where: { username: "admin" },
     });
@@ -49,7 +55,7 @@ async function main() {
         });
     }
 
-    // 2. หมวดหมู่ยา
+    // 2. drug category data
     const categoriesData = [
         { name: "ยาปฏิชีวนะ (Antibiotics)" },
         { name: "ยาแก้ปวด/ลดไข้ (Analgesics)" },
@@ -65,7 +71,7 @@ async function main() {
     }
     const categories = await prisma.drug_Category.findMany();
 
-    // 3. ข้อมูลยา
+    // 3. drug data
     const drugsData = [
         { name: "Amoxicillin 500mg", price: 120, unit: "แผง" },
         { name: "Paracetamol 500mg", price: 20, unit: "แผง" },
@@ -89,17 +95,78 @@ async function main() {
     }
     const drugs = await prisma.drug.findMany();
 
-    // 4. ข้อมูลผู้ป่วย
-    const patientsData = [
-        { f: "กิตติพงษ์", l: "อัศวเหม", g: Gender.male },
-        { f: "นริศรา", l: "รัตนโกสินทร์", g: Gender.female },
-        { f: "ประเสริฐ", l: "สุขสวัสดิ์", g: Gender.male },
-        { f: "วิไลพร", l: "วงค์สว่าง", g: Gender.female },
-        { f: "สมศักดิ์", l: "รักชาติ", g: Gender.male },
-        { f: "จิราพร", l: "ดวงดี", g: Gender.female },
-        { f: "พงศธร", l: "มีทรัพย์", g: Gender.male },
-        { f: "เบญจมาศ", l: "แก้ววิจิตร", g: Gender.female },
+    // 4. patient data
+    const maleFirstNames = [
+        "ศักดิ์ชัย",
+        "ธนวัฒน์",
+        "ภูมินทร์",
+        "ธีรพงศ์",
+        "นพพล",
+        "วีระชัย",
+        "สมชาย",
+        "สิทธิพล",
+        "ปิยพงษ์",
+        "อติรุจ",
+        "กิตติภพ",
+        "จิรวัฒน์",
+        "ธนกร",
+        "ปวริศ",
+        "รพินทร์",
     ];
+    const femaleFirstNames = [
+        "สิรินาถ",
+        "พัชราภา",
+        "ณัฏฐา",
+        "สลิลทิพย์",
+        "จันทร์จิรา",
+        "วิไลวรรณ",
+        "สุดารัตน์",
+        "ปาริชาติ",
+        "ทิพวรรณ",
+        "ณิชา",
+        "กนกวรรณ",
+        "จิราภรณ์",
+        "ฐานิตา",
+        "นภัสสร",
+        "พิมพิกา",
+    ];
+    const lastNames = [
+        "รักชาติ",
+        "แจ่มใส",
+        "สว่างวรวงศ์",
+        "เจริญศิริ",
+        "รัตนวิจิตร",
+        "พงษ์ศิริ",
+        "เลิศวรพงศ์",
+        "ประชาสวัสดิ์",
+        "ยิ่งเจริญ",
+        "มณีมานะ",
+        "วิจิตรบรรจง",
+        "ศรีสุวรรณ",
+        "ทองดี",
+        "วงพิศุทธ์",
+        "สุขสวัสดิ์",
+    ];
+
+    const patientsData: { f: string; l: string; g: Gender }[] = [
+        { f: "ก้องภพ", l: "โชควิริยะ", g: Gender.male },
+        { f: "ถิรวัฒน์", l: "อุจินา", g: Gender.male },
+        { f: "กรมภัฏ", l: "พิริยะ", g: Gender.male },
+        { f: "ณพวิทย์", l: "วงษ์ประเสริฐ", g: Gender.male },
+        { f: "รัฐภูมิ", l: "เกิดพระจีน", g: Gender.male },
+    ];
+
+    // add random patients
+    for (let i = 0; i < 25; i++) {
+        const isMale = Math.random() > 0.5;
+        const gender = isMale ? Gender.male : Gender.female;
+        const firstName = isMale
+            ? maleFirstNames[randomInt(0, maleFirstNames.length - 1)]
+            : femaleFirstNames[randomInt(0, femaleFirstNames.length - 1)];
+        const lastName = lastNames[randomInt(0, lastNames.length - 1)];
+        patientsData.push({ f: firstName, l: lastName, g: gender });
+    }
+
     for (let i = 0; i < patientsData.length; i++) {
         await prisma.patient.create({
             data: {
@@ -108,16 +175,17 @@ async function main() {
                 gender: patientsData[i].g,
                 citizen_number: generateCitizenId(),
                 hospital_number: `HN-67${(i + 1).toString().padStart(4, "0")}`,
-                phone: `08${randomInt(10000000, 99999999)}`,
-                address: `${randomInt(100, 999)} หมู่ ${randomInt(1, 12)} ต.ในเมือง อ.เมือง จ.ขอนแก่น`,
+                phone: `0${randomInt(6, 9)}${randomInt(10000000, 99999999)}`,
+                address: `${randomInt(1, 99)}/${randomInt(1, 99)} หมู่ ${randomInt(1, 12)} ต.ในเมือง อ.เมือง จ.ขอนแก่น`,
                 birth_date: daysAgo(randomInt(7000, 18000)),
-                allergy: i % 3 === 0 ? "แพ้ยากลุ่ม Penicillin" : "ไม่มี",
+                allergy: i % 5 === 0 ? "แพ้ยากลุ่ม Penicillin" : "ไม่มี",
             },
         });
     }
+
     const patients = await prisma.patient.findMany();
 
-    // 5. จำลองข้อมูลย้อนหลัง 365 วัน
+    // 5. simulate data for 365 days
     console.log("⏳ กำลังสร้างธุรกรรมย้อนหลัง 365 วัน... อาจใช้เวลาสักครู่");
 
     const symptoms = [

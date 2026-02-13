@@ -9,15 +9,19 @@ export async function GET() {
             now.getFullYear(),
             now.getMonth(),
             1,
-            0, 0, 0
-    );
+            0,
+            0,
+            0,
+        );
 
         const endDate = new Date(
             now.getFullYear(),
             now.getMonth() + 1,
             0,
-            23, 59, 59
-    );
+            23,
+            59,
+            59,
+        );
         const visitDetails = await prisma.visit_Detail.findMany({
             where: {
                 deleted_at: null,
@@ -39,7 +43,7 @@ export async function GET() {
             },
         });
 
-        // 3️⃣ รวมยอดเงินตามประเภท
+        // 3. Sum amount by type
         const summary = {
             drug: 0,
             service: 0,
@@ -52,7 +56,7 @@ export async function GET() {
 
         const total = summary.drug + summary.service;
 
-        // 4️⃣ คำนวณ proportion (%)
+        // 4. Calculate proportion (%)
         const result = [
             {
                 type: "drug",
@@ -76,14 +80,17 @@ export async function GET() {
         });
     } catch (error) {
         console.log("Dashboard stat API Error", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 },
+        );
     }
 }
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        if(body.visit_id){
+        if (body.visit_id) {
             const visit = await prisma.visit.findUnique({
                 where: {
                     visit_id: body.visit_id,
@@ -91,16 +98,28 @@ export async function POST(request: Request) {
             });
 
             if (!visit) {
-                return NextResponse.json({ message: "Visit not found" }, { status: 404 });
+                return NextResponse.json(
+                    { message: "Visit not found" },
+                    { status: 404 },
+                );
             }
         }
 
-        if(!body.income_date){
-            return NextResponse.json({ message: "Income date is required" }, { status: 400 });
-        } else if(!body.amount){
-            return NextResponse.json({ message: "Amount is required" }, { status: 400 });
-        } else if(!body.payment_method){
-            return NextResponse.json({ message: "Payment method is required" }, { status: 400 });
+        if (!body.income_date) {
+            return NextResponse.json(
+                { message: "Income date is required" },
+                { status: 400 },
+            );
+        } else if (!body.amount) {
+            return NextResponse.json(
+                { message: "Amount is required" },
+                { status: 400 },
+            );
+        } else if (!body.payment_method) {
+            return NextResponse.json(
+                { message: "Payment method is required" },
+                { status: 400 },
+            );
         }
 
         const income = await prisma.income.create({

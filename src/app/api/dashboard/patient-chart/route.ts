@@ -14,7 +14,7 @@ export async function GET() {
             where: {
                 visit_date: {
                     gte: start,
-                    lte: end
+                    lte: end,
                 },
             },
             select: {
@@ -28,25 +28,32 @@ export async function GET() {
             const current = new Date(start);
             current.setDate(start.getDate() + i);
 
-            const dateStr = current.toLocaleDateString("th-TH");
+            const dateStr = current.toLocaleDateString("th-TH", {
+                day: "numeric",
+                month: "short",
+            });
 
-            const count = visits.filter(v =>
-                v.visit_date.getDate() === current.getDate() &&
-                v.visit_date.getMonth() === current.getMonth() &&
-                v.visit_date.getFullYear() === current.getFullYear()
+            const count = visits.filter(
+                (v) =>
+                    v.visit_date.getDate() === current.getDate() &&
+                    v.visit_date.getMonth() === current.getMonth() &&
+                    v.visit_date.getFullYear() === current.getFullYear(),
             ).length;
 
             chartData.push({
                 date: dateStr,
-                count: count
+                count: count,
             });
         }
 
         return NextResponse.json({
-            data: chartData
+            data: chartData,
         });
     } catch (error) {
         console.log("Patient Chart API Error", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Internal Server Error" },
+            { status: 500 },
+        );
     }
 }

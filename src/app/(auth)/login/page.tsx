@@ -6,8 +6,10 @@ import Toast, { ToastType } from "@/components/Toast";
 import { login as loginService } from "@/services/auth";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import usePageTitle from "@/hooks/usePageTitle";
 
 export default function LoginPage() {
+    usePageTitle("เข้าสู่ระบบ");
     console.log("LoginPage rendering, calling useAuth...");
     const [username, setUsername] = useState("");
     const [password_hash, setPassword] = useState("");

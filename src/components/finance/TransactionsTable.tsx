@@ -7,7 +7,7 @@ import Badge from "@/components/Badge";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
 interface Transaction {
-    id: number;
+    id: string;
     date: string;
     type: string;
     category: string;
@@ -16,9 +16,21 @@ interface Transaction {
     status: string;
 }
 
-export default function TransactionsTable({ data }: { data: Transaction[] }) {
-    const [page, setPage] = useState(1);
+interface TransactionsTableProps {
+    data: Transaction[];
+    currentPage: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    pageSize?: number;
+}
 
+export default function TransactionsTable({
+    data,
+    currentPage,
+    total,
+    onPageChange,
+    pageSize = 10,
+}: TransactionsTableProps) {
     const columns: Column<Transaction>[] = [
         { key: "date", header: "วันที่" },
         { key: "category", header: "หมวดหมู่" },
@@ -28,16 +40,18 @@ export default function TransactionsTable({ data }: { data: Transaction[] }) {
             header: "จำนวนเงิน",
             align: "right",
             render: (row) =>
-                `${row.type === "income" ? "+" : "-"}฿${row.amount.toLocaleString()}`
+                `${row.type === "income" ? "+" : "-"}฿${row.amount.toLocaleString()}`,
         },
         {
             key: "status",
             header: "สถานะ",
             align: "center",
             render: (row) =>
-                row.status === "completed"
-                    ? <Badge label="เสร็จสิ้น" variant="success" />
-                    : <Badge label="รอดำเนินการ" variant="warning" />
+                row.status === "completed" ? (
+                    <Badge label="เสร็จสิ้น" variant="success" />
+                ) : (
+                    <Badge label="รอดำเนินการ" variant="warning" />
+                ),
         },
         {
             key: "actions",
@@ -55,24 +69,18 @@ export default function TransactionsTable({ data }: { data: Transaction[] }) {
                         <Trash2 size={16} className="text-red-600" />
                     </button>
                 </div>
-            )
-        }
+            ),
+        },
     ];
 
     return (
         <>
-            <DataTable
-                columns={columns}
-                data={data}
-                rowKey={(row) => row.id}
-                page={page}
-                pageSize={5}
-            />
+            <DataTable columns={columns} data={data} rowKey={(row) => row.id} />
 
             <Pagination
-                page={page}
-                totalPages={Math.ceil(data.length / 5)}
-                onChange={setPage}
+                page={currentPage}
+                totalPages={Math.ceil(total / pageSize)}
+                onChange={onPageChange}
             />
         </>
     );
