@@ -312,7 +312,7 @@ export default function FinancePage() {
     const formattedIncomeDistribution = incomeStats.map((item, index) => ({
         name:
             item.type === "drug"
-                ? "เวชภัณฑ์"
+                ? "จ่ายยา"
                 : item.type === "service"
                   ? "บริการ"
                   : item.type,
@@ -322,8 +322,13 @@ export default function FinancePage() {
     }));
 
     const expenseColors = ["#EF4444", "#F59E0B", "#10B981", "#3B82F6"];
+    const expenseType = {
+        drug: "ค่ายา",
+        utility: "ค่าเช่า/สาธารณูปโภค",
+        general: "ค่าใช้จ่ายอื่นๆ",
+    };
     const formattedExpenseDistribution = expenseStats.map((item, index) => ({
-        name: item.type,
+        name: expenseType[item.type],
         value: item.percentage,
         amount: item.amount,
         color: expenseColors[index % expenseColors.length],
@@ -366,18 +371,23 @@ export default function FinancePage() {
                         icon={DollarSign}
                         title="กำไรสุทธิ"
                         value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
-                        subtitle="เดือนนี้"
                         trend={
                             (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
                         }
                         trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
+                        subtitle="เดือนนี้"
                         color="#3F7C87"
                     />
                     <StatCard
                         icon={TrendingUp}
                         title="อัตรากำไร"
                         value={`${summary?.profitRate || 0}%`}
-                        subtitle="ของเดือนนี้"
+                        // subtitle={
+                        //     (summary?.netProfitGrowth || 0) >= 0
+                        //         ? `เพิ่ม ${Math.abs(summary?.netProfitGrowth || 0)}%`
+                        //         : `ลดลง ${Math.abs(summary?.netProfitGrowth || 0)}%`
+                        // }
+                        subtitle="เดือนนี้"
                         color="#F59E0B"
                     />
                 </div>
