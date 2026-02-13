@@ -45,7 +45,7 @@ const columns: Column<LowStockItem>[] = [
         align: "center",
     },
     {
-        key: "status", // Using stock as key for status render logic
+        key: "status",
         header: "สถานะ",
         align: "center",
         render: (row) => {
