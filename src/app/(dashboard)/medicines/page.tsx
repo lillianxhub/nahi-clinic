@@ -7,8 +7,10 @@ import { DrugLot, Medicine } from "@/interface/medicine";
 import MedicineCard from "@/components/medicine/MedicineCard";
 import MedicineLotModal from "@/components/medicine/MedicineLotModal";
 import Pagination from "@/components/Pagination";
+import usePageTitle from "@/hooks/usePageTitle";
 
 export default function MedicinesPage() {
+    usePageTitle("Medicines");
     const [medicines, setMedicines] = useState<Medicine[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -65,7 +67,10 @@ export default function MedicinesPage() {
     }, [medicines]);
 
     const filteredMedicines = withComputed.filter((m) => {
-        if (search && !m.drug_name.toLowerCase().includes(search.toLowerCase())) {
+        if (
+            search &&
+            !m.drug_name.toLowerCase().includes(search.toLowerCase())
+        ) {
             return false;
         }
 
@@ -91,9 +96,11 @@ export default function MedicinesPage() {
         return lots.map((lot) => {
             const expireDate = new Date(lot.expire_date);
             const diffDays =
-                (expireDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+                (expireDate.getTime() - today.getTime()) /
+                (1000 * 60 * 60 * 24);
 
-            let status: "normal" | "expiring" | "out_of_stock" | "expired" = "normal";
+            let status: "normal" | "expiring" | "out_of_stock" | "expired" =
+                "normal";
 
             if (diffDays < 0) {
                 status = "expired";
@@ -114,14 +121,12 @@ export default function MedicinesPage() {
         });
     };
 
-
     if (loading) {
         return <div className="p-6">กำลังโหลดข้อมูล...</div>;
     }
 
     return (
         <div className="space-y-6">
-
             {lowStockTotal > 0 && (
                 <div className="bg-warning/20 border border-yellow-200 rounded-lg p-4 mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -134,7 +139,7 @@ export default function MedicinesPage() {
             )}
 
             <div className="flex flex-wrap gap-4 items-center">
-                <div className="relative flex-1 min-w-[250px]">
+                <div className="relative flex-1 min-w-62.5">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         type="text"
@@ -204,7 +209,6 @@ export default function MedicinesPage() {
                 totalPages={totalPages}
                 onChange={setPage}
             />
-
-        </div >
+        </div>
     );
 }

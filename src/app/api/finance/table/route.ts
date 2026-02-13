@@ -33,7 +33,11 @@ export async function GET(request: Request) {
         // 4. Format data consistently for table display
         const formattedIncomes = incomes.map((item) => ({
             id: item.income_id,
-            date: item.income_date,
+            date: item.income_date.toLocaleDateString("th-TH", {
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+            }),
             type: "income",
             category: "ค่าตรวจรักษา",
             description: item.visit?.patient
@@ -51,7 +55,11 @@ export async function GET(request: Request) {
 
             return {
                 id: item.expense_id,
-                date: item.expense_date,
+                date: item.expense_date.toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "numeric",
+                    day: "numeric",
+                }),
                 type: "expense",
                 category: categoryTH,
                 description: item.description || "-",

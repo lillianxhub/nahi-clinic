@@ -16,9 +16,21 @@ interface Transaction {
     status: string;
 }
 
-export default function TransactionsTable({ data }: { data: Transaction[] }) {
-    const [page, setPage] = useState(1);
+interface TransactionsTableProps {
+    data: Transaction[];
+    currentPage: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    pageSize?: number;
+}
 
+export default function TransactionsTable({
+    data,
+    currentPage,
+    total,
+    onPageChange,
+    pageSize = 10,
+}: TransactionsTableProps) {
     const columns: Column<Transaction>[] = [
         { key: "date", header: "วันที่" },
         { key: "category", header: "หมวดหมู่" },
@@ -63,18 +75,12 @@ export default function TransactionsTable({ data }: { data: Transaction[] }) {
 
     return (
         <>
-            <DataTable
-                columns={columns}
-                data={data}
-                rowKey={(row) => row.id}
-                page={page}
-                pageSize={5}
-            />
+            <DataTable columns={columns} data={data} rowKey={(row) => row.id} />
 
             <Pagination
-                page={page}
-                totalPages={Math.ceil(data.length / 5)}
-                onChange={setPage}
+                page={currentPage}
+                totalPages={Math.ceil(total / pageSize)}
+                onChange={onPageChange}
             />
         </>
     );

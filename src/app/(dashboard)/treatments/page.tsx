@@ -1,8 +1,10 @@
 "use client";
 
 import { Search } from "lucide-react";
+import usePageTitle from "@/hooks/usePageTitle";
 
 export default function TreatmentsPage() {
+    usePageTitle("Treatments");
     return (
         <div className="space-y-6">
             {/*Header*/}

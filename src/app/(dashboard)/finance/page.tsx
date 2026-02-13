@@ -50,6 +50,7 @@ import {
     ExpenseStatItem,
     TransactionItem,
 } from "@/interface/finance";
+import usePageTitle from "@/hooks/usePageTitle";
 
 function StatCard({
     icon: Icon,
@@ -111,6 +112,7 @@ function StatCard({
 }
 
 export default function FinancePage() {
+    usePageTitle("Finance");
     const [showAddModal, setShowAddModal] = useState(false);
     const [transactionType, setTransactionType] = useState("income");
     const [filterType, setFilterType] = useState("all");
@@ -125,6 +127,9 @@ export default function FinancePage() {
     const [incomeStats, setIncomeStats] = useState<IncomeStatItem[]>([]);
     const [expenseStats, setExpenseStats] = useState<ExpenseStatItem[]>([]);
     const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+    const [transactionPage, setTransactionPage] = useState(1);
+    const [totalTransactions, setTotalTransactions] = useState(0);
+    const TRANSACTIONS_PER_PAGE = 10;
 
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
@@ -173,23 +178,37 @@ export default function FinancePage() {
         }
     };
 
+    const fetchTransactionsData = async (page: number) => {
+        try {
+            const tableRes = await financeService.getTransactionsTable({
+                page,
+                limit: TRANSACTIONS_PER_PAGE,
+            });
+            setTransactions(tableRes.data);
+            setTotalTransactions(tableRes.total);
+            setTransactionPage(tableRes.page);
+        } catch (error) {
+            console.error("Failed to fetch transactions:", error);
+        }
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [summaryRes, chartRes, incomeRes, expenseRes, tableRes] =
+            const [summaryRes, chartRes, incomeRes, expenseRes] =
                 await Promise.all([
                     financeService.getSummaryStats(),
                     financeService.getBarChartData(dateRange),
                     financeService.getIncomeStats(),
                     financeService.getExpenseStats(),
-                    financeService.getTransactionsTable({ page: 1, limit: 10 }),
                 ]);
 
             setSummary(summaryRes.data);
             setChartData(chartRes);
             setIncomeStats(incomeRes.data);
             setExpenseStats(expenseRes.data);
-            setTransactions(tableRes.data);
+
+            await fetchTransactionsData(1);
         } catch (error) {
             console.error("Failed to fetch finance data:", error);
         } finally {
@@ -530,7 +549,13 @@ export default function FinancePage() {
                             </button>
                         </div>
                     </div>
-                    <TransactionsTable data={filteredTransactions} />
+                    <TransactionsTable
+                        data={filteredTransactions}
+                        currentPage={transactionPage}
+                        total={totalTransactions}
+                        onPageChange={fetchTransactionsData}
+                        pageSize={TRANSACTIONS_PER_PAGE}
+                    />
                 </div>
             </div>
 

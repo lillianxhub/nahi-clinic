@@ -23,6 +23,7 @@ import {
     PatientChartData,
     RevenueExpenseChartData,
 } from "@/interface/dashboard";
+import usePageTitle from "@/hooks/usePageTitle";
 
 /* =========================
    Table Columns
@@ -44,7 +45,7 @@ const columns: Column<LowStockItem>[] = [
         align: "center",
     },
     {
-        key: "stock", // Using stock as key for status render logic
+        key: "status", // Using stock as key for status render logic
         header: "สถานะ",
         align: "center",
         render: (row) => {
@@ -88,6 +89,7 @@ function StatCard({
 ========================= */
 
 export default function DashboardPage() {
+    usePageTitle("Dashboard");
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
 
