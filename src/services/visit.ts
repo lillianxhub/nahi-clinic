@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ItemType, PaymentMethod} from "../../generated/prisma/client";
+import { ItemType, PaymentMethod } from "../../generated/prisma/client";
 
 export class StockNotEnoughError extends Error {
     constructor(message: string = "Stock not enough") {
@@ -18,7 +18,7 @@ export async function createVisitWithTreatment(input: {
 }) {
     return await prisma.$transaction(async (tx) => {
         // -------------------------------------------------------
-        // 1. สร้าง Visit
+        // 1. Create Visit
         // -------------------------------------------------------
         const visit = await tx.visit.create({
             data: {
@@ -32,7 +32,7 @@ export async function createVisitWithTreatment(input: {
         let totalAmount = 0;
 
         // -------------------------------------------------------
-        // 2. จัดการ Services (ค่าบริการ)
+        // 2. Handle Services (Service Charges)
         // -------------------------------------------------------
         if (input.services && input.services.length > 0) {
             for (const s of input.services) {
@@ -51,27 +51,27 @@ export async function createVisitWithTreatment(input: {
         }
 
         // -------------------------------------------------------
-        // 3. จัดการ Drugs (ค่ายา และ ตัดสต็อก)
+        // 3. Handle Drugs (Drug Charges and Stock Reduction)
         // -------------------------------------------------------
         if (input.drugs && input.drugs.length > 0) {
             for (const d of input.drugs) {
-                // 3.1 ดึงข้อมูล Lot เพื่อเช็คสต็อก และเอา drug_id
+                // 3.1 Fetch Lot info to check stock and get drug_id
                 const lot = await tx.drug_Lot.findUnique({
                     where: { lot_id: d.lot_id },
-                    include: { drug: true }
+                    include: { drug: true },
                 });
 
-                // เช็คว่ามียาไหม และพอไหม
+                // Check if drug exists and stock is sufficient
                 if (!lot || lot.qty_remaining < d.quantity) {
                     throw new StockNotEnoughError(
-                        `ยา Lot ${d.lot_id} ไม่พอ (เหลือ ${lot?.qty_remaining || 0})`
+                        `ยา Lot ${d.lot_id} ไม่พอ (เหลือ ${lot?.qty_remaining || 0})`,
                     );
                 }
 
-                // 3.2 คำนวณราคารวม
+                // 3.2 Calculate total amount
                 totalAmount += d.sell_price * d.quantity;
 
-                // 3.3 บันทึกประวัติการหยิบยา (Drug Usage)
+                // 3.3 Record drug usage history (Drug Usage)
                 await tx.drug_Usage.create({
                     data: {
                         visit_id: visit.visit_id,
@@ -81,7 +81,7 @@ export async function createVisitWithTreatment(input: {
                     },
                 });
 
-                // 3.4 บันทึกรายการยาลงใบเสร็จ (Visit Detail)
+                // 3.4 Record drug item on receipt (Visit Detail)
                 await tx.visit_Detail.create({
                     data: {
                         visit_id: visit.visit_id,
@@ -93,7 +93,7 @@ export async function createVisitWithTreatment(input: {
                     },
                 });
 
-                // 3.5 ตัดสต็อกจริง (Update Stock)
+                // 3.5 Deduct actual stock (Update Stock)
                 await tx.drug_Lot.update({
                     where: { lot_id: d.lot_id },
                     data: {
@@ -106,7 +106,7 @@ export async function createVisitWithTreatment(input: {
         }
 
         // -------------------------------------------------------
-        // 4. บันทึกรายรับ (Income)
+        // 4. Record income (Income)
         // -------------------------------------------------------
         await tx.income.create({
             data: {

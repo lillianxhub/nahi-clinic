@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        // 1. หา patient ล่าสุด
+        // 1. Find latest patient
         const lastPatient = await prisma.patient.findFirst({
             where: {
                 hospital_number: {
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
             },
         });
 
-        // 2. generate HN ใหม่
+        // 2. Generate new HN (Hospital Number)
         let nextNumber = 1;
 
         if (lastPatient?.hospital_number) {

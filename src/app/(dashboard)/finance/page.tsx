@@ -231,7 +231,7 @@ export default function FinancePage() {
     */
 
     /*
-    // ข้อมูลสรุป
+    // Summary Information
     const summaryData = {
         totalIncome: 285000,
         totalExpense: 142500,
@@ -240,7 +240,7 @@ export default function FinancePage() {
         thisMonthExpense: 14250,
     };
 
-    // ข้อมูลกราฟรายรับรายจ่าย
+    // Revenue and Expense Chart Data
     const chartData = [
         { month: 'ม.ค.', รายรับ: 245000, รายจ่าย: 125000 },
         { month: 'ก.พ.', รายรับ: 268000, รายจ่าย: 132000 },
@@ -250,7 +250,7 @@ export default function FinancePage() {
         { month: 'มิ.ย.', รายรับ: 285000, รายจ่าย: 142500 },
     ];
 
-    // ข้อมูลสัดส่วนรายรับ
+    // Income Distribution Data
     const incomeDistribution = [
         { name: 'ค่าตรวจรักษา', value: 45, amount: 128250, color: '#3F7C87' },
         { name: 'ค่ายา', value: 35, amount: 99750, color: '#5A9AA8' },
@@ -258,7 +258,7 @@ export default function FinancePage() {
         { name: 'วัคซีน', value: 8, amount: 22800, color: '#C8E6E8' },
     ];
 
-    // ข้อมูลสัดส่วนรายจ่าย
+    // Expense Distribution Data
     const expenseDistribution = [
         { name: 'ค่ายา/เวชภัณฑ์', value: 40, amount: 57000, color: '#EF4444' },
         { name: 'เงินเดือนพนักงาน', value: 35, amount: 49875, color: '#F59E0B' },
@@ -266,7 +266,7 @@ export default function FinancePage() {
         { name: 'อื่นๆ', value: 10, amount: 14250, color: '#3B82F6' },
     ];
 
-    // รายการธุรกรรมล่าสุด
+    // Latest Transactions
     const [transactions, setTransactions] = useState([
         { id: 1, date: '2024-01-12', type: 'income', category: 'ค่าตรวจรักษา', description: 'ผู้ป่วย: นางสาวมาลี สุขสันต์', amount: 1500, status: 'completed' },
         { id: 2, date: '2024-01-12', type: 'income', category: 'ค่ายา', description: 'ขายยา: Paracetamol, Amoxicillin', amount: 850, status: 'completed' },
