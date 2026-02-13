@@ -367,6 +367,10 @@ export default function FinancePage() {
                         title="กำไรสุทธิ"
                         value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
                         subtitle="เดือนนี้"
+                        trend={
+                            (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
+                        }
+                        trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
                         color="#3F7C87"
                     />
                     <StatCard
