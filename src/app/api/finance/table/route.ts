@@ -33,6 +33,7 @@ export async function GET(request: Request) {
         // 4. Format data consistently for table display
         const formattedIncomes = incomes.map((item) => ({
             id: item.income_id,
+            timestamp: item.income_date.getTime(), //ใช้เรียง
             date: item.income_date.toLocaleDateString("th-TH", {
                 year: "numeric",
                 month: "numeric",
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
 
             return {
                 id: item.expense_id,
+                timestamp: item.expense_date.getTime(), //ใช้เรียง
                 date: item.expense_date.toLocaleDateString("th-TH", {
                     year: "numeric",
                     month: "numeric",
@@ -72,12 +74,10 @@ export async function GET(request: Request) {
         const allTransactions = [
             ...formattedIncomes,
             ...formattedExpenses,
-        ].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        );
+        ].sort((a, b) => b.timestamp - a.timestamp);
 
         // 6. Paginate data
-        const paginatedData = allTransactions.slice(skip, skip + limit);
+        const paginatedData = allTransactions.slice(skip, skip + limit).map(({ timestamp, ...rest }) => rest);
 
         return NextResponse.json({
             data: paginatedData,
