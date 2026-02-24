@@ -8,6 +8,7 @@ import MedicineCard from "@/components/medicine/MedicineCard";
 import MedicineLotModal from "@/components/medicine/MedicineLotModal";
 import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
+import AddMedicineModal from "@/components/medicine/AddMedicineModal";
 
 export default function MedicinesPage() {
     usePageTitle("Medicines");
@@ -21,6 +22,7 @@ export default function MedicinesPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [lowStockTotal, setLowStockTotal] = useState(0);
+    const [openAdd, setOpenAdd] = useState(false);
 
     useEffect(() => {
         fetchMedicines();
@@ -164,7 +166,7 @@ export default function MedicinesPage() {
 
                 <button
                     className="cursor-pointer ml-auto bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
-                    onClick={() => console.log("add medicine")}
+                    onClick={() => setOpenAdd(true)}
                 >
                     <Plus className="w-4 h-4" />
                     เพิ่มยา
@@ -209,6 +211,15 @@ export default function MedicinesPage() {
                 totalPages={totalPages}
                 onChange={setPage}
             />
+            {/* Add medicine Modal */}
+                  <AddMedicineModal
+                    open={openAdd}
+                    onClose={() => setOpenAdd(false)}
+                    onSuccess={() => {
+                      setPage(1);
+                      fetchMedicines();
+                    }}
+                  />
         </div>
     );
 }
