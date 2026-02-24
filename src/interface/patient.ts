@@ -3,6 +3,8 @@ import { Gender } from "@/constants/gender";
 export interface Patient {
     patient_id: string;
     hospital_number: string;
+    first_name: string;
+    last_name: string;
     fullName: string;
     gender: Gender;
     birthDate: string;

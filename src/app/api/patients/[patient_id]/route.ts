@@ -1,95 +1,114 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: Request) {
-  try {
-    const searchParams = new URL(req.url).searchParams;
-    const q = searchParams.get("q");         // search patient name / HN
-    const month = searchParams.get("month"); // YYYY-MM
+type Params = {
+    params: Promise<{ patient_id: string }>;
+};
 
-    const where: any = {
-      deleted_at: null,
-    };
+export async function GET(_: Request, { params }: Params) {
+    try {
+        const { patient_id } = await params;
 
-    // 🔎 filter by month
-    if (month) {
-      const start = new Date(`${month}-01T00:00:00.000Z`);
-      const end = new Date(start);
-      end.setUTCMonth(end.getUTCMonth() + 1);
+        const patient = await prisma.patient.findFirst({
+            where: {
+                patient_id: patient_id,
+                deleted_at: null,
+            },
+            include: {
+                visits: {
+                    where: { deleted_at: null },
+                    orderBy: { visit_date: "desc" },
+                    take: 5,
+                },
+            },
+        });
 
-      where.visit_date = {
-        gte: start,
-        lt: end,
-      };
+        if (!patient) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลผู้ป่วย" },
+                { status: 404 },
+            );
+        }
+
+        return NextResponse.json({ data: patient });
+    } catch (error) {
+        console.error("Get patient error:", error);
+        return NextResponse.json(
+            { message: "Internal server error" },
+            { status: 500 },
+        );
     }
-
-    // 🔍 search patient
-    if (q) {
-      where.patient = {
-        OR: [
-          { first_name: { contains: q, mode: "insensitive" } },
-          { last_name: { contains: q, mode: "insensitive" } },
-          { hospital_number: { contains: q, mode: "insensitive" } },
-        ],
-      };
-    }
-
-    const treatments = await prisma.visit.findMany({
-      where,
-      orderBy: { visit_date: "desc" },
-      select: {
-        visit_id: true,
-        visit_date: true,
-        symptom: true,
-        diagnosis: true,
-        patient: {
-          select: {
-            patient_id: true,
-            hospital_number: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({ data: treatments });
-  } catch (error) {
-    console.error("Get treatments error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 },
-    );
-  }
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+export async function PATCH(req: Request, { params }: Params) {
+    try {
+        const { patient_id } = await params;
+        const body = await req.json();
 
-    // ✅ basic validation
-    if (!body.patient_id || !body.visit_date || !body.symptom || !body.diagnosis) {
-      return NextResponse.json(
-        { message: "ข้อมูลไม่ครบถ้วน" },
-        { status: 400 },
-      );
+        const existing = await prisma.patient.findFirst({
+            where: {
+                patient_id: patient_id,
+                deleted_at: null,
+            },
+        });
+
+        if (!existing) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลผู้ป่วย" },
+                { status: 404 },
+            );
+        }
+
+        const patient = await prisma.patient.update({
+            where: { patient_id: patient_id },
+            data: {
+                first_name: body.first_name,
+                last_name: body.last_name,
+                gender: body.gender,
+                phone: body.phone,
+                address: body.address,
+                birth_date: body.birth_date
+                    ? new Date(body.birth_date)
+                    : undefined,
+                allergy: body.allergy,
+            },
+        });
+
+        return NextResponse.json({ data: patient });
+    } catch (error: any) {
+        console.error("Update patient error:", error);
+        return NextResponse.json({ message: error.message }, { status: 500 });
     }
+}
 
-    const treatment = await prisma.visit.create({
-      data: {
-        patient_id: body.patient_id,          // ได้จาก dropdown/search
-        visit_date: new Date(body.visit_date),
-        symptom: body.symptom,
-        diagnosis: body.diagnosis,
-      },
-    });
+export async function DELETE(_: Request, { params }: Params) {
+    try {
+        const { patient_id } = await params;
 
-    return NextResponse.json(treatment, { status: 201 });
-  } catch (error: any) {
-    console.error("Create treatment error:", error);
-    return NextResponse.json(
-      { message: error.message },
-      { status: 500 },
-    );
-  }
+        const existing = await prisma.patient.findFirst({
+            where: {
+                patient_id: patient_id,
+                deleted_at: null,
+            },
+        });
+
+        if (!existing) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลผู้ป่วย" },
+                { status: 404 },
+            );
+        }
+
+        await prisma.patient.update({
+            where: { patient_id: patient_id },
+            data: {
+                deleted_at: new Date(),
+            },
+        });
+
+        return NextResponse.json({ message: "ลบผู้ป่วยสำเร็จ" });
+    } catch (error: any) {
+        console.error("Delete patient error:", error);
+        return NextResponse.json({ message: error.message }, { status: 500 });
+    }
 }
