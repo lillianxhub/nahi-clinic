@@ -4,18 +4,18 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request) {
   try {
     const searchParams = new URL(req.url).searchParams;
-    const q = searchParams.get("q");         // search patient name / HN
-    const month = searchParams.get("month"); // YYYY-MM
+    const q = searchParams.get("q"); // search patient name
+    const month = searchParams.get("month"); // optional: YYYY-MM
 
     const where: any = {
       deleted_at: null,
     };
 
-    // 🔎 filter by month
+    // filter by month
     if (month) {
-      const start = new Date(`${month}-01T00:00:00.000Z`);
+      const start = new Date(`${month}-01`);
       const end = new Date(start);
-      end.setUTCMonth(end.getUTCMonth() + 1);
+      end.setMonth(end.getMonth() + 1);
 
       where.visit_date = {
         gte: start,
@@ -23,38 +23,34 @@ export async function GET(req: Request) {
       };
     }
 
-    // 🔍 search patient
+    // search patient name
     if (q) {
       where.patient = {
         OR: [
-          { first_name: { contains: q, mode: "insensitive" } },
-          { last_name: { contains: q, mode: "insensitive" } },
-          { hospital_number: { contains: q, mode: "insensitive" } },
+          { first_name: { contains: q } },
+          { last_name: { contains: q } },
+          { hospital_number: { contains: q } },
         ],
       };
     }
 
-    const treatments = await prisma.visit.findMany({
+    const visits = await prisma.visit.findMany({
       where,
       orderBy: { visit_date: "desc" },
-      select: {
-        visit_id: true,
-        visit_date: true,
-        symptom: true,
-        diagnosis: true,
+      include: {
         patient: {
           select: {
             patient_id: true,
-            hospital_number: true,
             first_name: true,
             last_name: true,
+            hospital_number: true,
           },
         },
       },
     });
 
-    return NextResponse.json({ data: treatments });
-  } catch (error) {
+    return NextResponse.json({ data: visits });
+  } catch (error: any) {
     console.error("Get treatments error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
@@ -67,17 +63,9 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ basic validation
-    if (!body.patient_id || !body.visit_date || !body.symptom || !body.diagnosis) {
-      return NextResponse.json(
-        { message: "ข้อมูลไม่ครบถ้วน" },
-        { status: 400 },
-      );
-    }
-
     const treatment = await prisma.visit.create({
       data: {
-        patient_id: body.patient_id,          // ได้จาก dropdown/search
+        patient_id: body.patient_id,   // ได้จาก dropdown/search
         visit_date: new Date(body.visit_date),
         symptom: body.symptom,
         diagnosis: body.diagnosis,
@@ -86,10 +74,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json(treatment, { status: 201 });
   } catch (error: any) {
-    console.error("Create treatment error:", error);
     return NextResponse.json(
       { message: error.message },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
