@@ -6,6 +6,9 @@ export async function GET(req: Request) {
         const searchParams = new URL(req.url).searchParams;
         const q = searchParams.get("q"); // search patient name
         const month = searchParams.get("month"); // optional: YYYY-MM
+        const page = parseInt(searchParams.get("page") || "1");
+        const pageSize = parseInt(searchParams.get("pageSize") || "10");
+        const skip = (page - 1) * pageSize;
 
         const where: any = {
             deleted_at: null,
@@ -34,22 +37,37 @@ export async function GET(req: Request) {
             };
         }
 
-        const visits = await prisma.visit.findMany({
-            where,
-            orderBy: { visit_date: "desc" },
-            include: {
-                patient: {
-                    select: {
-                        patient_id: true,
-                        first_name: true,
-                        last_name: true,
-                        hospital_number: true,
+        const [visits, total] = await Promise.all([
+            prisma.visit.findMany({
+                where,
+                orderBy: { visit_date: "desc" },
+                include: {
+                    patient: {
+                        select: {
+                            patient_id: true,
+                            first_name: true,
+                            last_name: true,
+                            hospital_number: true,
+                        },
                     },
+                },
+                skip,
+                take: pageSize,
+            }),
+            prisma.visit.count({ where }),
+        ]);
+
+        return NextResponse.json({
+            data: visits,
+            meta: {
+                pagination: {
+                    page,
+                    pageSize,
+                    pageCount: Math.ceil(total / pageSize),
+                    total,
                 },
             },
         });
-
-        return NextResponse.json({ data: visits });
     } catch (error: any) {
         console.error("Get treatments error:", error);
         return NextResponse.json(
