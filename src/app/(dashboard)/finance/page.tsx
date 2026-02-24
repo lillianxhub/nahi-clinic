@@ -341,7 +341,7 @@ export default function FinancePage() {
 
     if (loading && !summary) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex items-center justify-center min-h-100">
                 กำลังโหลดข้อมูล...
             </div>
         );
@@ -568,6 +568,7 @@ export default function FinancePage() {
                         currentPage={transactionPage}
                         total={totalTransactions}
                         onPageChange={fetchTransactionsData}
+                        onRefresh={fetchData}
                         pageSize={TRANSACTIONS_PER_PAGE}
                     />
                 </div>
