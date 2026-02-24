@@ -1,25 +1,48 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        const now = new Date();
-        const currentMonthStart = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1,
-        );
-        const currentMonthEnd = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0,
-        );
-        const prevMonthStart = new Date(
-            now.getFullYear(),
-            now.getMonth() - 1,
-            1,
-        );
-        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        const { searchParams } = new URL(request.url);
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
+
+        let currentStart: Date;
+        let currentEnd: Date;
+        let prevStart: Date;
+        let prevEnd: Date;
+
+        if (startDateParam && endDateParam) {
+            currentStart = new Date(startDateParam);
+            currentEnd = new Date(endDateParam);
+            currentEnd.setHours(23, 59, 59, 999);
+
+            const diff = currentEnd.getTime() - currentStart.getTime();
+            prevStart = new Date(currentStart.getTime() - diff - 1);
+            prevEnd = new Date(currentStart.getTime() - 1);
+        } else {
+            const now = new Date();
+            currentStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            currentEnd = new Date(
+                now.getFullYear(),
+                now.getMonth() + 1,
+                0,
+                23,
+                59,
+                59,
+                999,
+            );
+            prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            prevEnd = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                0,
+                23,
+                59,
+                59,
+                999,
+            );
+        }
 
         const [monthIncome, monthExpense, prevMonthIncome, prevMonthExpense] =
             await Promise.all([
@@ -27,8 +50,8 @@ export async function GET() {
                     _sum: { amount: true },
                     where: {
                         income_date: {
-                            gte: currentMonthStart,
-                            lte: currentMonthEnd,
+                            gte: currentStart,
+                            lte: currentEnd,
                         },
                         is_active: true,
                     },
@@ -37,8 +60,8 @@ export async function GET() {
                     _sum: { amount: true },
                     where: {
                         expense_date: {
-                            gte: currentMonthStart,
-                            lte: currentMonthEnd,
+                            gte: currentStart,
+                            lte: currentEnd,
                         },
                         is_active: true,
                     },
@@ -46,7 +69,7 @@ export async function GET() {
                 prisma.income.aggregate({
                     _sum: { amount: true },
                     where: {
-                        income_date: { gte: prevMonthStart, lte: prevMonthEnd },
+                        income_date: { gte: prevStart, lte: prevEnd },
                         is_active: true,
                     },
                 }),
@@ -54,8 +77,8 @@ export async function GET() {
                     _sum: { amount: true },
                     where: {
                         expense_date: {
-                            gte: prevMonthStart,
-                            lte: prevMonthEnd,
+                            gte: prevStart,
+                            lte: prevEnd,
                         },
                         is_active: true,
                     },

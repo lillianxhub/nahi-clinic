@@ -1,8 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
+
+        let startDate: Date;
+        let endDate: Date;
+
+        if (startDateParam && endDateParam) {
+            startDate = new Date(startDateParam);
+            endDate = new Date(endDateParam);
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            endDate = new Date(
+                now.getFullYear(),
+                now.getMonth() + 1,
+                0,
+                23,
+                59,
+                59,
+            );
+        }
+
         // 1. Fetch summary total grouped by type
         const expenseGroups = await prisma.expense.groupBy({
             by: ["expense_type"],
@@ -11,6 +35,11 @@ export async function GET() {
             },
             where: {
                 is_active: true,
+                deleted_at: null,
+                expense_date: {
+                    gte: startDate,
+                    lte: endDate,
+                },
             },
         });
 

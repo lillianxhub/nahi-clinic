@@ -139,7 +139,12 @@ export default function TransactionsTable({
 
     return (
         <>
-            <DataTable columns={columns} data={data} rowKey={(row) => row.id} />
+            <DataTable
+                columns={columns}
+                data={data}
+                rowKey={(row) => row.id}
+                emptyMessage="ไม่พบข้อมูลธุรกรรมที่ค้นหา"
+            />
 
             <Pagination
                 page={currentPage}

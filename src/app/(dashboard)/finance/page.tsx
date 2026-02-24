@@ -8,31 +8,15 @@ import {
     Calendar,
     Search,
     Filter,
-    Download,
     Plus,
-    Edit,
-    Trash2,
-    X,
-    Check,
     ArrowUpRight,
     ArrowDownRight,
-    FileText,
-    Menu,
-    Home,
-    Users,
-    Package,
-    Settings,
-    BarChart3,
-    Eye,
+    X,
+    Check,
 } from "lucide-react";
 import {
-    LineChart,
-    Line,
     BarChart,
     Bar,
-    PieChart,
-    Pie,
-    Cell,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -119,7 +103,6 @@ export default function FinancePage() {
     const [dateRange, setDateRange] = useState<"week" | "month" | "year">(
         "year",
     );
-    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState<FinanceSummaryStats | null>(null);
@@ -130,6 +113,11 @@ export default function FinancePage() {
     const [transactionPage, setTransactionPage] = useState(1);
     const [totalTransactions, setTotalTransactions] = useState(0);
     const TRANSACTIONS_PER_PAGE = 10;
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [customStartDate, setCustomStartDate] = useState("");
+    const [customEndDate, setCustomEndDate] = useState("");
 
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
@@ -145,8 +133,8 @@ export default function FinancePage() {
                 await financeService.createIncome({
                     income_date: formData.date,
                     amount: Number(formData.amount),
-                    payment_method: "cash", // Default or map from category
-                    visit_id: "", // Need a way to select visit if required, but for now empty
+                    payment_method: "cash",
+                    visit_id: "",
                 });
             } else {
                 let expenseType = "general";
@@ -163,7 +151,8 @@ export default function FinancePage() {
                 });
             }
             setShowAddModal(false);
-            fetchData();
+            fetchDashboardData();
+            fetchTransactionsData(1);
             // Reset form
             setFormData({
                 date: new Date().toISOString().split("T")[0],
@@ -183,6 +172,10 @@ export default function FinancePage() {
             const tableRes = await financeService.getTransactionsTable({
                 page,
                 limit: TRANSACTIONS_PER_PAGE,
+                search: searchQuery,
+                startDate: customStartDate,
+                endDate: customEndDate,
+                type: filterType,
             });
             setTransactions(tableRes.data);
             setTotalTransactions(tableRes.total);
@@ -192,121 +185,40 @@ export default function FinancePage() {
         }
     };
 
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
         setLoading(true);
         try {
+            const queryParams = { range: dateRange };
             const [summaryRes, chartRes, incomeRes, expenseRes] =
                 await Promise.all([
-                    financeService.getSummaryStats(),
-                    financeService.getBarChartData(dateRange),
-                    financeService.getIncomeStats(),
-                    financeService.getExpenseStats(),
+                    financeService.getSummaryStats(queryParams),
+                    financeService.getBarChartData(queryParams),
+                    financeService.getIncomeStats(queryParams),
+                    financeService.getExpenseStats(queryParams),
                 ]);
 
             setSummary(summaryRes.data);
             setChartData(chartRes);
             setIncomeStats(incomeRes.data);
             setExpenseStats(expenseRes.data);
-
-            await fetchTransactionsData(1);
         } catch (error) {
-            console.error("Failed to fetch finance data:", error);
+            console.error("Failed to fetch dashboard data:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        fetchDashboardData();
     }, [dateRange]);
 
-    /*
     useEffect(() => {
-        const testService = async () => {
-            console.log("--- Finance Service Test ---");
-            try {
-                const summary = await financeService.getSummaryStats();
-                console.log("Summary Stats:", summary);
+        fetchTransactionsData(1);
+    }, [filterType, customStartDate, customEndDate]);
 
-                const chart = await financeService.getBarChartData("year");
-                console.log("Bar Chart Data:", chart);
-
-                const incomeStats = await financeService.getIncomeStats();
-                console.log("Income Stats:", incomeStats);
-
-                const expenseStats = await financeService.getExpenseStats();
-                console.log("Expense Stats:", expenseStats);
-
-                const table = await financeService.getTransactionsTable({ page: 1, limit: 10 });
-                console.log("Transactions Table:", table);
-            } catch (error) {
-                console.error("Finance Service Test Error:", error);
-            }
-            console.log("----------------------------");
-        };
-
-        testService();
-    }, []);
-    */
-
-    /*
-    // Summary Information
-    const summaryData = {
-        totalIncome: 285000,
-        totalExpense: 142500,
-        netProfit: 142500,
-        thisMonthIncome: 28500,
-        thisMonthExpense: 14250,
+    const handleSearch = () => {
+        fetchTransactionsData(1);
     };
-
-    // Revenue and Expense Chart Data
-    const chartData = [
-        { month: 'ม.ค.', รายรับ: 245000, รายจ่าย: 125000 },
-        { month: 'ก.พ.', รายรับ: 268000, รายจ่าย: 132000 },
-        { month: 'มี.ค.', รายรับ: 252000, รายจ่าย: 128000 },
-        { month: 'เม.ย.', รายรับ: 278000, รายจ่าย: 145000 },
-        { month: 'พ.ค.', รายรับ: 295000, รายจ่าย: 138000 },
-        { month: 'มิ.ย.', รายรับ: 285000, รายจ่าย: 142500 },
-    ];
-
-    // Income Distribution Data
-    const incomeDistribution = [
-        { name: 'ค่าตรวจรักษา', value: 45, amount: 128250, color: '#3F7C87' },
-        { name: 'ค่ายา', value: 35, amount: 99750, color: '#5A9AA8' },
-        { name: 'ค่าบริการ', value: 12, amount: 34200, color: '#A5DBDD' },
-        { name: 'วัคซีน', value: 8, amount: 22800, color: '#C8E6E8' },
-    ];
-
-    // Expense Distribution Data
-    const expenseDistribution = [
-        { name: 'ค่ายา/เวชภัณฑ์', value: 40, amount: 57000, color: '#EF4444' },
-        { name: 'เงินเดือนพนักงาน', value: 35, amount: 49875, color: '#F59E0B' },
-        { name: 'ค่าเช่า/สาธารณูปโภค', value: 15, amount: 21375, color: '#10B981' },
-        { name: 'อื่นๆ', value: 10, amount: 14250, color: '#3B82F6' },
-    ];
-
-    // Latest Transactions
-    const [transactions, setTransactions] = useState([
-        { id: 1, date: '2024-01-12', type: 'income', category: 'ค่าตรวจรักษา', description: 'ผู้ป่วย: นางสาวมาลี สุขสันต์', amount: 1500, status: 'completed' },
-        { id: 2, date: '2024-01-12', type: 'income', category: 'ค่ายา', description: 'ขายยา: Paracetamol, Amoxicillin', amount: 850, status: 'completed' },
-        { id: 3, date: '2024-01-12', type: 'expense', category: 'ค่ายา/เวชภัณฑ์', description: 'สั่งซื้อยา: บริษัท ABC จำกัด', amount: 12500, status: 'completed' },
-        { id: 4, date: '2024-01-11', type: 'วัคซีน', description: 'ฉีดวัคซีนไข้หวัดใหญ่', amount: 1200, status: 'completed' },
-        { id: 5, date: '2024-01-11', type: 'expense', category: 'ค่าเช่า/สาธารณูปโภค', description: 'ค่าไฟฟ้าประจำเดือน', amount: 3500, status: 'completed' },
-        { id: 6, date: '2024-01-11', type: 'income', category: 'ค่าตรวจรักษา', description: 'ผู้ป่วย: นายวิชัย กล้าหาญ', amount: 2000, status: 'completed' },
-        { id: 7, date: '2024-01-10', type: 'expense', category: 'เงินเดือนพนักงาน', description: 'เงินเดือนครึ่งเดือน', amount: 25000, status: 'pending' },
-        { id: 8, date: '2024-01-10', type: 'income', category: 'ค่าบริการ', description: 'ค่าใบรับรองแพทย์', amount: 300, status: 'completed' },
-    ]);
-    */
-
-    const menuItems = [
-        { icon: Home, label: "Dashboard", active: false },
-        { icon: Users, label: "ผู้ป่วย", active: false },
-        { icon: Package, label: "คลังยา", active: false },
-        { icon: DollarSign, label: "รายรับ-รายจ่าย", active: true },
-        { icon: FileText, label: "บันทึกการรักษา", active: false },
-        { icon: BarChart3, label: "รายงาน", active: false },
-        { icon: Settings, label: "ตั้งค่า", active: false },
-    ];
 
     const incomeColors = ["#3F7C87", "#5A9AA8", "#A5DBDD", "#C8E6E8"];
     const formattedIncomeDistribution = incomeStats.map((item, index) => ({
@@ -322,34 +234,30 @@ export default function FinancePage() {
     }));
 
     const expenseColors = ["#EF4444", "#F59E0B", "#10B981", "#3B82F6"];
-    const expenseType = {
+    const expenseTypeLabels = {
         drug: "ค่ายา",
         utility: "ค่าเช่า/สาธารณูปโภค",
         general: "ค่าใช้จ่ายอื่นๆ",
     };
     const formattedExpenseDistribution = expenseStats.map((item, index) => ({
-        name: expenseType[item.type],
+        name:
+            expenseTypeLabels[item.type as keyof typeof expenseTypeLabels] ||
+            item.type,
         value: item.percentage,
         amount: item.amount,
         color: expenseColors[index % expenseColors.length],
     }));
 
-    const filteredTransactions = transactions.filter((t) => {
-        if (filterType === "all") return true;
-        return t.type === filterType;
-    });
-
     if (loading && !summary) {
         return (
-            <div className="flex items-center justify-center min-h-100">
+            <div className="flex items-center justify-center min-h-screen">
                 กำลังโหลดข้อมูล...
             </div>
         );
     }
 
     return (
-        <>
-            {/* Content */}
+        <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
             <div className="space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -357,14 +265,14 @@ export default function FinancePage() {
                         icon={ArrowUpRight}
                         title="รายรับทั้งหมด"
                         value={`฿${(summary?.monthIncome || 0).toLocaleString()}`}
-                        subtitle="เดือนนี้"
+                        subtitle="ช่วงเวลาที่เลือก"
                         color="#10B981"
                     />
                     <StatCard
                         icon={ArrowDownRight}
                         title="รายจ่ายทั้งหมด"
                         value={`฿${(summary?.monthExpense || 0).toLocaleString()}`}
-                        subtitle="เดือนนี้"
+                        subtitle="ช่วงเวลาที่เลือก"
                         color="#EF4444"
                     />
                     <StatCard
@@ -375,25 +283,20 @@ export default function FinancePage() {
                             (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
                         }
                         trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
-                        subtitle="เดือนนี้"
+                        subtitle="เทียบกับช่วงก่อนหน้า"
                         color="#3F7C87"
                     />
                     <StatCard
                         icon={TrendingUp}
                         title="อัตรากำไร"
                         value={`${summary?.profitRate || 0}%`}
-                        // subtitle={
-                        //     (summary?.netProfitGrowth || 0) >= 0
-                        //         ? `เพิ่ม ${Math.abs(summary?.netProfitGrowth || 0)}%`
-                        //         : `ลดลง ${Math.abs(summary?.netProfitGrowth || 0)}%`
-                        // }
-                        subtitle="เดือนนี้"
+                        subtitle="ช่วงเวลาที่เลือก"
                         color="#F59E0B"
                     />
                 </div>
 
                 {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Revenue Trend */}
                     <div
                         className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-sm"
@@ -409,14 +312,10 @@ export default function FinancePage() {
                             <select
                                 value={dateRange}
                                 onChange={(e) =>
-                                    setDateRange(
-                                        e.target.value as
-                                            | "week"
-                                            | "month"
-                                            | "year",
-                                    )
+                                    setDateRange(e.target.value as any)
                                 }
-                                className="px-3 py-2 border rounded-lg text-sm outline-none"
+                                disabled={!!(customStartDate && customEndDate)}
+                                className="px-3 py-2 border rounded-lg text-sm outline-none disabled:bg-gray-50"
                                 style={{
                                     borderColor: "#E5E7EB",
                                     color: "#3F7C87",
@@ -454,13 +353,13 @@ export default function FinancePage() {
                                     dataKey="income"
                                     name="รายรับ"
                                     fill="#3F7C87"
-                                    radius={[8, 8, 0, 0]}
+                                    radius={[4, 4, 0, 0]}
                                 />
                                 <Bar
                                     dataKey="expense"
                                     name="รายจ่าย"
                                     fill="#91d9db"
-                                    radius={[8, 8, 0, 0]}
+                                    radius={[4, 4, 0, 0]}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
@@ -483,7 +382,7 @@ export default function FinancePage() {
 
                 {/* Expense Distribution */}
                 <div
-                    className="bg-white border rounded-xl p-6 shadow-sm mb-6"
+                    className="bg-white border rounded-xl p-6 shadow-sm"
                     style={{ borderColor: "#E5E7EB" }}
                 >
                     <h3
@@ -531,31 +430,33 @@ export default function FinancePage() {
                     </div>
                 </div>
 
-                <div className="bg-white border rounded-xl p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                {/* Transactions Table Section */}
+                <div
+                    className="bg-white border rounded-xl p-6 shadow-sm"
+                    style={{ borderColor: "#E5E7EB" }}
+                >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                         <h3 className="text-lg font-bold text-primary">
                             รายการธุรกรรม
                         </h3>
-
                         <div className="flex gap-2">
                             <button
                                 onClick={() => {
                                     setTransactionType("income");
                                     setShowAddModal(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer hover:opacity-90 transition-opacity"
                                 style={{ backgroundColor: "#3F7C87" }}
                             >
                                 <Plus size={16} />
                                 เพิ่มรายรับ
                             </button>
-
                             <button
                                 onClick={() => {
                                     setTransactionType("expense");
                                     setShowAddModal(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer hover:opacity-90 transition-opacity"
                                 style={{ backgroundColor: "#5A9AA8" }}
                             >
                                 <Plus size={16} />
@@ -563,24 +464,96 @@ export default function FinancePage() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div className="relative">
+                            <Search
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                size={18}
+                            />
+                            <input
+                                type="text"
+                                placeholder="ค้นหารายละเอียด หรือ ผู้ป่วย..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) =>
+                                    e.key === "Enter" && handleSearch()
+                                }
+                                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                style={{ borderColor: "#E5E7EB" }}
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Filter size={18} className="text-muted" />
+                            <select
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                                className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
+                                style={{ borderColor: "#E5E7EB" }}
+                            >
+                                <option value="all">ทุกประเภท</option>
+                                <option value="income">รายรับ</option>
+                                <option value="expense">รายจ่าย</option>
+                            </select>
+                        </div>
+
+                        <div className="md:col-span-2 flex items-center gap-2">
+                            <Calendar size={18} className="text-muted" />
+                            <div className="flex items-center gap-2 flex-1">
+                                <input
+                                    type="date"
+                                    value={customStartDate}
+                                    onChange={(e) =>
+                                        setCustomStartDate(e.target.value)
+                                    }
+                                    className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
+                                    style={{ borderColor: "#E5E7EB" }}
+                                />
+                                <span className="text-muted">-</span>
+                                <input
+                                    type="date"
+                                    value={customEndDate}
+                                    onChange={(e) =>
+                                        setCustomEndDate(e.target.value)
+                                    }
+                                    className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
+                                    style={{ borderColor: "#E5E7EB" }}
+                                />
+                                {(customStartDate || customEndDate) && (
+                                    <button
+                                        onClick={() => {
+                                            setCustomStartDate("");
+                                            setCustomEndDate("");
+                                        }}
+                                        className="p-2 text-muted hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     <TransactionsTable
-                        data={filteredTransactions}
+                        data={transactions}
                         currentPage={transactionPage}
                         total={totalTransactions}
                         onPageChange={fetchTransactionsData}
-                        onRefresh={fetchData}
+                        onRefresh={() => {
+                            fetchDashboardData();
+                            fetchTransactionsData(transactionPage);
+                        }}
                         pageSize={TRANSACTIONS_PER_PAGE}
                     />
                 </div>
             </div>
 
-            {/* Add Transaction Modal */}
+            {/* Modals */}
             {showAddModal && (
-                <div
-                    className="fixed inset-0 flex items-center justify-center z-50"
-                    style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-                >
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
+                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div className="flex items-center justify-between mb-6">
                             <h3
                                 className="text-xl font-bold"
@@ -588,18 +561,17 @@ export default function FinancePage() {
                             >
                                 เพิ่มรายการใหม่
                             </h3>
-                            <button onClick={() => setShowAddModal(false)}>
-                                <X size={24} style={{ color: "#7E7E7E" }} />
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="text-muted hover:text-primary transition-colors"
+                            >
+                                <X size={24} />
                             </button>
                         </div>
 
                         <div className="space-y-4">
-                            {/* Transaction Type */}
                             <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: "#3F7C87" }}
-                                >
+                                <label className="block text-sm font-medium mb-2 text-primary">
                                     ประเภทรายการ
                                 </label>
                                 <div className="grid grid-cols-2 gap-3">
@@ -607,21 +579,14 @@ export default function FinancePage() {
                                         onClick={() =>
                                             setTransactionType("income")
                                         }
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "income" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "income" ? "border-green-500 bg-green-50" : "border-gray-100"}`}
                                     >
                                         <ArrowUpRight
                                             size={24}
-                                            className="mx-auto mb-2"
-                                            style={{ color: "#10B981" }}
+                                            className="mx-auto mb-2 text-green-500"
                                         />
                                         <p
-                                            className="font-medium"
-                                            style={{
-                                                color:
-                                                    transactionType === "income"
-                                                        ? "#10B981"
-                                                        : "#7E7E7E",
-                                            }}
+                                            className={`font-medium text-center ${transactionType === "income" ? "text-green-600" : "text-gray-500"}`}
                                         >
                                             รายรับ
                                         </p>
@@ -630,22 +595,14 @@ export default function FinancePage() {
                                         onClick={() =>
                                             setTransactionType("expense")
                                         }
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "expense" ? "border-red-500 bg-red-50" : "border-gray-200"}`}
+                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "expense" ? "border-red-500 bg-red-50" : "border-gray-100"}`}
                                     >
                                         <ArrowDownRight
                                             size={24}
-                                            className="mx-auto mb-2"
-                                            style={{ color: "#EF4444" }}
+                                            className="mx-auto mb-2 text-red-500"
                                         />
                                         <p
-                                            className="font-medium"
-                                            style={{
-                                                color:
-                                                    transactionType ===
-                                                    "expense"
-                                                        ? "#EF4444"
-                                                        : "#7E7E7E",
-                                            }}
+                                            className={`font-medium text-center ${transactionType === "expense" ? "text-red-600" : "text-gray-500"}`}
                                         >
                                             รายจ่าย
                                         </p>
@@ -653,96 +610,77 @@ export default function FinancePage() {
                                 </div>
                             </div>
 
-                            {/* Date */}
-                            <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: "#3F7C87" }}
-                                >
-                                    วันที่
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.date}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            date: e.target.value,
-                                        })
-                                    }
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none transition-all"
-                                    style={{
-                                        borderColor: "#E5E7EB",
-                                        color: "#3F7C87",
-                                    }}
-                                    onFocus={(e) =>
-                                        (e.target.style.borderColor = "#3F7C87")
-                                    }
-                                    onBlur={(e) =>
-                                        (e.target.style.borderColor = "#E5E7EB")
-                                    }
-                                />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-primary">
+                                        วันที่
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                date: e.target.value,
+                                            })
+                                        }
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                        style={{ borderColor: "#E5E7EB" }}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-primary">
+                                        หมวดหมู่
+                                    </label>
+                                    <select
+                                        value={formData.category}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                category: e.target.value,
+                                            })
+                                        }
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                        style={{ borderColor: "#E5E7EB" }}
+                                    >
+                                        <option value="">เลือกหมวดหมู่</option>
+                                        {transactionType === "income" ? (
+                                            <>
+                                                <option value="ค่าตรวจรักษา">
+                                                    ค่าตรวจรักษา
+                                                </option>
+                                                <option value="ค่ายา">
+                                                    ค่ายา
+                                                </option>
+                                                <option value="ค่าบริการ">
+                                                    ค่าบริการ
+                                                </option>
+                                                <option value="วัคซีน">
+                                                    วัคซีน
+                                                </option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="ค่ายา/เวชภัณฑ์">
+                                                    ค่ายา/เวชภัณฑ์
+                                                </option>
+                                                <option value="เงินเดือนพนักงาน">
+                                                    เงินเดือนพนักงาน
+                                                </option>
+                                                <option value="ค่าเช่า/สาธารณูปโภค">
+                                                    ค่าเช่า/สาธารณูปโภค
+                                                </option>
+                                                <option value="อื่นๆ">
+                                                    อื่นๆ
+                                                </option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
                             </div>
 
-                            {/* Category */}
                             <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: "#3F7C87" }}
-                                >
-                                    หมวดหมู่
-                                </label>
-                                <select
-                                    value={formData.category}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            category: e.target.value,
-                                        })
-                                    }
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none"
-                                    style={{
-                                        borderColor: "#E5E7EB",
-                                        color: "#3F7C87",
-                                    }}
-                                >
-                                    <option value="">เลือกหมวดหมู่</option>
-                                    {transactionType === "income" ? (
-                                        <>
-                                            <option value="ค่าตรวจรักษา">
-                                                ค่าตรวจรักษา
-                                            </option>
-                                            <option value="ค่ายา">ค่ายา</option>
-                                            <option value="ค่าบริการ">
-                                                ค่าบริการ
-                                            </option>
-                                            <option value="วัคซีน">
-                                                วัคซีน
-                                            </option>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <option value="ค่ายา/เวชภัณฑ์">
-                                                ค่ายา/เวชภัณฑ์
-                                            </option>
-                                            <option value="เงินเดือนพนักงาน">
-                                                เงินเดือนพนักงาน
-                                            </option>
-                                            <option value="ค่าเช่า/สาธารณูปโภค">
-                                                ค่าเช่า/สาธารณูปโภค
-                                            </option>
-                                            <option value="อื่นๆ">อื่นๆ</option>
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-
-                            {/* Amount */}
-                            <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: "#3F7C87" }}
-                                >
+                                <label className="block text-sm font-medium mb-2 text-primary">
                                     จำนวนเงิน
                                 </label>
                                 <input
@@ -754,23 +692,15 @@ export default function FinancePage() {
                                             amount: e.target.value,
                                         })
                                     }
-                                    placeholder="กรอกจำนวนเงิน"
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none transition-all"
-                                    style={{
-                                        borderColor: "#E5E7EB",
-                                        color: "#3F7C87",
-                                    }}
+                                    placeholder="0.00"
+                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                    style={{ borderColor: "#E5E7EB" }}
                                 />
                             </div>
 
-                            {/* Description */}
-
                             {transactionType === "expense" && (
                                 <div>
-                                    <label
-                                        className="block text-sm font-medium mb-2"
-                                        style={{ color: "#3F7C87" }}
-                                    >
+                                    <label className="block text-sm font-medium mb-2 text-primary">
                                         รายละเอียด
                                     </label>
                                     <textarea
@@ -782,22 +712,14 @@ export default function FinancePage() {
                                                 description: e.target.value,
                                             })
                                         }
-                                        placeholder="รายละเอียดเพิ่มเติม"
-                                        className="w-full px-4 py-3 border-2 rounded-lg outline-none resize-none"
-                                        style={{
-                                            borderColor: "#E5E7EB",
-                                            color: "#3F7C87",
-                                        }}
+                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary resize-none"
+                                        style={{ borderColor: "#E5E7EB" }}
                                     />
                                 </div>
                             )}
 
-                            {/* Status */}
                             <div>
-                                <label
-                                    className="block text-sm font-medium mb-2"
-                                    style={{ color: "#3F7C87" }}
-                                >
+                                <label className="block text-sm font-medium mb-2 text-primary">
                                     สถานะ
                                 </label>
                                 <select
@@ -808,37 +730,27 @@ export default function FinancePage() {
                                             status: e.target.value,
                                         })
                                     }
-                                    className="w-full px-4 py-3 border-2 rounded-lg outline-none"
-                                    style={{
-                                        borderColor: "#E5E7EB",
-                                        color: "#3F7C87",
-                                    }}
+                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
+                                    style={{ borderColor: "#E5E7EB" }}
                                 >
                                     <option value="completed">เสร็จสิ้น</option>
                                     <option value="pending">รอดำเนินการ</option>
                                 </select>
                             </div>
 
-                            {/* Actions */}
-                            <div className="flex items-center justify-end gap-3 pt-4">
+                            <div className="flex justify-end gap-3 mt-6">
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="flex items-center gap-2 px-5 py-2 rounded-lg border hover:bg-gray-50"
-                                    style={{
-                                        borderColor: "#E5E7EB",
-                                        color: "#7E7E7E",
-                                    }}
+                                    className="px-6 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
+                                    style={{ borderColor: "#E5E7EB" }}
                                 >
-                                    <X size={18} />
                                     ยกเลิก
                                 </button>
-
                                 <button
                                     onClick={handleSave}
-                                    className="flex items-center gap-2 px-6 py-2 rounded-lg text-white hover:opacity-90"
+                                    className="px-8 py-2 rounded-lg text-white hover:opacity-90 transition-opacity"
                                     style={{ backgroundColor: "#3F7C87" }}
                                 >
-                                    <Check size={18} />
                                     บันทึก
                                 </button>
                             </div>
@@ -846,6 +758,6 @@ export default function FinancePage() {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }

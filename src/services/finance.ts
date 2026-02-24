@@ -29,16 +29,21 @@ export const financeService = {
     // --- Extended Finance APIs (api/finance/*) ---
 
     async getBarChartData(
-        range: "week" | "month" | "year" = "year",
+        params?: QueryParams,
     ): Promise<FinanceBarChartResponse> {
-        const query = buildQuery({ range });
+        const query = buildQuery(params);
         return apiClient.get<FinanceBarChartResponse>(
             `/api/finance/bar-chart${query}`,
         );
     },
 
-    async getExpenseStats(): Promise<ExpenseStatsApiResponse> {
-        return apiClient.get<ExpenseStatsApiResponse>("/api/finance/expense");
+    async getExpenseStats(
+        params?: QueryParams,
+    ): Promise<ExpenseStatsApiResponse> {
+        const query = buildQuery(params);
+        return apiClient.get<ExpenseStatsApiResponse>(
+            `/api/finance/expense${query}`,
+        );
     },
 
     async createExpense(payload: CreateExpensePayload): Promise<Expense> {
@@ -48,8 +53,13 @@ export const financeService = {
         );
     },
 
-    async getIncomeStats(): Promise<IncomeStatsApiResponse> {
-        return apiClient.get<IncomeStatsApiResponse>("/api/finance/income");
+    async getIncomeStats(
+        params?: QueryParams,
+    ): Promise<IncomeStatsApiResponse> {
+        const query = buildQuery(params);
+        return apiClient.get<IncomeStatsApiResponse>(
+            `/api/finance/income${query}`,
+        );
     },
 
     async createIncome(payload: CreateIncomePayload): Promise<Income> {
@@ -59,9 +69,12 @@ export const financeService = {
         );
     },
 
-    async getSummaryStats(): Promise<FinanceSummaryStatsApiResponse> {
+    async getSummaryStats(
+        params?: QueryParams,
+    ): Promise<FinanceSummaryStatsApiResponse> {
+        const query = buildQuery(params);
         return apiClient.get<FinanceSummaryStatsApiResponse>(
-            "/api/finance/stats",
+            `/api/finance/stats${query}`,
         );
     },
 

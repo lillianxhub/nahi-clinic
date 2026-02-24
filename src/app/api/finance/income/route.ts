@@ -1,27 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const now = new Date();
+        const { searchParams } = new URL(request.url);
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
 
-        const startDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1,
-            0,
-            0,
-            0,
-        );
+        let startDate: Date;
+        let endDate: Date;
 
-        const endDate = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            0,
-            23,
-            59,
-            59,
-        );
+        if (startDateParam && endDateParam) {
+            startDate = new Date(startDateParam);
+            endDate = new Date(endDateParam);
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+            endDate = new Date(
+                now.getFullYear(),
+                now.getMonth() + 1,
+                0,
+                23,
+                59,
+                59,
+            );
+        }
         const visitDetails = await prisma.visit_Detail.findMany({
             where: {
                 deleted_at: null,
