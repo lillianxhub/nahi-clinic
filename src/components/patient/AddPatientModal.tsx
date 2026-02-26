@@ -24,6 +24,7 @@ export function mapPatientFromApi(api: PatientApiResponse): Patient {
         phone: api.phone,
         address: api.address,
         allergy: api.allergy,
+        visits: api.visits,
     };
 }
 

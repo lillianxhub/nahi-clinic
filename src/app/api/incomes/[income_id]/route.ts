@@ -15,6 +15,13 @@ export async function GET(req: Request, { params }: Params) {
             where: {
                 income_id,
             },
+            include: {
+                visit: {
+                    include: {
+                        patient: true,
+                    },
+                },
+            },
         });
 
         if (!income) {

@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import PieWithLegend from "@/components/charts/PieWithLegend";
 import TransactionsTable from "@/components/finance/TransactionsTable";
+import AddTransactionModal from "@/components/finance/AddTransactionModal";
 import { financeService } from "@/services/finance";
 import {
     FinanceSummaryStats,
@@ -118,54 +119,6 @@ export default function FinancePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [customStartDate, setCustomStartDate] = useState("");
     const [customEndDate, setCustomEndDate] = useState("");
-
-    const [formData, setFormData] = useState({
-        date: new Date().toISOString().split("T")[0],
-        category: "",
-        amount: "",
-        description: "",
-        status: "completed",
-    });
-
-    const handleSave = async () => {
-        try {
-            if (transactionType === "income") {
-                await financeService.createIncome({
-                    income_date: formData.date,
-                    amount: Number(formData.amount),
-                    payment_method: "cash",
-                    visit_id: "",
-                });
-            } else {
-                let expenseType = "general";
-                if (formData.category === "ค่ายา/เวชภัณฑ์")
-                    expenseType = "drug";
-                if (formData.category === "ค่าเช่า/สาธารณูปโภค")
-                    expenseType = "utility";
-
-                await financeService.createExpense({
-                    expense_date: formData.date,
-                    expense_type: expenseType as any,
-                    amount: Number(formData.amount),
-                    description: formData.description,
-                });
-            }
-            setShowAddModal(false);
-            fetchDashboardData();
-            fetchTransactionsData(1);
-            // Reset form
-            setFormData({
-                date: new Date().toISOString().split("T")[0],
-                category: "",
-                amount: "",
-                description: "",
-                status: "completed",
-            });
-        } catch (error) {
-            console.error("Failed to save transaction:", error);
-            alert("ไม่สามารถบันทึกข้อมูลได้");
-        }
-    };
 
     const fetchTransactionsData = async (page: number) => {
         try {
@@ -551,213 +504,15 @@ export default function FinancePage() {
             </div>
 
             {/* Modals */}
-            {showAddModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-                    <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3
-                                className="text-xl font-bold"
-                                style={{ color: "#3F7C87" }}
-                            >
-                                เพิ่มรายการใหม่
-                            </h3>
-                            <button
-                                onClick={() => setShowAddModal(false)}
-                                className="text-muted hover:text-primary transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-primary">
-                                    ประเภทรายการ
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() =>
-                                            setTransactionType("income")
-                                        }
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "income" ? "border-green-500 bg-green-50" : "border-gray-100"}`}
-                                    >
-                                        <ArrowUpRight
-                                            size={24}
-                                            className="mx-auto mb-2 text-green-500"
-                                        />
-                                        <p
-                                            className={`font-medium text-center ${transactionType === "income" ? "text-green-600" : "text-gray-500"}`}
-                                        >
-                                            รายรับ
-                                        </p>
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            setTransactionType("expense")
-                                        }
-                                        className={`p-4 border-2 rounded-lg transition-all ${transactionType === "expense" ? "border-red-500 bg-red-50" : "border-gray-100"}`}
-                                    >
-                                        <ArrowDownRight
-                                            size={24}
-                                            className="mx-auto mb-2 text-red-500"
-                                        />
-                                        <p
-                                            className={`font-medium text-center ${transactionType === "expense" ? "text-red-600" : "text-gray-500"}`}
-                                        >
-                                            รายจ่าย
-                                        </p>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-primary">
-                                        วันที่
-                                    </label>
-                                    <input
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                date: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                        style={{ borderColor: "#E5E7EB" }}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-primary">
-                                        หมวดหมู่
-                                    </label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                category: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                        style={{ borderColor: "#E5E7EB" }}
-                                    >
-                                        <option value="">เลือกหมวดหมู่</option>
-                                        {transactionType === "income" ? (
-                                            <>
-                                                <option value="ค่าตรวจรักษา">
-                                                    ค่าตรวจรักษา
-                                                </option>
-                                                <option value="ค่ายา">
-                                                    ค่ายา
-                                                </option>
-                                                <option value="ค่าบริการ">
-                                                    ค่าบริการ
-                                                </option>
-                                                <option value="วัคซีน">
-                                                    วัคซีน
-                                                </option>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <option value="ค่ายา/เวชภัณฑ์">
-                                                    ค่ายา/เวชภัณฑ์
-                                                </option>
-                                                <option value="เงินเดือนพนักงาน">
-                                                    เงินเดือนพนักงาน
-                                                </option>
-                                                <option value="ค่าเช่า/สาธารณูปโภค">
-                                                    ค่าเช่า/สาธารณูปโภค
-                                                </option>
-                                                <option value="อื่นๆ">
-                                                    อื่นๆ
-                                                </option>
-                                            </>
-                                        )}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-primary">
-                                    จำนวนเงิน
-                                </label>
-                                <input
-                                    type="number"
-                                    value={formData.amount}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            amount: e.target.value,
-                                        })
-                                    }
-                                    placeholder="0.00"
-                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                    style={{ borderColor: "#E5E7EB" }}
-                                />
-                            </div>
-
-                            {transactionType === "expense" && (
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-primary">
-                                        รายละเอียด
-                                    </label>
-                                    <textarea
-                                        rows={3}
-                                        value={formData.description}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                description: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary resize-none"
-                                        style={{ borderColor: "#E5E7EB" }}
-                                    />
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2 text-primary">
-                                    สถานะ
-                                </label>
-                                <select
-                                    value={formData.status}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            status: e.target.value,
-                                        })
-                                    }
-                                    className="w-full px-4 py-2 border rounded-lg outline-none focus:border-primary"
-                                    style={{ borderColor: "#E5E7EB" }}
-                                >
-                                    <option value="completed">เสร็จสิ้น</option>
-                                    <option value="pending">รอดำเนินการ</option>
-                                </select>
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    onClick={() => setShowAddModal(false)}
-                                    className="px-6 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
-                                    style={{ borderColor: "#E5E7EB" }}
-                                >
-                                    ยกเลิก
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    className="px-8 py-2 rounded-lg text-white hover:opacity-90 transition-opacity"
-                                    style={{ backgroundColor: "#3F7C87" }}
-                                >
-                                    บันทึก
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AddTransactionModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={() => {
+                    fetchDashboardData();
+                    fetchTransactionsData(1);
+                }}
+                initialType={transactionType as "income" | "expense"}
+            />
         </div>
     );
 }

@@ -11,6 +11,7 @@ export interface Patient {
     phone: string;
     address?: string;
     allergy?: string;
+    visits?: any[];
 }
 
 export interface CreatePatientPayload {
@@ -33,4 +34,5 @@ export interface PatientApiResponse {
     phone: string;
     address?: string;
     allergy: string;
+    visits?: any[];
 }

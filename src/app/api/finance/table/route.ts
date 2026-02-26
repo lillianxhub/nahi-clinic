@@ -77,10 +77,13 @@ export async function GET(request: Request) {
         const formattedIncomes = incomes.map((item) => ({
             id: item.income_id,
             timestamp: item.income_date.getTime(),
-            date: item.income_date.toLocaleDateString("th-TH", {
+            date: item.income_date.toLocaleString("th-TH", {
                 year: "numeric",
-                month: "numeric",
+                month: "short",
                 day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
             }),
             type: "income",
             category: "ค่าตรวจรักษา",
@@ -100,10 +103,13 @@ export async function GET(request: Request) {
             return {
                 id: item.expense_id,
                 timestamp: item.expense_date.getTime(),
-                date: item.expense_date.toLocaleDateString("th-TH", {
+                date: item.expense_date.toLocaleString("th-TH", {
                     year: "numeric",
-                    month: "numeric",
+                    month: "short",
                     day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
                 }),
                 type: "expense",
                 category: categoryTH,

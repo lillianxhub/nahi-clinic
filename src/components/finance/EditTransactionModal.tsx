@@ -21,6 +21,10 @@ import {
     CreateExpensePayload,
 } from "@/interface/finance";
 import { financeService } from "@/services/finance";
+import { patientService } from "@/services/patient";
+import { Patient } from "@/interface/patient";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Search, User } from "lucide-react";
 
 interface EditTransactionModalProps {
     isOpen: boolean;
@@ -39,9 +43,92 @@ export default function EditTransactionModal({
     const [fetching, setFetching] = useState(false);
     const [formData, setFormData] = useState<any>(null);
 
+    // Patient Search States
+    const [searchTerm, setSearchTerm] = useState("");
+    const debouncedSearch = useDebounce(searchTerm, 500);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [searchingPatients, setSearchingPatients] = useState(false);
+    const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+        null,
+    );
+
+    // Visit States
+    const [visits, setVisits] = useState<any[]>([]);
+    const [loadingVisits, setLoadingVisits] = useState(false);
+    const [selectedVisitId, setSelectedVisitId] = useState("");
+
+    useEffect(() => {
+        const fetchPatients = async () => {
+            if (!debouncedSearch || debouncedSearch.length < 2) {
+                setPatients([]);
+                return;
+            }
+
+            try {
+                setSearchingPatients(true);
+                const res = await patientService.getPatients({
+                    q: debouncedSearch,
+                    pageSize: 5,
+                });
+                setPatients(res.data);
+            } catch (error) {
+                console.error("ค้นหาผู้ป่วยล้มเหลว", error);
+            } finally {
+                setSearchingPatients(false);
+            }
+        };
+
+        fetchPatients();
+    }, [debouncedSearch]);
+
+    useEffect(() => {
+        const fetchPatientDetails = async () => {
+            if (!selectedPatient) {
+                setVisits([]);
+                // Only reset visit ID if we're not in the middle of initial load
+                if (formData) setSelectedVisitId("");
+                return;
+            }
+
+            try {
+                setLoadingVisits(true);
+                const res = await patientService.getPatientById(
+                    selectedPatient.patient_id,
+                );
+                // @ts-ignore
+                const patientVisits = res.visits || [];
+                setVisits(patientVisits);
+                // If it's a new patient selection, select the first visit
+                if (
+                    formData &&
+                    !patientVisits.some(
+                        (v: any) => v.visit_id === selectedVisitId,
+                    )
+                ) {
+                    if (patientVisits.length > 0) {
+                        setSelectedVisitId(patientVisits[0].visit_id);
+                    }
+                }
+            } catch (error) {
+                console.error("ดึงข้อมูลการเข้าตรวจล้มเหลว", error);
+            } finally {
+                setLoadingVisits(false);
+            }
+        };
+
+        fetchPatientDetails();
+    }, [selectedPatient]);
+
     useEffect(() => {
         if (isOpen && transaction) {
             fetchDetails();
+        } else {
+            // Reset states when closed
+            setSelectedPatient(null);
+            setSearchTerm("");
+            setVisits([]);
+            setSelectedVisitId("");
         }
     }, [isOpen, transaction]);
 
@@ -51,18 +138,31 @@ export default function EditTransactionModal({
         try {
             if (transaction.type === "income") {
                 const res = await financeService.getIncomeById(transaction.id);
+                const dateObj = new Date(res.income_date);
                 setFormData({
                     ...res,
-                    date: new Date(res.income_date).toISOString().split("T")[0],
+                    date: dateObj.toISOString().split("T")[0],
+                    hour: dateObj.getHours().toString().padStart(2, "0"),
+                    minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
                 });
+                setSelectedVisitId(res.visit_id);
+
+                // @ts-ignore - visit and patient are included now
+                if (res.visit?.patient) {
+                    // @ts-ignore
+                    setSelectedPatient(res.visit.patient);
+                    // @ts-ignore
+                    setSearchTerm(res.visit.patient.fullName || "");
+                }
             } else {
                 const res = await financeService.getExpenseById(transaction.id);
+                const dateObj = new Date(res.expense_date);
                 setFormData({
                     ...res,
-                    date: new Date(res.expense_date)
-                        .toISOString()
-                        .split("T")[0],
+                    date: dateObj.toISOString().split("T")[0],
+                    hour: dateObj.getHours().toString().padStart(2, "0"),
+                    minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
                 });
             }
@@ -79,19 +179,29 @@ export default function EditTransactionModal({
         e.preventDefault();
         if (!transaction || !formData) return;
 
+        if (transaction.type === "income" && !selectedVisitId) {
+            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+            return;
+        }
+
         setLoading(true);
         try {
+            const isoDateTime = new Date(
+                `${formData.date}T${formData.hour}:${formData.minute}:00`,
+            ).toISOString();
+
             if (transaction.type === "income") {
                 const payload: Partial<CreateIncomePayload> = {
-                    income_date: new Date(formData.date).toISOString(),
+                    income_date: isoDateTime,
                     amount: Number(formData.amount),
                     payment_method: formData.payment_method,
                     receipt_no: formData.receipt_no,
+                    visit_id: selectedVisitId,
                 };
                 await financeService.updateIncome(transaction.id, payload);
             } else {
                 const payload: Partial<CreateExpensePayload> = {
-                    expense_date: new Date(formData.date).toISOString(),
+                    expense_date: isoDateTime,
                     expense_type: formData.expense_type,
                     amount: Number(formData.amount),
                     description: formData.description,
@@ -160,28 +270,273 @@ export default function EditTransactionModal({
                 ) : (
                     <form onSubmit={handleSave}>
                         <div className="p-8 space-y-5 max-h-[70vh] overflow-y-auto">
+                            {/* Patient & Visit Selection (for Income) */}
+                            {isIncome && (
+                                <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <div className="relative">
+                                        <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                            ค้นหาผู้ป่วย{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
+                                        </label>
+                                        <div className="relative">
+                                            <Search
+                                                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                size={18}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="ค้นหาด้วยชื่อ สกุล หรือเบอร์โทรศัพท์..."
+                                                value={searchTerm}
+                                                onChange={(e) => {
+                                                    setSearchTerm(
+                                                        e.target.value,
+                                                    );
+                                                    setShowPatientDropdown(
+                                                        true,
+                                                    );
+                                                }}
+                                                onFocus={() =>
+                                                    setShowPatientDropdown(true)
+                                                }
+                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                            />
+                                        </div>
+
+                                        {showPatientDropdown &&
+                                            (searchTerm?.length ?? 0) >= 2 && (
+                                                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                                                    {searchingPatients ? (
+                                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                                            กำลังค้นหา...
+                                                        </div>
+                                                    ) : patients.length > 0 ? (
+                                                        patients.map(
+                                                            (patient) => (
+                                                                <button
+                                                                    key={
+                                                                        patient.patient_id
+                                                                    }
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedPatient(
+                                                                            patient,
+                                                                        );
+                                                                        setSearchTerm(
+                                                                            patient.fullName,
+                                                                        );
+                                                                        setShowPatientDropdown(
+                                                                            false,
+                                                                        );
+                                                                    }}
+                                                                    className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex items-center gap-3 transition-colors"
+                                                                >
+                                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                                                        <User
+                                                                            size={
+                                                                                20
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-semibold text-gray-800">
+                                                                            {
+                                                                                patient.fullName
+                                                                            }
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            HN:{" "}
+                                                                            {
+                                                                                patient.hospital_number
+                                                                            }{" "}
+                                                                            |
+                                                                            โทร:{" "}
+                                                                            {
+                                                                                patient.phone
+                                                                            }
+                                                                        </p>
+                                                                    </div>
+                                                                </button>
+                                                            ),
+                                                        )
+                                                    ) : (
+                                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                                            ไม่พบข้อมูลผู้ป่วย
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                    </div>
+
+                                    {selectedPatient && (
+                                        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                                เลือกการเข้าตรวจ (Visit){" "}
+                                                <span className="text-red-500">
+                                                    *
+                                                </span>
+                                            </label>
+                                            {loadingVisits ? (
+                                                <div className="text-sm text-gray-500 animate-pulse flex items-center gap-2 py-2">
+                                                    <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                                                    กำลังโหลดข้อมูลการเข้าตรวจ...
+                                                </div>
+                                            ) : visits.length > 0 ? (
+                                                <div className="relative">
+                                                    <Calendar
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={18}
+                                                    />
+                                                    <select
+                                                        value={selectedVisitId}
+                                                        onChange={(e) =>
+                                                            setSelectedVisitId(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none"
+                                                    >
+                                                        {visits.map((visit) => (
+                                                            <option
+                                                                key={
+                                                                    visit.visit_id
+                                                                }
+                                                                value={
+                                                                    visit.visit_id
+                                                                }
+                                                            >
+                                                                {new Date(
+                                                                    visit.visit_date,
+                                                                ).toLocaleDateString(
+                                                                    "th-TH",
+                                                                    {
+                                                                        year: "numeric",
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    },
+                                                                )}{" "}
+                                                                -{" "}
+                                                                {visit.symptom ||
+                                                                    "ไม่มีระบุอาการ"}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                        <svg
+                                                            width="12"
+                                                            height="12"
+                                                            viewBox="0 0 12 12"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                        >
+                                                            <path
+                                                                d="M2.5 4.5L6 8L9.5 4.5"
+                                                                stroke="currentColor"
+                                                                strokeWidth="1.5"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-xl border border-red-100 flex items-center gap-2">
+                                                    <X size={16} />
+                                                    ไม่พบประวัติการเข้าตรวจสำหรับผู้ป่วยรายนี้
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {/* Date */}
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <Calendar
-                                        size={16}
-                                        className="text-primary"
+                            <div className="space-y-1.5 flex gap-3">
+                                <div className="flex-1">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <Calendar
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        วันที่{" "}
+                                        <span className="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData?.date || ""}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                date: e.target.value,
+                                            })
+                                        }
+                                        required
                                     />
-                                    วันที่{" "}
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <input
-                                    type="date"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={formData?.date || ""}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            date: e.target.value,
-                                        })
-                                    }
-                                    required
-                                />
+                                </div>
+                                <div className="w-48">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        เวลา{" "}
+                                        <span className="text-danger">*</span>
+                                    </label>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <select
+                                            value={formData?.hour || "00"}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    hour: e.target.value,
+                                                })
+                                            }
+                                            className="flex-1 px-2 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white text-center"
+                                        >
+                                            {Array.from({ length: 24 }).map(
+                                                (_, i) => (
+                                                    <option
+                                                        key={i}
+                                                        value={i
+                                                            .toString()
+                                                            .padStart(2, "0")}
+                                                    >
+                                                        {i
+                                                            .toString()
+                                                            .padStart(2, "0")}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                        <span className="font-bold text-gray-400">
+                                            :
+                                        </span>
+                                        <select
+                                            value={formData?.minute || "00"}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    minute: e.target.value,
+                                                })
+                                            }
+                                            className="flex-1 px-2 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white text-center"
+                                        >
+                                            {Array.from({ length: 60 }).map(
+                                                (_, i) => (
+                                                    <option
+                                                        key={i}
+                                                        value={i
+                                                            .toString()
+                                                            .padStart(2, "0")}
+                                                    >
+                                                        {i
+                                                            .toString()
+                                                            .padStart(2, "0")}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Type Specific Fields */}
