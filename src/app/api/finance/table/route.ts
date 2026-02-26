@@ -8,30 +8,53 @@ export async function GET(request: Request) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "10");
         const search = searchParams.get("search") || "";
+        const range = searchParams.get("range") || "month";
         const startDate = searchParams.get("startDate");
         const endDate = searchParams.get("endDate");
         const type = searchParams.get("type") || "all";
-
         const skip = (page - 1) * limit;
 
         // 2. Prepare Filters
         const incomeWhere: any = { is_active: true, deleted_at: null };
         const expenseWhere: any = { is_active: true, deleted_at: null };
 
-        if (startDate) {
-            const start = new Date(startDate);
-            incomeWhere.income_date = {
-                ...incomeWhere.income_date,
-                gte: start,
-            };
-            expenseWhere.expense_date = {
-                ...expenseWhere.expense_date,
-                gte: start,
-            };
+        let start: Date | undefined;
+        let end: Date | undefined;
+
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        } else {
+            const now = new Date();
+            if (range === "year") {
+                start = new Date(now.getFullYear(), 0, 1);
+                end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+            } else if (range === "week") {
+                end = new Date(now);
+                end.setHours(23, 59, 59, 999);
+                start = new Date(now);
+                start.setDate(now.getDate() - 6);
+                start.setHours(0, 0, 0, 0);
+            } else if (range === "month") {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(
+                    now.getFullYear(),
+                    now.getMonth() + 1,
+                    0,
+                    23,
+                    59,
+                    59,
+                    999,
+                );
+            }
         }
-        if (endDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999); // End of day
+
+        if (start) {
+            incomeWhere.income_date = { gte: start };
+            expenseWhere.expense_date = { gte: start };
+        }
+        if (end) {
             incomeWhere.income_date = { ...incomeWhere.income_date, lte: end };
             expenseWhere.expense_date = {
                 ...expenseWhere.expense_date,

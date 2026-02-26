@@ -128,7 +128,7 @@ export default function ViewTreatmentModal({
                                                       new Date(
                                                           treatment.visit_date,
                                                       ),
-                                                      "d MMMM yyyy",
+                                                      "d MMMM yyyy HH:mm น.",
                                                       { locale: th },
                                                   )
                                                 : "-"}
