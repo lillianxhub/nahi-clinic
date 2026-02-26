@@ -5,6 +5,7 @@ export async function GET(request: Request) {
     try {
         const now = new Date();
         const { searchParams } = new URL(request.url);
+        const range = searchParams.get("range") || "month";
         const startDateParam = searchParams.get("startDate");
         const endDateParam = searchParams.get("endDate");
 
@@ -15,8 +16,17 @@ export async function GET(request: Request) {
             startDate = new Date(startDateParam);
             endDate = new Date(endDateParam);
             endDate.setHours(23, 59, 59, 999);
+        } else if (range === "year") {
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+        } else if (range === "week") {
+            endDate = new Date(now);
+            endDate.setHours(23, 59, 59, 999);
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 6);
+            startDate.setHours(0, 0, 0, 0);
         } else {
-            const now = new Date();
+            // Default to month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
             endDate = new Date(
                 now.getFullYear(),

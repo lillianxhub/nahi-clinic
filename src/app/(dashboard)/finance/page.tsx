@@ -129,6 +129,7 @@ export default function FinancePage() {
                 startDate: customStartDate,
                 endDate: customEndDate,
                 type: filterType,
+                range: dateRange,
             });
             setTransactions(tableRes.data);
             setTotalTransactions(tableRes.total);
@@ -141,7 +142,11 @@ export default function FinancePage() {
     const fetchDashboardData = async () => {
         setLoading(true);
         try {
-            const queryParams = { range: dateRange };
+            const queryParams = {
+                range: dateRange,
+                startDate: customStartDate,
+                endDate: customEndDate,
+            };
             const [summaryRes, chartRes, incomeRes, expenseRes] =
                 await Promise.all([
                     financeService.getSummaryStats(queryParams),
@@ -163,11 +168,11 @@ export default function FinancePage() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [dateRange]);
+    }, [dateRange, customStartDate, customEndDate]);
 
     useEffect(() => {
         fetchTransactionsData(1);
-    }, [filterType, customStartDate, customEndDate]);
+    }, [filterType, customStartDate, customEndDate, dateRange]);
 
     const handleSearch = () => {
         fetchTransactionsData(1);
@@ -201,6 +206,17 @@ export default function FinancePage() {
         color: expenseColors[index % expenseColors.length],
     }));
 
+    const rangeLabels = {
+        week: "สัปดาห์นี้",
+        month: "เดือนนี้",
+        year: "ปีนี้",
+    };
+
+    const currentSubtitle =
+        customStartDate && customEndDate
+            ? "ช่วงเวลาที่เลือก"
+            : rangeLabels[dateRange];
+
     if (loading && !summary) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -218,32 +234,32 @@ export default function FinancePage() {
                         icon={ArrowUpRight}
                         title="รายรับทั้งหมด"
                         value={`฿${(summary?.monthIncome || 0).toLocaleString()}`}
-                        subtitle="ช่วงเวลาที่เลือก"
+                        subtitle={currentSubtitle}
                         color="#10B981"
                     />
                     <StatCard
                         icon={ArrowDownRight}
                         title="รายจ่ายทั้งหมด"
                         value={`฿${(summary?.monthExpense || 0).toLocaleString()}`}
-                        subtitle="ช่วงเวลาที่เลือก"
+                        subtitle={currentSubtitle}
                         color="#EF4444"
                     />
                     <StatCard
                         icon={DollarSign}
                         title="กำไรสุทธิ"
                         value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
-                        trend={
-                            (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
-                        }
+                        // trend={
+                        //     (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
+                        // }
                         trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
-                        subtitle="เทียบกับช่วงก่อนหน้า"
+                        subtitle={currentSubtitle}
                         color="#3F7C87"
                     />
                     <StatCard
                         icon={TrendingUp}
                         title="อัตรากำไร"
                         value={`${summary?.profitRate || 0}%`}
-                        subtitle="ช่วงเวลาที่เลือก"
+                        subtitle={currentSubtitle}
                         color="#F59E0B"
                     />
                 </div>
