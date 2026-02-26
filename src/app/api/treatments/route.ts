@@ -78,20 +78,47 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
+  try {
+    const body = await req.json();
 
-        const treatment = await prisma.visit.create({
-            data: {
-                patient_id: body.patient_id, // ได้จาก dropdown/search
-                visit_date: new Date(body.visit_date),
-                symptom: body.symptom,
-                diagnosis: body.diagnosis,
-            },
-        });
-
-        return NextResponse.json(treatment, { status: 201 });
-    } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+    if (!body.patient_id || !body.visit_date || !body.symptom || !body.diagnosis) {
+      return NextResponse.json(
+        { message: "ข้อมูลไม่ครบถ้วน" },
+        { status: 400 }
+      );
     }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1️⃣ สร้างการรักษา
+      const treatment = await tx.visit.create({
+        data: {
+          patient_id: body.patient_id,
+          visit_date: new Date(body.visit_date),
+          symptom: body.symptom,
+          diagnosis: body.diagnosis,
+        },
+      });
+
+      // 2️⃣ สร้างรายรับจากการรักษา
+      const income = await tx.income.create({
+        data: {
+          visit_id: treatment.visit_id,
+          amount: body.amount ?? 0,          // หรือคำนวณจาก treatment
+          income_date: new Date(),
+          payment_method: body.payment_method,
+        },
+      });
+
+      return { treatment, income };
+    });
+
+    return NextResponse.json(result, { status: 201 });
+
+  } catch (error: any) {
+    console.error("Create treatment + income error:", error);
+    return NextResponse.json(
+      { message: error.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
