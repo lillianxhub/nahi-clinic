@@ -511,9 +511,15 @@ export default function AddTreatmentModal({
                                                                     {m.sell_price.toLocaleString()}{" "}
                                                                     บาท |
                                                                     คงเหลือ:{" "}
-                                                                    {m.stock
-                                                                        ?.total ??
-                                                                        0}{" "}
+                                                                    {m.lots?.reduce(
+                                                                        (
+                                                                            sum,
+                                                                            lot,
+                                                                        ) =>
+                                                                            sum +
+                                                                            lot.qty_remaining,
+                                                                        0,
+                                                                    ) ?? 0}{" "}
                                                                     {m.unit}
                                                                 </div>
                                                             </div>

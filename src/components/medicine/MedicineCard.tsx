@@ -1,24 +1,23 @@
 "use client";
 
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Eye, Trash2 } from "lucide-react";
 import { Medicine } from "@/interface/medicine";
 import { useState } from "react";
 import { medicineService } from "@/services/medicine";
 
 type Props = {
     medicine: Medicine;
-    onClick?: (id: string) => void;
+    onView?: (id: string) => void;
     onEdit?: (id: string) => void;
     onDelete?: (id: string) => void;
 };
 
 export default function MedicineCard({
     medicine,
+    onView,
     onEdit,
     onDelete,
-    onClick,
 }: Props) {
-    
     const minQuantity = medicine.min_stock;
 
     const totalQuantity =
@@ -57,8 +56,7 @@ export default function MedicineCard({
 
     return (
         <div
-            className={`cursor-pointer bg-card rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow border ${getBackgroundColor()}`}
-            onClick={() => onClick?.(medicine.drug_id)}
+            className={`bg-card rounded-lg shadow-sm p-4 transition-shadow border ${getBackgroundColor()}`}
         >
             <div
                 className="
@@ -114,15 +112,34 @@ export default function MedicineCard({
                 {/* ===== Actions ===== */}
                 <div className="flex items-center justify-end gap-2">
                     <button
-                        onClick={() => onEdit?.(medicine.drug_id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onView?.(medicine.drug_id);
+                        }}
+                        className="cursor-pointer p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors"
+                        title="ดูรายการ Lot"
+                    >
+                        <Eye className="w-5 h-5" />
+                    </button>
+
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit?.(medicine.drug_id);
+                        }}
                         className="cursor-pointer p-2 hover:bg-teal-50 text-primary rounded-lg transition-colors"
+                        title="แก้ไขข้อมูลยา"
                     >
                         <Edit2 className="w-5 h-5" />
                     </button>
 
                     <button
-                        onClick={() => onDelete?.(medicine.drug_id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete?.(medicine.drug_id);
+                        }}
                         className="cursor-pointer p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                        title="ลบยา"
                     >
                         <Trash2 className="w-5 h-5" />
                     </button>

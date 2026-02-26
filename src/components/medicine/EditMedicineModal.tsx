@@ -1,64 +1,49 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-    X,
-    Pill,
-    Package,
-    DollarSign,
-    Calendar,
-    Tag,
-    Layers,
-} from "lucide-react";
+import { X, Pill, Tag, Layers, DollarSign, Package } from "lucide-react";
 import { medicineService } from "@/services/medicine";
-import { DrugCategory } from "@/interface/medicine";
+import { DrugCategory, Medicine } from "@/interface/medicine";
 
-interface AddMedicineModalProps {
+interface EditMedicineModalProps {
     open: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    medicine: Medicine | null;
 }
 
-export default function AddMedicineModal({
+export default function EditMedicineModal({
     open,
     onClose,
     onSuccess,
-}: AddMedicineModalProps) {
+    medicine,
+}: EditMedicineModalProps) {
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
-    const getTodayStr = () => new Date().toISOString().split("T")[0];
-
-    const generateLotNo = (dateStr: string) => {
-        const d = new Date(dateStr);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `LOT-${year}${month}-${day}`;
-    };
-
     const [formData, setFormData] = useState({
-        medicine_name: "",
+        drug_name: "",
         category_id: "",
         unit: "",
-        quantity: "",
-        buy_price: "",
         sell_price: "",
-        received_date: getTodayStr(),
-        expiry_date: "",
-        lot_no: generateLotNo(getTodayStr()),
+        min_stock: "",
+        status: "active" as "active" | "inactive",
     });
 
     useEffect(() => {
         if (open) {
             fetchCategories();
-            const today = getTodayStr();
-            setFormData((prev) => ({
-                ...prev,
-                received_date: today,
-                lot_no: generateLotNo(today),
-            }));
+            if (medicine) {
+                setFormData({
+                    drug_name: medicine.drug_name,
+                    category_id: medicine.category?.category_id || "",
+                    unit: medicine.unit,
+                    sell_price: String(medicine.sell_price),
+                    min_stock: String(medicine.min_stock || 0),
+                    status: medicine.status || "active",
+                });
+            }
         }
-    }, [open]);
+    }, [open, medicine]);
 
     const fetchCategories = async () => {
         try {
@@ -73,53 +58,32 @@ export default function AddMedicineModal({
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     ) => {
         const { name, value } = e.target;
-
-        setFormData((prev) => {
-            const newData = { ...prev, [name]: value };
-
-            // Auto-update lot number if received_date changes
-            if (name === "received_date") {
-                newData.lot_no = generateLotNo(value);
-            }
-
-            return newData;
-        });
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!medicine) return;
 
         try {
             setLoading(true);
 
-            await medicineService.createMedicine({
-                drug_name: formData.medicine_name,
+            await medicineService.updateMedicine(medicine.drug_id, {
+                drug_name: formData.drug_name,
                 category_id: formData.category_id,
                 unit: formData.unit,
-                quantity: Number(formData.quantity),
-                buy_price: Number(formData.buy_price),
                 sell_price: Number(formData.sell_price),
-                received_date: formData.received_date,
-                expiry_date: formData.expiry_date,
-                lot_no: formData.lot_no,
-            });
-
-            setFormData({
-                medicine_name: "",
-                category_id: "",
-                unit: "",
-                quantity: "",
-                buy_price: "",
-                sell_price: "",
-                received_date: getTodayStr(),
-                expiry_date: "",
-                lot_no: generateLotNo(getTodayStr()),
+                min_stock: Number(formData.min_stock),
+                status: formData.status,
             });
 
             onSuccess();
             onClose();
         } catch (error) {
-            console.error("สร้างยาไม่สำเร็จ", error);
+            console.error("แก้ไขยาไม่สำเร็จ", error);
             alert("เกิดข้อผิดพลาด: " + String(error));
         } finally {
             setLoading(false);
@@ -129,13 +93,10 @@ export default function AddMedicineModal({
     if (!open) return null;
 
     const isFormValid =
-        formData.medicine_name.trim() &&
+        formData.drug_name.trim() &&
         formData.category_id &&
         formData.unit.trim() &&
-        formData.quantity &&
-        formData.buy_price &&
-        formData.sell_price &&
-        formData.expiry_date;
+        formData.sell_price;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -151,10 +112,10 @@ export default function AddMedicineModal({
                         </div>
                         <div>
                             <h2 className="text-xl font-semibold text-white">
-                                เพิ่มยาใหม่
+                                แก้ไขข้อมูลยา
                             </h2>
                             <p className="text-white/80 text-sm">
-                                กรอกข้อมูลยา
+                                อัปเดตข้อมูลรายละเอียดของยา
                             </p>
                         </div>
                     </div>
@@ -171,7 +132,7 @@ export default function AddMedicineModal({
                     onSubmit={handleSubmit}
                     className="p-6 space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto"
                 >
-                    {/* Medicine Name */}
+                    {/* Drug Name */}
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-foreground flex items-center gap-2">
                             <Pill size={16} className="text-primary" />
@@ -179,10 +140,10 @@ export default function AddMedicineModal({
                         </label>
                         <input
                             type="text"
-                            name="medicine_name"
+                            name="drug_name"
                             placeholder="กรอกชื่อยา"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.medicine_name}
+                            value={formData.drug_name}
                             onChange={handleChange}
                             required
                         />
@@ -234,65 +195,6 @@ export default function AddMedicineModal({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Quantity */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Package size={16} className="text-primary" />
-                                จำนวน <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="quantity"
-                                placeholder="0"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.quantity}
-                                onChange={handleChange}
-                                required
-                                min="0"
-                            />
-                        </div>
-
-                        {/* Lot No */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Package size={16} className="text-primary" />
-                                เลขล็อต (Lot No.)
-                            </label>
-                            <input
-                                type="text"
-                                name="lot_no"
-                                placeholder="ระบุเลขล็อต (ถ้าเว้นวางจะรันตามวันที่)"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.lot_no}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Buy Price */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <DollarSign
-                                    size={16}
-                                    className="text-primary"
-                                />
-                                ราคาทุน (ต่อหน่วย){" "}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="buy_price"
-                                placeholder="0.00"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.buy_price}
-                                onChange={handleChange}
-                                required
-                                min="0"
-                                step="0.01"
-                            />
-                        </div>
-
                         {/* Sell Price */}
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -315,42 +217,54 @@ export default function AddMedicineModal({
                                 step="0.01"
                             />
                         </div>
-                    </div>
 
-                    {/* Expiry Date */}
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Received Date */}
+                        {/* Min Stock */}
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันที่นำเข้า{" "}
-                                <span className="text-danger">*</span>
+                                <Package size={16} className="text-primary" />
+                                จุดแจ้งเตือนสต็อกต่ำ
                             </label>
                             <input
-                                type="date"
-                                name="received_date"
+                                type="number"
+                                name="min_stock"
+                                placeholder="0"
                                 className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.received_date}
+                                value={formData.min_stock}
                                 onChange={handleChange}
-                                required
+                                min="0"
                             />
                         </div>
+                    </div>
 
-                        {/* Expiry Date */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันหมดอายุ{" "}
-                                <span className="text-danger">*</span>
+                    {/* Status */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Tag size={16} className="text-primary" />
+                            สถานะ
+                        </label>
+                        <div className="flex gap-4 p-1">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="active"
+                                    checked={formData.status === "active"}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm">ใช้งานปกติ</span>
                             </label>
-                            <input
-                                type="date"
-                                name="expiry_date"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.expiry_date}
-                                onChange={handleChange}
-                                required
-                            />
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="status"
+                                    value="inactive"
+                                    checked={formData.status === "inactive"}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm">ระงับการใช้งาน</span>
+                            </label>
                         </div>
                     </div>
                 </form>
@@ -394,7 +308,7 @@ export default function AddMedicineModal({
                                 กำลังบันทึก...
                             </span>
                         ) : (
-                            "บันทึกข้อมูล"
+                            "อัปเดตข้อมูล"
                         )}
                     </button>
                 </div>
