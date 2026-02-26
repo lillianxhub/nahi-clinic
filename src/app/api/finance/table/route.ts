@@ -80,6 +80,7 @@ export async function GET(request: Request) {
                     visit: {
                         include: {
                             patient: true,
+                            visitDetails: true,
                         },
                     },
                 },
@@ -115,6 +116,18 @@ export async function GET(request: Request) {
                 : "รายรับอื่นๆ",
             amount: Number(item.amount),
             status: "เสร็จสิ้น",
+            visit: item.visit
+                ? {
+                      symptom: item.visit.symptom,
+                      diagnosis: item.visit.diagnosis,
+                      note: item.visit.note,
+                      items: item.visit.visitDetails.map((detail: any) => ({
+                          description: detail.description,
+                          quantity: Number(detail.quantity),
+                          unit_price: Number(detail.unit_price),
+                      })),
+                  }
+                : undefined,
         }));
 
         const formattedExpenses = expenses.map((item) => {

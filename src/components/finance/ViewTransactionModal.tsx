@@ -137,6 +137,102 @@ export default function ViewTransactionModal({
                             </p>
                         </div>
                     </div>
+
+                    {/* Treatment Details if available */}
+                    {transaction.visit && (
+                        <div className="pt-4 border-t border-gray-100 space-y-4">
+                            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                ข้อมูลการรักษา
+                            </h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {transaction.visit.symptom && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-muted font-bold uppercase tracking-wider">
+                                            อาการ
+                                        </label>
+                                        <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-100 italic text-sm text-foreground">
+                                            {transaction.visit.symptom}
+                                        </div>
+                                    </div>
+                                )}
+                                {transaction.visit.diagnosis && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-muted font-bold uppercase tracking-wider">
+                                            การวินิจฉัย
+                                        </label>
+                                        <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-100 text-sm text-foreground font-medium">
+                                            {transaction.visit.diagnosis}
+                                        </div>
+                                    </div>
+                                )}
+                                {transaction.visit.note && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-muted font-bold uppercase tracking-wider">
+                                            บันทึกเพิ่มเติม
+                                        </label>
+                                        <div className="bg-gray-50/50 p-3 rounded-lg border border-gray-100 text-sm text-muted">
+                                            {transaction.visit.note}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Prescribed Items */}
+                                {transaction.visit.items &&
+                                    transaction.visit.items.length > 0 && (
+                                        <div className="space-y-2 mt-2">
+                                            <label className="text-[10px] text-muted font-bold uppercase tracking-wider">
+                                                รายการยาและค่าบริการ
+                                            </label>
+                                            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white/50">
+                                                <table className="w-full text-xs">
+                                                    <thead className="bg-gray-50 text-muted font-medium">
+                                                        <tr>
+                                                            <th className="px-3 py-2 text-left">
+                                                                รายการ
+                                                            </th>
+                                                            <th className="px-3 py-2 text-center">
+                                                                จำนวน
+                                                            </th>
+                                                            <th className="px-3 py-2 text-right">
+                                                                รวม
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {transaction.visit.items.map(
+                                                            (item, idx) => (
+                                                                <tr
+                                                                    key={idx}
+                                                                    className="hover:bg-gray-50/50 transition-colors"
+                                                                >
+                                                                    <td className="px-3 py-2 text-foreground font-medium">
+                                                                        {
+                                                                            item.description
+                                                                        }
+                                                                    </td>
+                                                                    <td className="px-3 py-2 text-center">
+                                                                        {
+                                                                            item.quantity
+                                                                        }
+                                                                    </td>
+                                                                    <td className="px-3 py-2 text-right font-semibold">
+                                                                        ฿
+                                                                        {(
+                                                                            item.quantity *
+                                                                            item.unit_price
+                                                                        ).toLocaleString()}
+                                                                    </td>
+                                                                </tr>
+                                                            ),
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer Actions */}

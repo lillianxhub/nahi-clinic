@@ -100,6 +100,16 @@ export interface TransactionItem {
     description: string;
     amount: number;
     status: string;
+    visit?: {
+        symptom?: string;
+        diagnosis?: string;
+        note?: string;
+        items?: {
+            description: string;
+            quantity: number;
+            unit_price: number;
+        }[];
+    };
 }
 
 export interface TransactionTableApiResponse {
