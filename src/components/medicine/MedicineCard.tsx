@@ -116,7 +116,7 @@ export default function MedicineCard({
                             e.stopPropagation();
                             onView?.(medicine.drug_id);
                         }}
-                        className="cursor-pointer p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors"
+                        className="cursor-pointer p-2 hover:opacity-70 text-primary rounded-lg transition-colors"
                         title="ดูรายการ Lot"
                     >
                         <Eye className="w-5 h-5" />
@@ -127,7 +127,7 @@ export default function MedicineCard({
                             e.stopPropagation();
                             onEdit?.(medicine.drug_id);
                         }}
-                        className="cursor-pointer p-2 hover:bg-teal-50 text-primary rounded-lg transition-colors"
+                        className="cursor-pointer p-2 hover:opacity-70 text-blue-600 rounded-lg transition-colors"
                         title="แก้ไขข้อมูลยา"
                     >
                         <Edit2 className="w-5 h-5" />
@@ -138,7 +138,7 @@ export default function MedicineCard({
                             e.stopPropagation();
                             onDelete?.(medicine.drug_id);
                         }}
-                        className="cursor-pointer p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                        className="cursor-pointer p-2 hover:opacity-70 text-red-600 rounded-lg transition-colors"
                         title="ลบยา"
                     >
                         <Trash2 className="w-5 h-5" />

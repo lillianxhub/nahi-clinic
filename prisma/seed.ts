@@ -2,6 +2,8 @@ import { prisma } from "../src/lib/prisma";
 import { Gender } from "../generated/prisma/client";
 import bcrypt from "bcrypt";
 
+const TOTAL_DAYS = 730;
+
 function daysAgo(days: number) {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -13,23 +15,29 @@ function randomInt(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function generateCitizenId() {
-    let id = "";
-    for (let i = 0; i < 13; i++) {
-        id += Math.floor(Math.random() * 10).toString();
+// Generate a guaranteed-unique citizen ID using the patient index as a seed
+function generateCitizenId(index: number): string {
+    // Format: 1XXXXXXXXXXXXXX where X digits are index-based + random padding
+    const base = index.toString().padStart(8, "0");
+    const suffix = Math.floor(Math.random() * 99999)
+        .toString()
+        .padStart(5, "0");
+    return `1${base}${suffix}`.slice(0, 13);
+}
+
+// Shuffle array in-place (Fisher-Yates)
+function shuffle<T>(arr: T[]): T[] {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return id;
+    return arr;
 }
 
 async function main() {
     console.log("🧹 กำลังล้างข้อมูลเก่า...");
-    const drugUsageCount = await prisma.drug_Usage.count();
-    const expenseDrugLotCount = await prisma.expense_Drug_Lot.count();
-    console.log(`- ลบ Drug_Usage: ${drugUsageCount} รายการ`);
     await prisma.drug_Usage.deleteMany();
-    console.log(`- ลบ Expense_Drug_Lot: ${expenseDrugLotCount} รายการ`);
     await prisma.expense_Drug_Lot.deleteMany();
-
     await prisma.income.deleteMany();
     await prisma.visit_Detail.deleteMany();
     await prisma.visit.deleteMany();
@@ -38,11 +46,10 @@ async function main() {
     await prisma.drug.deleteMany();
     await prisma.drug_Category.deleteMany();
     await prisma.patient.deleteMany();
-    // Keep users to avoid locking out
 
-    console.log("🚀 เริ่มต้นการ Seed ข้อมูลระดับ 1 ปี (365 วัน)...");
+    console.log(`🚀 เริ่มต้นการ Seed ข้อมูลระดับ 2 ปี (${TOTAL_DAYS} วัน)...`);
 
-    // 1. admin user data
+    // 1. Admin (เหมือนเดิม)
     const adminExists = await prisma.user.findFirst({
         where: { username: "admin" },
     });
@@ -55,13 +62,13 @@ async function main() {
         });
     }
 
-    // 2. drug category data
+    // 2. Categories & 3. Drugs (เหมือนเดิม)
     const categoriesData = [
-        { name: "ยาปฏิชีวนะ (Antibiotics)" },
-        { name: "ยาแก้ปวด/ลดไข้ (Analgesics)" },
-        { name: "ยาแก้อักเสบ (NSAIDs)" },
-        { name: "ยาแก้แพ้ (Antihistamines)" },
-        { name: "วิตามินและอาหารเสริม" },
+        { name: "ยาปฏิชีวนะ" },
+        { name: "ยาแก้ปวด" },
+        { name: "ยาแก้อักเสบ" },
+        { name: "ยาแก้แพ้" },
+        { name: "วิตามิน" },
         { name: "ยาระบบทางเดินอาหาร" },
     ];
     for (const cat of categoriesData) {
@@ -71,12 +78,11 @@ async function main() {
     }
     const categories = await prisma.drug_Category.findMany();
 
-    // 3. drug data
     const drugsData = [
         { name: "Amoxicillin 500mg", price: 120, unit: "แผง" },
         { name: "Paracetamol 500mg", price: 20, unit: "แผง" },
         { name: "Ibuprofen 400mg", price: 45, unit: "เม็ด" },
-        { name: "CPM (Chlorpheniramine)", price: 15, unit: "เม็ด" },
+        { name: "CPM", price: 15, unit: "เม็ด" },
         { name: "Omeprazole 20mg", price: 150, unit: "กล่อง" },
         { name: "Vitamin C 1000mg", price: 250, unit: "ขวด" },
     ];
@@ -95,7 +101,7 @@ async function main() {
     }
     const drugs = await prisma.drug.findMany();
 
-    // 4. patient data
+    // 4. Patients – build ALL unique first×last combos then shuffle-pick
     const maleFirstNames = [
         "ศักดิ์ชัย",
         "ธนวัฒน์",
@@ -129,6 +135,11 @@ async function main() {
         "ฐานิตา",
         "นภัสสร",
         "พิมพิกา",
+        "วรัญญา",
+        "ชนาภา",
+        "ธัญชนก",
+        "พรรษา",
+        "อนันตา",
     ];
     const lastNames = [
         "รักชาติ",
@@ -148,6 +159,19 @@ async function main() {
         "สุขสวัสดิ์",
     ];
 
+    // Build all unique male and female combos, then shuffle each pool
+    const maleCombos = shuffle(
+        maleFirstNames.flatMap((f) =>
+            lastNames.map((l) => ({ f, l, g: Gender.male })),
+        ),
+    );
+    const femaleCombos = shuffle(
+        femaleFirstNames.flatMap((f) =>
+            lastNames.map((l) => ({ f, l, g: Gender.female })),
+        ),
+    );
+
+    const TOTAL_PATIENTS = 45;
     const patientsData: { f: string; l: string; g: Gender }[] = [
         { f: "ก้องภพ", l: "โชควิริยะ", g: Gender.male },
         { f: "ถิรวัฒน์", l: "อุจินา", g: Gender.male },
@@ -155,16 +179,16 @@ async function main() {
         { f: "ณพวิทย์", l: "วงษ์ประเสริฐ", g: Gender.male },
         { f: "รัฐภูมิ", l: "เกิดพระจีน", g: Gender.male },
     ];
-
-    // add random patients
-    for (let i = 0; i < 25; i++) {
-        const isMale = Math.random() > 0.5;
-        const gender = isMale ? Gender.male : Gender.female;
-        const firstName = isMale
-            ? maleFirstNames[randomInt(0, maleFirstNames.length - 1)]
-            : femaleFirstNames[randomInt(0, femaleFirstNames.length - 1)];
-        const lastName = lastNames[randomInt(0, lastNames.length - 1)];
-        patientsData.push({ f: firstName, l: lastName, g: gender });
+    let mi = 0;
+    let fi = 0;
+    for (let i = 0; i < TOTAL_PATIENTS; i++) {
+        if (i % 2 === 0 && mi < maleCombos.length) {
+            patientsData.push(maleCombos[mi++]);
+        } else if (fi < femaleCombos.length) {
+            patientsData.push(femaleCombos[fi++]);
+        } else {
+            patientsData.push(maleCombos[mi++]);
+        }
     }
 
     for (let i = 0; i < patientsData.length; i++) {
@@ -173,7 +197,7 @@ async function main() {
                 first_name: patientsData[i].f,
                 last_name: patientsData[i].l,
                 gender: patientsData[i].g,
-                citizen_number: generateCitizenId(),
+                citizen_number: generateCitizenId(i + 1),
                 hospital_number: `HN-67${(i + 1).toString().padStart(4, "0")}`,
                 phone: `0${randomInt(6, 9)}${randomInt(10000000, 99999999)}`,
                 address: `${randomInt(1, 99)}/${randomInt(1, 99)} หมู่ ${randomInt(1, 12)} ต.ในเมือง อ.เมือง จ.ขอนแก่น`,
@@ -182,67 +206,40 @@ async function main() {
             },
         });
     }
-
     const patients = await prisma.patient.findMany();
 
-    // 5. simulate data for 365 days
-    console.log("⏳ กำลังสร้างธุรกรรมย้อนหลัง 365 วัน... อาจใช้เวลาสักครู่");
-
-    const symptoms = [
-        "ปวดหัว ตัวร้อน",
-        "ไอ จาม มีน้ำมูก",
-        "ปวดท้อง ท้องเสีย",
-        "ผื่นคันตามร่างกาย",
-        "ปวดเมื่อยกล้ามเนื้อ",
-        "เวียนศีรษะ หน้ามืด",
-        "เจ็บคอ กลืนลำบาก",
-        "แน่นหน้าอก",
-        "ปวดฟัน",
-        "ตรวจสุขภาพทั่วไป",
-    ];
-
+    // 5. Simulate 730 Days
+    const symptoms = ["ปวดหัว", "ไข้", "ท้องเสีย", "ผื่น", "ปวดเมื่อย"];
     const diagnoses = [
-        "ไข้หวัด (Common Cold)",
-        "โรคกระเพาะอักเสบ",
-        "กล้ามเนื้ออักเสบ",
-        "ภูมิแพ้อากาศ",
+        "ไข้หวัด",
         "อาหารเป็นพิษ",
-        "ความดันโลหิตสูง",
-        "ติดเชื้อทางเดินหายใจ",
-        "ผื่นแพ้สัมผัส",
-        "ปวดศีรษะจากความเครียด",
+        "กล้ามเนื้ออักเสบ",
         "สุขภาพปกติ",
     ];
 
-    for (let day = 365; day >= 0; day--) {
+    for (let day = TOTAL_DAYS; day >= 0; day--) {
         const date = daysAgo(day);
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
-        // --- รายจ่าย: ซื้อยาเข้าคลัง (สุ่มซื้อเดือนละครั้ง ทุกวันที่ 1 ของเดือน) ---
-        if (date.getDate() === 1 || day === 365) {
-            console.log(
-                `📦 ทำรายการซื้อยาเข้าคลังประจำเดือน: ${date.toLocaleDateString()}`,
-            );
+        // รายจ่าย: ซื้อยา (ซื้อทุกๆ ต้นเดือน)
+        if (date.getDate() === 1) {
             for (const drug of drugs) {
-                // ซุ่มซื้อยาบางตัว หรือซื้อทุกตัวเพื่อป้องกันสต็อกขาด
-                if (randomInt(1, 10) > 3) {
-                    const qty = randomInt(200, 500);
-                    const buyPrice = Number(drug.sell_price) * 0.6;
-
+                if (randomInt(1, 10) > 2) {
+                    const qty = randomInt(300, 600);
+                    const buyPrice = Number(drug.sell_price) * 0.5;
                     const expense = await prisma.expense.create({
                         data: {
                             expense_date: date,
                             expense_type: "drug",
-                            description: `สต็อกยาประจำเดือน ${drug.drug_name}`,
+                            description: `เติมสต็อก ${drug.drug_name}`,
                             amount: buyPrice * qty,
-                            receipt_no: `EXP-${date.getTime()}-${randomInt(100, 999)}`,
+                            receipt_no: `EXP-${date.getTime()}`,
                         },
                     });
-
                     await prisma.drug_Lot.create({
                         data: {
                             drug_id: drug.drug_id,
-                            lot_no: `LOT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, "0")}-${randomInt(10, 99)}`,
+                            lot_no: `L-${date.getFullYear()}${randomInt(100, 999)}`,
                             received_date: date,
                             expire_date: new Date(
                                 date.getFullYear() + 2,
@@ -253,9 +250,7 @@ async function main() {
                             qty_remaining: qty,
                             buy_price: buyPrice,
                             expenseLots: {
-                                create: {
-                                    expense_id: expense.expense_id,
-                                },
+                                create: { expense_id: expense.expense_id },
                             },
                         },
                     });
@@ -263,10 +258,8 @@ async function main() {
             }
         }
 
-        // --- รายได้: คนไข้มาตรวจ (Visit) ---
-        // เสาร์-อาทิตย์คนไข้เฉลี่ย 8-12 คน, วันธรรมดา 3-6 คน
-        const dailyVisits = isWeekend ? randomInt(8, 12) : randomInt(3, 6);
-
+        // รายได้: Visits
+        const dailyVisits = isWeekend ? randomInt(10, 15) : randomInt(4, 8);
         for (let v = 0; v < dailyVisits; v++) {
             const patient = patients[randomInt(0, patients.length - 1)];
             const visit = await prisma.visit.create({
@@ -278,14 +271,11 @@ async function main() {
                 },
             });
 
-            const serviceFee = 300;
             let totalDrugPrice = 0;
-
-            // สุ่มจ่ายยา 1-3 รายการ
             const drugCount = randomInt(1, 3);
             for (let i = 0; i < drugCount; i++) {
                 const drug = drugs[randomInt(0, drugs.length - 1)];
-                const qty = randomInt(1, 10);
+                const qty = randomInt(1, 5);
 
                 await prisma.visit_Detail.create({
                     data: {
@@ -298,52 +288,45 @@ async function main() {
                     },
                 });
 
-                // หักสต็อกและบันทึก Drug_Usage
-                // ค้นหา Lot ที่มีของ (FIFO)
-                const availableLot = await prisma.drug_Lot.findFirst({
-                    where: {
-                        drug_id: drug.drug_id,
-                        qty_remaining: { gt: 0 },
-                    },
+                // FIFO Stock Deduction
+                const lot = await prisma.drug_Lot.findFirst({
+                    where: { drug_id: drug.drug_id, qty_remaining: { gt: 0 } },
                     orderBy: { received_date: "asc" },
                 });
 
-                if (availableLot) {
-                    const useQty = Math.min(qty, availableLot.qty_remaining);
+                if (lot) {
+                    const useQty = Math.min(qty, lot.qty_remaining);
                     await prisma.drug_Usage.create({
                         data: {
                             visit_id: visit.visit_id,
-                            lot_id: availableLot.lot_id,
+                            lot_id: lot.lot_id,
                             quantity: useQty,
                             used_at: date,
                         },
                     });
-
                     await prisma.drug_Lot.update({
-                        where: { lot_id: availableLot.lot_id },
+                        where: { lot_id: lot.lot_id },
                         data: { qty_remaining: { decrement: useQty } },
                     });
                 }
-
                 totalDrugPrice += Number(drug.sell_price) * qty;
             }
 
-            // บันทึกรายได้ (Income)
             await prisma.income.create({
                 data: {
                     visit_id: visit.visit_id,
                     income_date: date,
-                    amount: serviceFee + totalDrugPrice,
-                    payment_method: randomInt(0, 1) === 0 ? "cash" : "transfer",
-                    receipt_no: `RC-${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate()}-${v}`,
+                    amount: 300 + totalDrugPrice,
+                    payment_method: Math.random() > 0.4 ? "transfer" : "cash",
+                    receipt_no: `RC-${date.getTime()}-${v}`,
                 },
             });
         }
 
-        if (day % 30 === 0) console.log(`...เหลืออีก ${day} วัน`);
+        if (day % 100 === 0)
+            console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
     }
-
-    console.log("✅ Seed ข้อมูล 1 ปีเรียบร้อย!");
+    console.log("✅ Seed ข้อมูล 2 ปีเรียบร้อย!");
 }
 
 main()
