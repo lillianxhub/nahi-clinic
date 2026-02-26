@@ -31,6 +31,7 @@ export interface CreateTreatmentDTO {
     symptom?: string;
     diagnosis?: string;
     note?: string;
+    payment_method: string;
 
     items: {
         item_type: ItemType;
