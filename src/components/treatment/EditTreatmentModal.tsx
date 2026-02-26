@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, FileText, Calendar, Search, User, Plus } from "lucide-react";
+import { X, FileText, Calendar, Search, User, Plus, Clock } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
 import { treatmentService } from "@/services/treatment";
@@ -24,6 +24,8 @@ export default function EditTreatmentModal({
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         visit_date: "",
+        hour: "00",
+        minute: "00",
         symptom: "",
         diagnosis: "",
         note: "",
@@ -46,8 +48,11 @@ export default function EditTreatmentModal({
 
     useEffect(() => {
         if (open && treatment) {
+            const dateObj = new Date(treatment.visit_date);
             setFormData({
                 visit_date: treatment.visit_date.split("T")[0],
+                hour: dateObj.getHours().toString().padStart(2, "0"),
+                minute: dateObj.getMinutes().toString().padStart(2, "0"),
                 symptom: treatment.symptom || "",
                 diagnosis: treatment.diagnosis || "",
                 note: treatment.note || "",
@@ -151,8 +156,12 @@ export default function EditTreatmentModal({
         try {
             setLoading(true);
 
+            const isoDateTime = new Date(
+                `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
+            ).toISOString();
+
             await treatmentService.updateTreatment(treatment.visit_id, {
-                visit_date: formData.visit_date,
+                visit_date: isoDateTime,
                 symptom: formData.symptom,
                 diagnosis: formData.diagnosis,
                 note: formData.note,
@@ -223,20 +232,69 @@ export default function EditTreatmentModal({
                         </div>
                     </div>
 
-                    {/* Visit Date */}
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Calendar size={16} className="text-primary" />
-                            วันที่ <span className="text-danger">*</span>
-                        </label>
-                        <input
-                            type="date"
-                            name="visit_date"
-                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.visit_date}
-                            onChange={handleChange}
-                            required
-                        />
+                    {/* Visit Date & Time */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Calendar size={16} className="text-primary" />
+                                วันที่ <span className="text-danger">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                name="visit_date"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.visit_date}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Clock size={16} className="text-primary" />
+                                เวลา <span className="text-danger">*</span>
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    name="hour"
+                                    value={formData.hour}
+                                    onChange={(e) =>
+                                        setFormData((prev: any) => ({
+                                            ...prev,
+                                            hour: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
+                                >
+                                    {Array.from({ length: 24 }, (_, i) =>
+                                        i.toString().padStart(2, "0"),
+                                    ).map((h) => (
+                                        <option key={h} value={h}>
+                                            {h}
+                                        </option>
+                                    ))}
+                                </select>
+                                <span className="font-bold">:</span>
+                                <select
+                                    name="minute"
+                                    value={formData.minute}
+                                    onChange={(e) =>
+                                        setFormData((prev: any) => ({
+                                            ...prev,
+                                            minute: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
+                                >
+                                    {Array.from({ length: 60 }, (_, i) =>
+                                        i.toString().padStart(2, "0"),
+                                    ).map((m) => (
+                                        <option key={m} value={m}>
+                                            {m}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Symptom */}

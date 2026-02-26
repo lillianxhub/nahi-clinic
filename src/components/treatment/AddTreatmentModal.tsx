@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, FileText, Calendar, Search, User, Plus } from "lucide-react";
+import { X, FileText, Calendar, Search, User, Plus, Clock } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
 import { treatmentService } from "@/services/treatment";
@@ -26,6 +26,8 @@ export default function AddTreatmentModal({
     const [formData, setFormData] = useState({
         patient_id: "",
         visit_date: new Date().toISOString().split("T")[0],
+        hour: new Date().getHours().toString().padStart(2, "0"),
+        minute: new Date().getMinutes().toString().padStart(2, "0"),
         symptom: "",
         diagnosis: "",
     });
@@ -172,8 +174,13 @@ export default function AddTreatmentModal({
         try {
             setLoading(true);
 
+            const isoDateTime = new Date(
+                `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
+            ).toISOString();
+
             await treatmentService.createTreatment({
                 ...formData,
+                visit_date: isoDateTime,
                 payment_method: paymentMethod,
                 items: selectedItems,
             } as CreateTreatmentDTO);
@@ -182,6 +189,8 @@ export default function AddTreatmentModal({
             setFormData({
                 patient_id: "",
                 visit_date: new Date().toISOString().split("T")[0],
+                hour: new Date().getHours().toString().padStart(2, "0"),
+                minute: new Date().getMinutes().toString().padStart(2, "0"),
                 symptom: "",
                 diagnosis: "",
             });
@@ -343,20 +352,73 @@ export default function AddTreatmentModal({
                                 )}
                         </div>
 
-                        {/* Visit Date */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันที่ <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                name="visit_date"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.visit_date}
-                                onChange={handleChange}
-                                required
-                            />
+                        {/* Visit Date & Time */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Calendar
+                                        size={16}
+                                        className="text-primary"
+                                    />
+                                    วันที่{" "}
+                                    <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    name="visit_date"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    value={formData.visit_date}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Clock size={16} className="text-primary" />
+                                    เวลา <span className="text-danger">*</span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        name="hour"
+                                        value={formData.hour}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                hour: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
+                                    >
+                                        {Array.from({ length: 24 }, (_, i) =>
+                                            i.toString().padStart(2, "0"),
+                                        ).map((h) => (
+                                            <option key={h} value={h}>
+                                                {h}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="font-bold">:</span>
+                                    <select
+                                        name="minute"
+                                        value={formData.minute}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                minute: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
+                                    >
+                                        {Array.from({ length: 60 }, (_, i) =>
+                                            i.toString().padStart(2, "0"),
+                                        ).map((m) => (
+                                            <option key={m} value={m}>
+                                                {m}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Symptom */}
