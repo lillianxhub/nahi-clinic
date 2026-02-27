@@ -1,5 +1,5 @@
 import { prisma } from "../src/lib/prisma";
-import { Gender } from "../generated/prisma/client";
+import { Gender } from "../src/generated/prisma/client";
 import bcrypt from "bcrypt";
 
 const TOTAL_DAYS = 730;
