@@ -1,4 +1,4 @@
-import { ItemType } from "../generated/prisma/enums";
+import { ItemType } from "@/generated/prisma/enums";
 
 export interface Treatment {
     hospital_number: string;
