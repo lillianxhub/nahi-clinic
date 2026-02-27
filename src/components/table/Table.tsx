@@ -13,12 +13,14 @@ interface DataTableProps<T> {
     rowKey: (row: T) => string | number;
     page?: number;
     pageSize?: number;
+    emptyMessage?: string;
 }
 
 export default function DataTable<T>({
     columns,
     data,
     rowKey,
+    emptyMessage = "ไม่มีข้อมูล",
 }: DataTableProps<T>) {
     return (
         <div className="overflow-hidden rounded-xl border border-[#E6EFEF] bg-white">
@@ -30,12 +32,13 @@ export default function DataTable<T>({
                             <th
                                 key={String(col.key)}
                                 className={`px-4 py-3 text-sm font-semibold
-                  ${col.align === "center"
-                                        ? "text-center"
-                                        : col.align === "right"
-                                            ? "text-right"
-                                            : "text-left"
-                                    }
+                  ${
+                      col.align === "center"
+                          ? "text-center"
+                          : col.align === "right"
+                            ? "text-right"
+                            : "text-left"
+                  }
                 `}
                             >
                                 {col.header}
@@ -46,30 +49,46 @@ export default function DataTable<T>({
 
                 {/* Body */}
                 <tbody>
-                    {data.map((row, index) => (
-                        <tr
-                            key={rowKey(row)}
-                            className={index % 2 === 0 ? "bg-[#E6EFEF]" : "bg-white"}
-                        >
-                            {columns.map((col) => (
-                                <td
-                                    key={String(col.key)}
-                                    className={`px-4 py-3 text-sm
-                    ${col.align === "center"
-                                            ? "text-center"
-                                            : col.align === "right"
-                                                ? "text-right"
-                                                : "text-left"
-                                        }
+                    {data.length > 0 ? (
+                        data.map((row, index) => (
+                            <tr
+                                key={rowKey(row)}
+                                className={
+                                    index % 2 === 0
+                                        ? "bg-[#E6EFEF]"
+                                        : "bg-white"
+                                }
+                            >
+                                {columns.map((col) => (
+                                    <td
+                                        key={String(col.key)}
+                                        className={`px-4 py-3 text-sm
+                    ${
+                        col.align === "center"
+                            ? "text-center"
+                            : col.align === "right"
+                              ? "text-right"
+                              : "text-left"
+                    }
                   `}
-                                >
-                                    {col.render
-                                        ? col.render(row)
-                                        : (row as any)[col.key]}
-                                </td>
-                            ))}
+                                    >
+                                        {col.render
+                                            ? col.render(row)
+                                            : (row as any)[col.key]}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td
+                                colSpan={columns.length}
+                                className="px-4 py-8 text-center text-muted text-sm bg-white"
+                            >
+                                {emptyMessage}
+                            </td>
                         </tr>
-                    ))}
+                    )}
                 </tbody>
             </table>
         </div>

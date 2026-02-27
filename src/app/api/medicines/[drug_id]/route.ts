@@ -84,3 +84,27 @@ export async function PATCH(req: Request, { params }: Params) {
         );
     }
 }
+export async function DELETE(req: Request, { params }: Params) {
+    try {
+        const { drug_id } = await params;
+
+        await prisma.drug.update({
+            where: { drug_id },
+            data: {
+                is_active: false,
+                deleted_at: new Date(),
+            },
+        });
+
+        return NextResponse.json({ message: "ลบข้อมูลยาสำเร็จ" });
+    } catch (error: any) {
+        console.error("Delete medicine error:", error);
+        return NextResponse.json(
+            {
+                message: "เกิดข้อผิดพลาดในการลบข้อมูลยา",
+                error: error.message,
+            },
+            { status: 500 },
+        );
+    }
+}

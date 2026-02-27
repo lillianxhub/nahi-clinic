@@ -64,6 +64,7 @@ export async function POST(req: Request) {
             user: {
                 id: user.user_id,
                 username: user.username,
+                access_token: token,
             },
         });
     } catch (error) {

@@ -1,6 +1,6 @@
 import { buildQuery, QueryParams } from "@/utils/query";
 import { apiClient } from "./apiClient";
-import { Medicine, MedicineSummary } from "@/interface/medicine";
+import { Medicine, MedicineSummary, DrugCategory } from "@/interface/medicine";
 import { ResponseData } from "@/interface/response";
 
 export const medicineService = {
@@ -11,6 +11,12 @@ export const medicineService = {
 
         return apiClient.get<ResponseData<Medicine[], MedicineSummary>>(
             `/api/medicines${query}`,
+        );
+    },
+
+    async getCategories(): Promise<{ data: DrugCategory[] }> {
+        return apiClient.get<{ data: DrugCategory[] }>(
+            "/api/medicines/categories",
         );
     },
 
@@ -27,5 +33,18 @@ export const medicineService = {
             `/api/medicines/${drug_id}`,
             payload,
         );
+    },
+
+    async deleteMedicine(drug_id: string): Promise<void> {
+        return apiClient.delete(`/api/medicines/${drug_id}`);
+    },
+
+    async updateLotQuantity(
+        lot_id: string,
+        qty_remaining: number,
+    ): Promise<void> {
+        return apiClient.patch(`/api/medicines/lots/${lot_id}`, {
+            qty_remaining,
+        });
     },
 };

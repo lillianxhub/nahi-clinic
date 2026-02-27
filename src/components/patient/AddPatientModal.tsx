@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, User, Phone, Calendar, Droplet } from "lucide-react";
+import { X, User, Phone, Calendar, Droplet, MapPin } from "lucide-react";
 import { patientService } from "@/services/patient";
 import { Patient, PatientApiResponse } from "@/interface/patient";
 import { Gender, GenderLabelTH } from "@/constants/gender";
@@ -14,14 +14,17 @@ interface Props {
 
 export function mapPatientFromApi(api: PatientApiResponse): Patient {
     return {
-        id: api.patient_id,
+        patient_id: api.patient_id,
         hospital_number: api.hospital_number,
+        first_name: api.first_name,
+        last_name: api.last_name,
         fullName: `${api.first_name} ${api.last_name}`,
         gender: api.gender,
         birthDate: api.birth_date,
         phone: api.phone,
         address: api.address,
         allergy: api.allergy,
+        visits: api.visits,
     };
 }
 
@@ -33,6 +36,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
         gender: Gender.male,
         birth_date: "",
         phone: "",
+        address: "",
         allergies: "",
     });
 
@@ -46,6 +50,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                 ...form,
                 birth_date: form.birth_date || undefined,
                 phone: form.phone || undefined,
+                address: form.address || undefined,
                 allergy: form.allergies || undefined,
             });
 
@@ -67,7 +72,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header with gradient */}
-                <div className="bg-gradient-to-r from-primary to-primary-light px-6 py-5 relative">
+                <div className="bg-linear-to-r from-primary to-primary-light px-6 py-5 relative">
                     <div className="flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-lg">
                             <User className="text-white" size={24} />
@@ -199,6 +204,24 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                             }
                         />
                     </div>
+                    {/* Address */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <MapPin size={16} className="text-primary" />
+                            ที่อยู่
+                        </label>
+                        <textarea
+                            placeholder="ระบุที่อยู่"
+                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                            value={form.address}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    address: e.target.value,
+                                })
+                            }
+                        />
+                    </div>
 
                     {/* Allergies */}
                     <div className="space-y-1.5">
@@ -218,7 +241,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         {form.allergies && (
                             <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
                                 <svg
-                                    className="w-5 h-5 text-warning flex-shrink-0 mt-0.5"
+                                    className="w-5 h-5 text-warning shrink-0 mt-0.5"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                 >
