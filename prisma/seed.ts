@@ -239,7 +239,7 @@ async function main() {
                     await prisma.drug_Lot.create({
                         data: {
                             drug_id: drug.drug_id,
-                            lot_no: `L-${date.getFullYear()}${randomInt(100, 999)}`,
+                            lot_no: `LOT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, "0")}-${randomInt(10, 99)}`,
                             received_date: date,
                             expire_date: new Date(
                                 date.getFullYear() + 2,
