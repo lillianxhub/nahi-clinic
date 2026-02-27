@@ -23,8 +23,8 @@ const menuItems = [
     { label: "บันทึกการรักษา", href: "/treatments", icon: PlusSquare },
     { label: "คลังยา", href: "/medicines", icon: Syringe },
     { label: "การเงิน", href: "/finance", icon: Wallet },
-    { label: "รายงาน", href: "/reports", icon: FileText },
-    { label: "การตั้งค่า", href: "/settings", icon: Settings },
+    // { label: "รายงาน", href: "/reports", icon: FileText },
+    // { label: "การตั้งค่า", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {

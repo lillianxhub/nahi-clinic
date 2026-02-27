@@ -32,9 +32,12 @@ export default function MedicineCard({
 
     const isLowStock = totalQuantity > 0 && totalQuantity <= minQuantity;
 
+    const isOutOfDate = nearestExpire && nearestExpire < new Date();
+
     const getBackgroundColor = () => {
         if (isOutOfStock) return "bg-danger/15 border-red-200";
         if (isLowStock) return "bg-warning/15 border-yellow-200";
+        if (isOutOfDate) return "bg-danger/15 border-red-200";
         return "bg-bg-card border-border";
     };
 
@@ -45,12 +48,16 @@ export default function MedicineCard({
         if (isLowStock) {
             return "bg-yellow-100 text-yellow-800 border-yellow-200";
         }
+        if (isOutOfDate) {
+            return "bg-red-100 text-red-800 border-red-200";
+        }
         return "bg-green-100 text-green-800 border-green-200";
     };
 
     const getStatusText = () => {
         if (isOutOfStock) return "หมด";
         if (isLowStock) return "ต่ำ";
+        if (isOutOfDate) return "หมดอายุ";
         return "ปกติ";
     };
 

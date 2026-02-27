@@ -20,6 +20,15 @@ export const medicineService = {
         );
     },
 
+    async createCategory(
+        category_name: string,
+    ): Promise<{ data: DrugCategory }> {
+        return apiClient.post<
+            { data: DrugCategory },
+            { category_name: string }
+        >("/api/medicines/categories", { category_name });
+    },
+
     async getMedicineDetail(drug_id: string): Promise<{ data: Medicine }> {
         return apiClient.get<{ data: Medicine }>(`/api/medicines/${drug_id}`);
     },
