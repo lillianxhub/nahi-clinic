@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,15 +7,13 @@ export async function GET(request: NextRequest) {
     const pageSize = searchParams.get("pageSize") || "10";
     const q = searchParams.get("q") || "";
 
-    // เรียก backend API ของคุณ
+    // เรียก backend API 
     const backendUrl = new URL(
-      `${process.env.NEXT_PUBLIC_API_URL}/treatments`
+      `${process.env.NEXT_PUBLIC_API_URL}/reports`
     );
     backendUrl.searchParams.append("page", page);
     backendUrl.searchParams.append("pageSize", pageSize);
     if (q) backendUrl.searchParams.append("q", q);
-    // include visitDetails เพื่อให้ได้ข้อมูลยา
-    backendUrl.searchParams.append("include", "visitDetails");
 
     const response = await fetch(backendUrl.toString(), {
       headers: {
@@ -30,9 +28,9 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching treatments:", error);
+    console.error("Error fetching reports:", error);
     return NextResponse.json(
-      { error: "Failed to fetch treatments" },
+      { error: "Failed to fetch reports" },
       { status: 500 }
     );
   }

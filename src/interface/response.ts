@@ -11,3 +11,14 @@ export interface ResponseData<T, TSummary = undefined> {
   meta: { pagination: Pagination };
   status: ApiStatus;
 }
+
+export interface UserSettings {
+  profile_image: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  clinic_name: string;
+  clinic_address: string;
+  api_url: string;
+}
