@@ -25,14 +25,44 @@ export async function GET(req: NextRequest) {
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
-        const where: Record<string, unknown> = { deleted_at: null };
+        const where: Record<string, any> = { deleted_at: null };
         if (q) {
             where.drug_name = { contains: q };
         }
-        if (status === "active") {
+
+        let activeStatus = searchParams.get("activeStatus");
+        if (activeStatus === "active") {
             where.is_active = true;
-        } else if (status === "inactive") {
+        } else if (activeStatus === "inactive") {
             where.is_active = false;
+        }
+
+        // Handle low stock / normal status filtering
+        if (status === "low" || status === "normal") {
+            const allDrugs = await prisma.drug.findMany({
+                select: {
+                    drug_id: true,
+                    min_stock: true,
+                    lots: {
+                        select: { qty_remaining: true },
+                    },
+                },
+                where: { is_active: true, deleted_at: null },
+            });
+
+            const filteredDrugIds = allDrugs
+                .filter((drug) => {
+                    const totalQty = drug.lots.reduce(
+                        (sum, lot) => sum + lot.qty_remaining,
+                        0,
+                    );
+                    return status === "low"
+                        ? totalQty <= drug.min_stock
+                        : totalQty > drug.min_stock;
+                })
+                .map((d) => d.drug_id);
+
+            where.drug_id = { in: filteredDrugIds };
         }
 
         const [data, total, lowStockCount] = await Promise.all([
@@ -57,7 +87,7 @@ export async function GET(req: NextRequest) {
                             select: { qty_remaining: true },
                         },
                     },
-                    where: { is_active: true },
+                    where: { is_active: true, deleted_at: null },
                 });
 
                 return drugs.filter((drug) => {

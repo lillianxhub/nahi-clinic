@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-    params: {
+    params: Promise<{
         lot_id: string;
-    };
+    }>;
 };
 
 export async function GET(req: Request, { params }: Params) {
@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: Params) {
         if (!lot) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลรายได้" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -29,7 +29,7 @@ export async function GET(req: Request, { params }: Params) {
         console.error("Get patient by id error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-    params: {
+    params: Promise<{
         lot_id: string;
-    };
+    }>;
 };
 
 export async function PATCH(req: Request, { params }: Params) {
