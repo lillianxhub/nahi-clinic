@@ -48,6 +48,7 @@ export default function EditTreatmentModal({
 
     useEffect(() => {
         if (open && treatment) {
+            console.log("Treatment Data", treatment);
             const dateObj = new Date(treatment.visit_date);
             setFormData({
                 visit_date: treatment.visit_date.split("T")[0],
@@ -404,9 +405,15 @@ export default function EditTreatmentModal({
                                                                     {m.sell_price.toLocaleString()}{" "}
                                                                     บาท |
                                                                     คงเหลือ:{" "}
-                                                                    {m.stock
-                                                                        ?.total ??
-                                                                        0}{" "}
+                                                                    {m.lots?.reduce(
+                                                                        (
+                                                                            sum,
+                                                                            lot,
+                                                                        ) =>
+                                                                            sum +
+                                                                            lot.qty_remaining,
+                                                                        0,
+                                                                    ) ?? 0}{" "}
                                                                     {m.unit}
                                                                 </div>
                                                             </div>
