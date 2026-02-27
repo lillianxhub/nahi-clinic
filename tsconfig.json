@@ -31,5 +31,6 @@
         "**/*.mts",
         "src/app/(dashboard)/reports"
     ],
-    "exclude": ["node_modules"]
+    "exclude": ["node_modules"],
+    "rootDir": "./"
 }
