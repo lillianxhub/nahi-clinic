@@ -36,6 +36,7 @@ model Patient {
   citizen_number  String?   @db.Char(13)
   visits          Visit[]
 
+  @@unique([citizen_number, hospital_number])
   @@map("patients")
 }
 
