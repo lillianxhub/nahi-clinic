@@ -61,15 +61,15 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        // 1. Find latest patient
+        // 1. Find latest patient by hospital_number to get the highest one
         const lastPatient = await prisma.patient.findFirst({
             where: {
                 hospital_number: {
-                    not: null,
+                    startsWith: "HN",
                 },
             },
             orderBy: {
-                created_at: "desc",
+                hospital_number: "desc",
             },
             select: {
                 hospital_number: true,
@@ -80,11 +80,11 @@ export async function POST(req: Request) {
         let nextNumber = 1;
 
         if (lastPatient?.hospital_number) {
-            const lastNumber = parseInt(
-                lastPatient.hospital_number.replace("HN", ""),
-                10,
-            );
-            nextNumber = lastNumber + 1;
+            // Extract only digits from the HN string (e.g., "HN00005" -> "00005")
+            const numberMatch = lastPatient.hospital_number.match(/\d+/);
+            if (numberMatch) {
+                nextNumber = parseInt(numberMatch[0], 10) + 1;
+            }
         }
 
         const hospitalNumber = `HN${nextNumber.toString().padStart(5, "0")}`;
