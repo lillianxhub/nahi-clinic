@@ -9,6 +9,8 @@ import MedicineLotModal from "@/components/medicine/MedicineLotModal";
 import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
 import AddMedicineModal from "@/components/medicine/AddMedicineModal";
+import EditMedicineModal from "@/components/medicine/EditMedicineModal";
+import Swal from "sweetalert2";
 
 export default function MedicinesPage() {
     usePageTitle("Medicines");
@@ -23,6 +25,7 @@ export default function MedicinesPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [lowStockTotal, setLowStockTotal] = useState(0);
     const [openAdd, setOpenAdd] = useState(false);
+    const [openEdit, setOpenEdit] = useState(false);
 
     useEffect(() => {
         fetchMedicines();
@@ -178,9 +181,43 @@ export default function MedicinesPage() {
                     <MedicineCard
                         key={medicine.drug_id}
                         medicine={medicine}
-                        onClick={(id) => openLotModal(id)}
-                        onEdit={(id) => console.log("edit", id)}
-                        onDelete={(id) => console.log("delete", id)}
+                        onView={async (id) => {
+                            await openLotModal(id);
+                        }}
+                        onEdit={(id) => {
+                            setSelectedDrug(medicine);
+                            setOpenEdit(true);
+                        }}
+                        onDelete={async (id) => {
+                            const result = await Swal.fire({
+                                title: "ยืนยันการลบ?",
+                                text: `คุณต้องการลบยา "${medicine.drug_name}" ใช่หรือไม่?`,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonColor: "#d33",
+                                cancelButtonColor: "#3085d6",
+                                confirmButtonText: "ลบข้อมูล",
+                                cancelButtonText: "ยกเลิก",
+                            });
+
+                            if (result.isConfirmed) {
+                                try {
+                                    await medicineService.deleteMedicine(id);
+                                    Swal.fire(
+                                        "ลบสำเร็จ!",
+                                        "ข้อมูลยาถูกลบเรียบร้อยแล้ว",
+                                        "success",
+                                    );
+                                    fetchMedicines();
+                                } catch (error) {
+                                    Swal.fire(
+                                        "เกิดข้อผิดพลาด!",
+                                        "ไม่สามารถลบข้อมูลยาได้",
+                                        "error",
+                                    );
+                                }
+                            }
+                        }}
                     />
                 ))}
             </div>
@@ -191,6 +228,10 @@ export default function MedicinesPage() {
                     onClose={() => setOpenLot(false)}
                     drugName={selectedDrug.drug_name}
                     lots={mapLotsWithStatus(selectedDrug.lots)}
+                    onRefresh={() => {
+                        openLotModal(selectedDrug.drug_id);
+                        fetchMedicines();
+                    }}
                 />
             )}
 
@@ -212,14 +253,23 @@ export default function MedicinesPage() {
                 onChange={setPage}
             />
             {/* Add medicine Modal */}
-                  <AddMedicineModal
-                    open={openAdd}
-                    onClose={() => setOpenAdd(false)}
-                    onSuccess={() => {
-                      setPage(1);
-                      fetchMedicines();
-                    }}
-                  />
+            <AddMedicineModal
+                open={openAdd}
+                onClose={() => setOpenAdd(false)}
+                onSuccess={() => {
+                    setPage(1);
+                    fetchMedicines();
+                }}
+            />
+
+            <EditMedicineModal
+                open={openEdit}
+                medicine={selectedDrug}
+                onClose={() => setOpenEdit(false)}
+                onSuccess={() => {
+                    fetchMedicines();
+                }}
+            />
         </div>
     );
 }

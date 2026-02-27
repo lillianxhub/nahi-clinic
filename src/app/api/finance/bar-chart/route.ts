@@ -20,28 +20,36 @@ import { th } from "date-fns/locale";
 
 export async function GET(request: Request) {
     try {
-        // 1. Receive filter from URL (e.g., /api/finance/bar-chart?range=7days)
+        // 1. Receive filter from URL
         const { searchParams } = new URL(request.url);
-        const range = searchParams.get("range") || "year"; // default is year
+        const range = searchParams.get("range") || "year";
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
 
         const now = new Date();
         let startDate: Date;
         let endDate: Date;
         let groupBy: "day" | "month" = "month";
 
-        // 2. Define time range based on filter (Relative / Recent)
-        if (range === "week") {
-            // Last 7 days: 6 days back + today
+        // 2. Define time range based on filter
+        if (startDateParam && endDateParam) {
+            startDate = startOfDay(new Date(startDateParam));
+            endDate = endOfDay(new Date(endDateParam));
+
+            const diffDays = Math.ceil(
+                (endDate.getTime() - startDate.getTime()) /
+                    (1000 * 60 * 60 * 24),
+            );
+            groupBy = diffDays > 60 ? "month" : "day";
+        } else if (range === "week") {
             startDate = startOfDay(subDays(now, 6));
             endDate = endOfDay(now);
             groupBy = "day";
         } else if (range === "month") {
-            // Last 1 month: 29 days back + today (total 30 days)
             startDate = startOfDay(subDays(now, 29));
             endDate = endOfDay(now);
             groupBy = "day";
         } else {
-            // Last 1 year: 11 months back + current month (total 12 months)
             startDate = startOfMonth(subMonths(now, 11));
             endDate = endOfMonth(now);
             groupBy = "month";

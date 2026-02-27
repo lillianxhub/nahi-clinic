@@ -2,37 +2,40 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-    params: {
-        patient_id: string;
-    };
+    params: Promise<{ patient_id: string }>;
 };
 
-export async function GET(req: Request, { params }: Params) {
+export async function GET(_: Request, { params }: Params) {
     try {
         const { patient_id } = await params;
 
-        const patient = await prisma.patient.findUnique({
+        const patient = await prisma.patient.findFirst({
             where: {
-                patient_id,
+                patient_id: patient_id,
+                deleted_at: null,
             },
             include: {
-                visits: true,
+                visits: {
+                    where: { deleted_at: null },
+                    orderBy: { visit_date: "desc" },
+                    take: 5,
+                },
             },
         });
 
         if (!patient) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลผู้ป่วย" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
         return NextResponse.json({ data: patient });
-    } catch (error: any) {
-        console.error("Get patient by id error:", error);
+    } catch (error) {
+        console.error("Get patient error:", error);
         return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { message: "Internal server error" },
+            { status: 500 },
         );
     }
 }
@@ -42,49 +45,70 @@ export async function PATCH(req: Request, { params }: Params) {
         const { patient_id } = await params;
         const body = await req.json();
 
-        const UpdatePatient = await prisma.patient.update({
+        const existing = await prisma.patient.findFirst({
             where: {
-                patient_id,
+                patient_id: patient_id,
+                deleted_at: null,
             },
+        });
+
+        if (!existing) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลผู้ป่วย" },
+                { status: 404 },
+            );
+        }
+
+        const patient = await prisma.patient.update({
+            where: { patient_id: patient_id },
             data: {
                 first_name: body.first_name,
                 last_name: body.last_name,
                 gender: body.gender,
                 phone: body.phone,
                 address: body.address,
-                birth_date: body.birth_date,
+                birth_date: body.birth_date
+                    ? new Date(body.birth_date)
+                    : undefined,
+                allergy: body.allergy,
             },
         });
 
-        return NextResponse.json({ data: UpdatePatient });
+        return NextResponse.json({ data: patient });
     } catch (error: any) {
-        console.error("Update patient by id error: ", error);
-        return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
-        );
+        console.error("Update patient error:", error);
+        return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
 
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(_: Request, { params }: Params) {
     try {
         const { patient_id } = await params;
 
-        const deletedPatient = await prisma.patient.update({
+        const existing = await prisma.patient.findFirst({
             where: {
-                patient_id,
+                patient_id: patient_id,
+                deleted_at: null,
             },
+        });
+
+        if (!existing) {
+            return NextResponse.json(
+                { message: "ไม่พบข้อมูลผู้ป่วย" },
+                { status: 404 },
+            );
+        }
+
+        await prisma.patient.update({
+            where: { patient_id: patient_id },
             data: {
                 deleted_at: new Date(),
             },
         });
 
-        return NextResponse.json({ data: deletedPatient });
+        return NextResponse.json({ message: "ลบผู้ป่วยสำเร็จ" });
     } catch (error: any) {
-        console.error("Delete patient by id error: ", error);
-        return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
-        );
+        console.error("Delete patient error:", error);
+        return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }
