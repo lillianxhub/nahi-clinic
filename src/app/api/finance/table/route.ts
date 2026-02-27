@@ -22,7 +22,9 @@ export async function GET(request: Request) {
         let end: Date | undefined;
 
         if (startDate && endDate) {
+
             start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
             end = new Date(endDate);
             end.setHours(23, 59, 59, 999);
         } else {
@@ -118,15 +120,15 @@ export async function GET(request: Request) {
             status: "เสร็จสิ้น",
             visit: item.visit
                 ? {
-                      symptom: item.visit.symptom,
-                      diagnosis: item.visit.diagnosis,
-                      note: item.visit.note,
-                      items: item.visit.visitDetails.map((detail: any) => ({
-                          description: detail.description,
-                          quantity: Number(detail.quantity),
-                          unit_price: Number(detail.unit_price),
-                      })),
-                  }
+                    symptom: item.visit.symptom,
+                    diagnosis: item.visit.diagnosis,
+                    note: item.visit.note,
+                    items: item.visit.visitDetails.map((detail: any) => ({
+                        description: detail.description,
+                        quantity: Number(detail.quantity),
+                        unit_price: Number(detail.unit_price),
+                    })),
+                }
                 : undefined,
         }));
 

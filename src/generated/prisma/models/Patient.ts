@@ -278,11 +278,10 @@ export type PatientOrderByWithRelationInput = {
 
 export type PatientWhereUniqueInput = Prisma.AtLeast<{
   patient_id?: string
-  hospital_number?: string
-  citizen_number?: string
   AND?: Prisma.PatientWhereInput | Prisma.PatientWhereInput[]
   OR?: Prisma.PatientWhereInput[]
   NOT?: Prisma.PatientWhereInput | Prisma.PatientWhereInput[]
+  hospital_number?: Prisma.StringNullableFilter<"Patient"> | string | null
   first_name?: Prisma.StringFilter<"Patient"> | string
   last_name?: Prisma.StringFilter<"Patient"> | string
   gender?: Prisma.EnumGenderNullableFilter<"Patient"> | $Enums.Gender | null
@@ -294,8 +293,9 @@ export type PatientWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"Patient"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Patient"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Patient"> | Date | string | null
+  citizen_number?: Prisma.StringNullableFilter<"Patient"> | string | null
   visits?: Prisma.VisitListRelationFilter
-}, "patient_id" | "hospital_number" | "citizen_number">
+}, "patient_id">
 
 export type PatientOrderByWithAggregationInput = {
   patient_id?: Prisma.SortOrder

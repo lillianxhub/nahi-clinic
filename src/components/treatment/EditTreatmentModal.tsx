@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, FileText, Calendar, Search, User, Plus, Clock } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
+import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -47,30 +48,49 @@ export default function EditTreatmentModal({
     );
 
     useEffect(() => {
-        if (open && treatment) {
-            const dateObj = new Date(treatment.visit_date);
+        if (open && treatment?.visit_id) {
+            fetchLatestTreatment();
+        }
+    }, [open, treatment?.visit_id]);
+
+    const fetchLatestTreatment = async () => {
+        try {
+            setLoading(true);
+            console.log("Fetching latest treatment data for ID:", treatment?.visit_id);
+            const data = await treatmentService.getTreatmentById(treatment!.visit_id);
+            console.log("Latest Treatment Data received from API:", data);
+
+            const dateObj = new Date(data.visit_date);
             setFormData({
-                visit_date: treatment.visit_date.split("T")[0],
+                visit_date: formatLocalDate(dateObj),
                 hour: dateObj.getHours().toString().padStart(2, "0"),
                 minute: dateObj.getMinutes().toString().padStart(2, "0"),
-                symptom: treatment.symptom || "",
-                diagnosis: treatment.diagnosis || "",
-                note: treatment.note || "",
+                symptom: data.symptom || "",
+                diagnosis: data.diagnosis || "",
+                note: data.note || "",
             });
 
             // Map existing visitDetails to selectedItems
-            const existingItems = (treatment.visitDetails || []).map(
-                (detail: any) => ({
-                    item_type: detail.item_type,
-                    drug_id: detail.drug_id,
-                    description: detail.description,
-                    quantity: detail.quantity,
-                    unit_price: detail.unit_price,
-                }),
-            );
+            const details = data.visitDetails || [];
+            console.log("Raw details from API:", details);
+
+            const existingItems = details.map((detail: any) => ({
+                item_type: detail.item_type,
+                drug_id: detail.drug_id,
+                description: detail.description,
+                quantity: Number(detail.quantity),
+                unit_price: Number(detail.unit_price),
+            }));
+
+            console.log("Mapped existing items for modal UI:", existingItems);
             setSelectedItems(existingItems);
+        } catch (error) {
+            console.error("โหลดข้อมูลการรักษาล่าสุดล้มเหลว", error);
+            alert("ไม่สามารถดึงข้อมูลล่าสุดได้");
+        } finally {
+            setLoading(false);
         }
-    }, [open, treatment]);
+    };
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -108,6 +128,7 @@ export default function EditTreatmentModal({
     };
 
     const handleSelectMedicine = (medicine: Medicine) => {
+        console.log("Selecting medicine:", medicine);
         const existingItem = selectedItems.find(
             (item) => item.drug_id === medicine.drug_id,
         );
@@ -128,7 +149,7 @@ export default function EditTreatmentModal({
                     drug_id: medicine.drug_id,
                     description: medicine.drug_name,
                     quantity: 1,
-                    unit_price: medicine.sell_price,
+                    unit_price: Number(medicine.sell_price),
                 },
             ]);
         }
@@ -404,9 +425,15 @@ export default function EditTreatmentModal({
                                                                     {m.sell_price.toLocaleString()}{" "}
                                                                     บาท |
                                                                     คงเหลือ:{" "}
-                                                                    {m.stock
-                                                                        ?.total ??
-                                                                        0}{" "}
+                                                                    {m.lots?.reduce(
+                                                                        (
+                                                                            sum,
+                                                                            lot,
+                                                                        ) =>
+                                                                            sum +
+                                                                            lot.qty_remaining,
+                                                                        0,
+                                                                    ) ?? 0}{" "}
                                                                     {m.unit}
                                                                 </div>
                                                             </div>

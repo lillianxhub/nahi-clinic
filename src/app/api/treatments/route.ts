@@ -51,6 +51,7 @@ export async function GET(req: Request) {
                             hospital_number: true,
                         },
                     },
+                    visitDetails: true,
                 },
                 skip,
                 take: pageSize,
