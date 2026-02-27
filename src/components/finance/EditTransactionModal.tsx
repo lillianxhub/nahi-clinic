@@ -25,6 +25,7 @@ import { patientService } from "@/services/patient";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search, User } from "lucide-react";
+import { formatLocalDate } from "@/utils/dateUtils";
 
 interface EditTransactionModalProps {
     isOpen: boolean;
@@ -141,7 +142,7 @@ export default function EditTransactionModal({
                 const dateObj = new Date(res.income_date);
                 setFormData({
                     ...res,
-                    date: dateObj.toISOString().split("T")[0],
+                    date: formatLocalDate(dateObj),
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
@@ -160,7 +161,7 @@ export default function EditTransactionModal({
                 const dateObj = new Date(res.expense_date);
                 setFormData({
                     ...res,
-                    date: dateObj.toISOString().split("T")[0],
+                    date: formatLocalDate(dateObj),
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),

@@ -248,8 +248,8 @@ export type Drug_UsageWhereInput = {
   created_at?: Prisma.DateTimeFilter<"Drug_Usage"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Drug_Usage"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Drug_Usage"> | Date | string | null
-  visit?: Prisma.XOR<Prisma.VisitScalarRelationFilter, Prisma.VisitWhereInput>
   lot?: Prisma.XOR<Prisma.Drug_LotScalarRelationFilter, Prisma.Drug_LotWhereInput>
+  visit?: Prisma.XOR<Prisma.VisitScalarRelationFilter, Prisma.VisitWhereInput>
 }
 
 export type Drug_UsageOrderByWithRelationInput = {
@@ -262,8 +262,8 @@ export type Drug_UsageOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
-  visit?: Prisma.VisitOrderByWithRelationInput
   lot?: Prisma.Drug_LotOrderByWithRelationInput
+  visit?: Prisma.VisitOrderByWithRelationInput
   _relevance?: Prisma.Drug_UsageOrderByRelevanceInput
 }
 
@@ -280,8 +280,8 @@ export type Drug_UsageWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"Drug_Usage"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Drug_Usage"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Drug_Usage"> | Date | string | null
-  visit?: Prisma.XOR<Prisma.VisitScalarRelationFilter, Prisma.VisitWhereInput>
   lot?: Prisma.XOR<Prisma.Drug_LotScalarRelationFilter, Prisma.Drug_LotWhereInput>
+  visit?: Prisma.XOR<Prisma.VisitScalarRelationFilter, Prisma.VisitWhereInput>
 }, "usage_id">
 
 export type Drug_UsageOrderByWithAggregationInput = {
@@ -324,8 +324,8 @@ export type Drug_UsageCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visit: Prisma.VisitCreateNestedOneWithoutDrugUsagesInput
   lot: Prisma.Drug_LotCreateNestedOneWithoutUsagesInput
+  visit: Prisma.VisitCreateNestedOneWithoutDrugUsagesInput
 }
 
 export type Drug_UsageUncheckedCreateInput = {
@@ -348,8 +348,8 @@ export type Drug_UsageUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visit?: Prisma.VisitUpdateOneRequiredWithoutDrugUsagesNestedInput
   lot?: Prisma.Drug_LotUpdateOneRequiredWithoutUsagesNestedInput
+  visit?: Prisma.VisitUpdateOneRequiredWithoutDrugUsagesNestedInput
 }
 
 export type Drug_UsageUncheckedUpdateInput = {
@@ -753,8 +753,8 @@ export type Drug_UsageSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
-  visit?: boolean | Prisma.VisitDefaultArgs<ExtArgs>
   lot?: boolean | Prisma.Drug_LotDefaultArgs<ExtArgs>
+  visit?: boolean | Prisma.VisitDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["drug_Usage"]>
 
 
@@ -773,15 +773,15 @@ export type Drug_UsageSelectScalar = {
 
 export type Drug_UsageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"usage_id" | "visit_id" | "lot_id" | "quantity" | "used_at" | "is_active" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["drug_Usage"]>
 export type Drug_UsageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  visit?: boolean | Prisma.VisitDefaultArgs<ExtArgs>
   lot?: boolean | Prisma.Drug_LotDefaultArgs<ExtArgs>
+  visit?: boolean | Prisma.VisitDefaultArgs<ExtArgs>
 }
 
 export type $Drug_UsagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Drug_Usage"
   objects: {
-    visit: Prisma.$VisitPayload<ExtArgs>
     lot: Prisma.$Drug_LotPayload<ExtArgs>
+    visit: Prisma.$VisitPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     usage_id: string
@@ -1133,8 +1133,8 @@ readonly fields: Drug_UsageFieldRefs;
  */
 export interface Prisma__Drug_UsageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  visit<T extends Prisma.VisitDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VisitDefaultArgs<ExtArgs>>): Prisma.Prisma__VisitClient<runtime.Types.Result.GetResult<Prisma.$VisitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   lot<T extends Prisma.Drug_LotDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_LotDefaultArgs<ExtArgs>>): Prisma.Prisma__Drug_LotClient<runtime.Types.Result.GetResult<Prisma.$Drug_LotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  visit<T extends Prisma.VisitDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.VisitDefaultArgs<ExtArgs>>): Prisma.Prisma__VisitClient<runtime.Types.Result.GetResult<Prisma.$VisitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.

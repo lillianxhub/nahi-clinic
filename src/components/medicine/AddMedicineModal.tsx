@@ -14,6 +14,7 @@ import { medicineService } from "@/services/medicine";
 import { DrugCategory } from "@/interface/medicine";
 import AddCategoryModal from "@/components/medicine/AddCategoryModal";
 import swal from "sweetalert2";
+import { formatLocalDate } from "@/utils/dateUtils";
 
 interface AddMedicineModalProps {
     open: boolean;
@@ -29,7 +30,7 @@ export default function AddMedicineModal({
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
-    const getTodayStr = () => new Date().toISOString().split("T")[0];
+    const getTodayStr = () => formatLocalDate(new Date());
 
     const generateLotNo = (dateStr: string) => {
         const d = new Date(dateStr);

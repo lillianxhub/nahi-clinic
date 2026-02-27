@@ -268,8 +268,8 @@ export type DrugWhereInput = {
   created_at?: Prisma.DateTimeFilter<"Drug"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Drug"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Drug"> | Date | string | null
-  category?: Prisma.XOR<Prisma.Drug_CategoryScalarRelationFilter, Prisma.Drug_CategoryWhereInput>
   lots?: Prisma.Drug_LotListRelationFilter
+  category?: Prisma.XOR<Prisma.Drug_CategoryScalarRelationFilter, Prisma.Drug_CategoryWhereInput>
   visitItems?: Prisma.Visit_DetailListRelationFilter
 }
 
@@ -285,8 +285,8 @@ export type DrugOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
-  category?: Prisma.Drug_CategoryOrderByWithRelationInput
   lots?: Prisma.Drug_LotOrderByRelationAggregateInput
+  category?: Prisma.Drug_CategoryOrderByWithRelationInput
   visitItems?: Prisma.Visit_DetailOrderByRelationAggregateInput
   _relevance?: Prisma.DrugOrderByRelevanceInput
 }
@@ -306,8 +306,8 @@ export type DrugWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"Drug"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Drug"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Drug"> | Date | string | null
-  category?: Prisma.XOR<Prisma.Drug_CategoryScalarRelationFilter, Prisma.Drug_CategoryWhereInput>
   lots?: Prisma.Drug_LotListRelationFilter
+  category?: Prisma.XOR<Prisma.Drug_CategoryScalarRelationFilter, Prisma.Drug_CategoryWhereInput>
   visitItems?: Prisma.Visit_DetailListRelationFilter
 }, "drug_id">
 
@@ -358,8 +358,8 @@ export type DrugCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  category: Prisma.Drug_CategoryCreateNestedOneWithoutDrugsInput
   lots?: Prisma.Drug_LotCreateNestedManyWithoutDrugInput
+  category: Prisma.Drug_CategoryCreateNestedOneWithoutDrugsInput
   visitItems?: Prisma.Visit_DetailCreateNestedManyWithoutDrugInput
 }
 
@@ -390,8 +390,8 @@ export type DrugUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.Drug_CategoryUpdateOneRequiredWithoutDrugsNestedInput
   lots?: Prisma.Drug_LotUpdateManyWithoutDrugNestedInput
+  category?: Prisma.Drug_CategoryUpdateOneRequiredWithoutDrugsNestedInput
   visitItems?: Prisma.Visit_DetailUpdateManyWithoutDrugNestedInput
 }
 
@@ -617,8 +617,8 @@ export type DrugCreateWithoutVisitItemsInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  category: Prisma.Drug_CategoryCreateNestedOneWithoutDrugsInput
   lots?: Prisma.Drug_LotCreateNestedManyWithoutDrugInput
+  category: Prisma.Drug_CategoryCreateNestedOneWithoutDrugsInput
 }
 
 export type DrugUncheckedCreateWithoutVisitItemsInput = {
@@ -663,8 +663,8 @@ export type DrugUpdateWithoutVisitItemsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  category?: Prisma.Drug_CategoryUpdateOneRequiredWithoutDrugsNestedInput
   lots?: Prisma.Drug_LotUpdateManyWithoutDrugNestedInput
+  category?: Prisma.Drug_CategoryUpdateOneRequiredWithoutDrugsNestedInput
 }
 
 export type DrugUncheckedUpdateWithoutVisitItemsInput = {
@@ -939,8 +939,8 @@ export type DrugSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
-  category?: boolean | Prisma.Drug_CategoryDefaultArgs<ExtArgs>
   lots?: boolean | Prisma.Drug$lotsArgs<ExtArgs>
+  category?: boolean | Prisma.Drug_CategoryDefaultArgs<ExtArgs>
   visitItems?: boolean | Prisma.Drug$visitItemsArgs<ExtArgs>
   _count?: boolean | Prisma.DrugCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["drug"]>
@@ -963,8 +963,8 @@ export type DrugSelectScalar = {
 
 export type DrugOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"drug_id" | "drug_name" | "category_id" | "unit" | "sell_price" | "min_stock" | "status" | "is_active" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["drug"]>
 export type DrugInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  category?: boolean | Prisma.Drug_CategoryDefaultArgs<ExtArgs>
   lots?: boolean | Prisma.Drug$lotsArgs<ExtArgs>
+  category?: boolean | Prisma.Drug_CategoryDefaultArgs<ExtArgs>
   visitItems?: boolean | Prisma.Drug$visitItemsArgs<ExtArgs>
   _count?: boolean | Prisma.DrugCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -972,8 +972,8 @@ export type DrugInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type $DrugPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Drug"
   objects: {
-    category: Prisma.$Drug_CategoryPayload<ExtArgs>
     lots: Prisma.$Drug_LotPayload<ExtArgs>[]
+    category: Prisma.$Drug_CategoryPayload<ExtArgs>
     visitItems: Prisma.$Visit_DetailPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1328,8 +1328,8 @@ readonly fields: DrugFieldRefs;
  */
 export interface Prisma__DrugClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  category<T extends Prisma.Drug_CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__Drug_CategoryClient<runtime.Types.Result.GetResult<Prisma.$Drug_CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   lots<T extends Prisma.Drug$lotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug$lotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Drug_LotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  category<T extends Prisma.Drug_CategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_CategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__Drug_CategoryClient<runtime.Types.Result.GetResult<Prisma.$Drug_CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   visitItems<T extends Prisma.Drug$visitItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug$visitItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Visit_DetailPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
