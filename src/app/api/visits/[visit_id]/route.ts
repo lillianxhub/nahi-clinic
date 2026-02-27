@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { getInclude } from "@/utils/prismaQuery";
 
 type Params = {
-    params: {
+    params: Promise<{
         visit_id: string;
-    };
+    }>;
 };
 
 export async function GET(req: Request, { params }: Params) {
@@ -31,7 +31,7 @@ export async function GET(req: Request, { params }: Params) {
         if (!visit) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลผู้ป่วย" },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -40,7 +40,7 @@ export async function GET(req: Request, { params }: Params) {
         console.error("Get visit by id error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -67,7 +67,7 @@ export async function PATCH(req: Request, { params }: Params) {
         console.error("Update visit by id error: ", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -90,7 +90,7 @@ export async function DELETE(req: Request, { params }: Params) {
         console.error("Delete visit by id error: ", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

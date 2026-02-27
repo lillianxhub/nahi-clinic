@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -14,6 +14,37 @@ export async function GET() {
         return NextResponse.json(
             {
                 message: "เกิดข้อผิดพลาดในการดึงข้อมูลหมวดหมู่ยา",
+                error: error.message,
+            },
+            { status: 500 },
+        );
+    }
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { category_name } = body;
+
+        if (!category_name || !category_name.trim()) {
+            return NextResponse.json(
+                { message: "กรุณาระบุชื่อหมวดหมู่" },
+                { status: 400 },
+            );
+        }
+
+        const category = await prisma.drug_Category.create({
+            data: {
+                category_name: category_name.trim(),
+            },
+        });
+
+        return NextResponse.json({ data: category }, { status: 201 });
+    } catch (error: any) {
+        console.error("Create drug category error:", error);
+        return NextResponse.json(
+            {
+                message: "เกิดข้อผิดพลาดในการสร้างหมวดหมู่ยา",
                 error: error.message,
             },
             { status: 500 },

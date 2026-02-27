@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-    params: {
+    params: Promise<{
         expense_id: string;
-    };
+    }>;
 };
 
 export async function GET(req: Request, { params }: Params) {

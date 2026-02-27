@@ -1,6 +1,11 @@
 import { buildQuery, QueryParams } from "@/utils/query";
 import { apiClient } from "./apiClient";
-import { Medicine, MedicineSummary, DrugCategory } from "@/interface/medicine";
+import {
+    Medicine,
+    MedicineSummary,
+    DrugCategory,
+    DrugLot,
+} from "@/interface/medicine";
 import { ResponseData } from "@/interface/response";
 
 export const medicineService = {
@@ -14,10 +19,29 @@ export const medicineService = {
         );
     },
 
+    async getMedicineLots(
+        drug_id: string,
+        params?: QueryParams,
+    ): Promise<ResponseData<DrugLot[], any>> {
+        const query = buildQuery(params);
+        return apiClient.get<ResponseData<DrugLot[], any>>(
+            `/api/medicines/${drug_id}/lots${query}`,
+        );
+    },
+
     async getCategories(): Promise<{ data: DrugCategory[] }> {
         return apiClient.get<{ data: DrugCategory[] }>(
             "/api/medicines/categories",
         );
+    },
+
+    async createCategory(
+        category_name: string,
+    ): Promise<{ data: DrugCategory }> {
+        return apiClient.post<
+            { data: DrugCategory },
+            { category_name: string }
+        >("/api/medicines/categories", { category_name });
     },
 
     async getMedicineDetail(drug_id: string): Promise<{ data: Medicine }> {

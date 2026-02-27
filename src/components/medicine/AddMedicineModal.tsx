@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { DrugCategory } from "@/interface/medicine";
+import AddCategoryModal from "@/components/medicine/AddCategoryModal";
+import swal from "sweetalert2";
 
 interface AddMedicineModalProps {
     open: boolean;
@@ -24,6 +26,7 @@ export default function AddMedicineModal({
     onClose,
     onSuccess,
 }: AddMedicineModalProps) {
+    const [showAddCategory, setShowAddCategory] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
     const getTodayStr = () => new Date().toISOString().split("T")[0];
@@ -74,6 +77,11 @@ export default function AddMedicineModal({
     ) => {
         const { name, value } = e.target;
 
+        if (name === "category_id" && value === "add_newCategory") {
+            setShowAddCategory(true);
+            return;
+        }
+
         setFormData((prev) => {
             const newData = { ...prev, [name]: value };
 
@@ -89,6 +97,19 @@ export default function AddMedicineModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        const result = await swal.fire({
+            title: "ยืนยันการเพิ่มยา",
+            text: "คุณต้องการเพิ่มยานี้หรือไม่?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "var(--primary)",
+            cancelButtonColor: "#ef4444",
+            confirmButtonText: "บันทึกยา",
+            cancelButtonText: "ยกเลิก",
+        });
+
+        if (!result.isConfirmed) return;
+
         try {
             setLoading(true);
 
@@ -102,6 +123,15 @@ export default function AddMedicineModal({
                 received_date: formData.received_date,
                 expiry_date: formData.expiry_date,
                 lot_no: formData.lot_no,
+            });
+
+            await swal.fire({
+                title: "สร้างยาสำเร็จ",
+                text: "ยาถูกสร้างเรียบร้อยแล้ว",
+                icon: "success",
+                confirmButtonText: "ตกลง",
+                timer: 1000,
+                showConfirmButton: false,
             });
 
             setFormData({
@@ -120,7 +150,13 @@ export default function AddMedicineModal({
             onClose();
         } catch (error) {
             console.error("สร้างยาไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาด: " + String(error));
+
+            swal.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "ไม่สามารถเพิ่มยาได้",
+                icon: "error",
+                confirmButtonText: "ตกลง",
+            });
         } finally {
             setLoading(false);
         }
@@ -168,7 +204,7 @@ export default function AddMedicineModal({
 
                 {/* Form Content */}
                 <form
-                    onSubmit={handleSubmit}
+                    // onSubmit={handleSubmit}
                     className="p-6 space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto"
                 >
                     {/* Medicine Name */}
@@ -211,6 +247,12 @@ export default function AddMedicineModal({
                                         {cat.category_name}
                                     </option>
                                 ))}
+                                <option
+                                    value="add_newCategory"
+                                    className="text-primary"
+                                >
+                                    + เพิ่มหมวดหมู่
+                                </option>
                             </select>
                         </div>
 
@@ -399,6 +441,14 @@ export default function AddMedicineModal({
                     </button>
                 </div>
             </div>
+            <AddCategoryModal
+                open={showAddCategory}
+                onClose={() => {
+                    setShowAddCategory(false);
+                    setFormData({ ...formData, category_id: "" });
+                }}
+                onSuccess={() => fetchCategories()}
+            />
         </div>
     );
 }
