@@ -4,6 +4,7 @@ import { Edit2, Eye, Trash2 } from "lucide-react";
 import { Medicine } from "@/interface/medicine";
 import { useState } from "react";
 import { medicineService } from "@/services/medicine";
+import { formatLocalDate } from "@/utils/dateUtils";
 
 type Props = {
     medicine: Medicine;
@@ -110,7 +111,7 @@ export default function MedicineCard({
                         <p className="text-xs text-gray-500 mb-1">หมดอายุ</p>
                         <p className="text-lg font-semibold text-gray-900">
                             {nearestExpire
-                                ? nearestExpire.toISOString().split("T")[0]
+                                ? formatLocalDate(nearestExpire)
                                 : "-"}
                         </p>
                     </div>

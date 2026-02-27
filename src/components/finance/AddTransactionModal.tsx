@@ -11,6 +11,7 @@ import { financeService } from "@/services/finance";
 import { patientService } from "@/services/patient";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
+import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 
 interface AddTransactionModalProps {
     isOpen: boolean;
@@ -27,10 +28,12 @@ export default function AddTransactionModal({
 }: AddTransactionModalProps) {
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState(initialType);
+
+    const now = new Date();
     const [formData, setFormData] = useState({
-        date: new Date().toISOString().split("T")[0],
-        hour: new Date().getHours().toString().padStart(2, "0"),
-        minute: new Date().getMinutes().toString().padStart(2, "0"),
+        date: formatLocalDate(now),
+        hour: getLocalTime(now).hour,
+        minute: getLocalTime(now).minute,
         category: "",
         amount: "",
         description: "",
@@ -146,10 +149,11 @@ export default function AddTransactionModal({
             onSuccess();
             onClose();
             // Reset form
+            const resetNow = new Date();
             setFormData({
-                date: new Date().toISOString().split("T")[0],
-                hour: new Date().getHours().toString().padStart(2, "0"),
-                minute: new Date().getMinutes().toString().padStart(2, "0"),
+                date: formatLocalDate(resetNow),
+                hour: getLocalTime(resetNow).hour,
+                minute: getLocalTime(resetNow).minute,
                 category: "",
                 amount: "",
                 description: "",
@@ -195,11 +199,10 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setTransactionType("income")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "income"
-                                        ? "border-green-500 bg-green-50 shadow-inner"
-                                        : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "income"
+                                    ? "border-green-500 bg-green-50 shadow-inner"
+                                    : "border-gray-100 hover:border-gray-200"
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "income" ? "bg-green-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -221,11 +224,10 @@ export default function AddTransactionModal({
                             </button>
                             <button
                                 onClick={() => setTransactionType("expense")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "expense"
-                                        ? "border-red-500 bg-red-50 shadow-inner"
-                                        : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "expense"
+                                    ? "border-red-500 bg-red-50 shadow-inner"
+                                    : "border-gray-100 hover:border-gray-200"
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "expense" ? "bg-red-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -601,11 +603,10 @@ export default function AddTransactionModal({
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 py-2.5 rounded-xl text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
-                                loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                            }`}
+                            className={`px-10 py-2.5 rounded-xl text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${loading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-primary hover:bg-primary-dark shadow-primary/20"
+                                }`}
                         >
                             {loading ? (
                                 <>

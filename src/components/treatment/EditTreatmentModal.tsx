@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, FileText, Calendar, Search, User, Plus, Clock } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
+import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -60,13 +61,8 @@ export default function EditTreatmentModal({
             console.log("Latest Treatment Data received from API:", data);
 
             const dateObj = new Date(data.visit_date);
-            const yyyy = dateObj.getFullYear();
-            const mm = (dateObj.getMonth() + 1).toString().padStart(2, "0");
-            const dd = dateObj.getDate().toString().padStart(2, "0");
-            const localDate = `${yyyy}-${mm}-${dd}`;
-
             setFormData({
-                visit_date: localDate,
+                visit_date: formatLocalDate(dateObj),
                 hour: dateObj.getHours().toString().padStart(2, "0"),
                 minute: dateObj.getMinutes().toString().padStart(2, "0"),
                 symptom: data.symptom || "",

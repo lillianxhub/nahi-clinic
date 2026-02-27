@@ -10,6 +10,7 @@ import { patientService } from "@/services/patient";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
 import AddPatientModal from "../patient/AddPatientModal";
+import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 
 interface AddTreatmentModalProps {
     open: boolean;
@@ -23,11 +24,12 @@ export default function AddTreatmentModal({
     onSuccess,
 }: AddTreatmentModalProps) {
     const [loading, setLoading] = useState(false);
+    const now = new Date();
     const [formData, setFormData] = useState({
         patient_id: "",
-        visit_date: new Date().toISOString().split("T")[0],
-        hour: new Date().getHours().toString().padStart(2, "0"),
-        minute: new Date().getMinutes().toString().padStart(2, "0"),
+        visit_date: formatLocalDate(now),
+        hour: getLocalTime(now).hour,
+        minute: getLocalTime(now).minute,
         symptom: "",
         diagnosis: "",
     });
@@ -186,11 +188,12 @@ export default function AddTreatmentModal({
             } as CreateTreatmentDTO);
 
             // Reset form
+            const resetNow = new Date();
             setFormData({
                 patient_id: "",
-                visit_date: new Date().toISOString().split("T")[0],
-                hour: new Date().getHours().toString().padStart(2, "0"),
-                minute: new Date().getMinutes().toString().padStart(2, "0"),
+                visit_date: formatLocalDate(resetNow),
+                hour: getLocalTime(resetNow).hour,
+                minute: getLocalTime(resetNow).minute,
                 symptom: "",
                 diagnosis: "",
             });
@@ -275,7 +278,7 @@ export default function AddTreatmentModal({
                                         if (
                                             selectedPatient &&
                                             e.target.value !==
-                                                selectedPatient.fullName
+                                            selectedPatient.fullName
                                         ) {
                                             setSelectedPatient(null);
                                             setFormData((prev) => ({
