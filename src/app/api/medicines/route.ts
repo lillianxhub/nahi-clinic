@@ -22,18 +22,32 @@ export async function GET(req: NextRequest) {
             };
         }
 
+        const q = searchParams.get("q");
+        const status = searchParams.get("status");
+
+        const where: Record<string, unknown> = { deleted_at: null };
+        if (q) {
+            where.drug_name = { contains: q };
+        }
+        if (status === "active") {
+            where.is_active = true;
+        } else if (status === "inactive") {
+            where.is_active = false;
+        }
+
         const [data, total, lowStockCount] = await Promise.all([
             prisma.drug.findMany({
                 skip,
                 take,
                 orderBy,
+                where,
                 include: {
                     category: true,
                     lots: true,
                 },
             }),
 
-            prisma.drug.count(),
+            prisma.drug.count({ where }),
 
             (async () => {
                 const drugs = await prisma.drug.findMany({
