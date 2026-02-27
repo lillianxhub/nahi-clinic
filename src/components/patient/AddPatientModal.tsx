@@ -37,7 +37,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
         birth_date: "",
         phone: "",
         address: "",
-        allergies: "",
+        allergy: "",
     });
 
     if (!open) return null;
@@ -51,7 +51,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                 birth_date: form.birth_date || undefined,
                 phone: form.phone || undefined,
                 address: form.address || undefined,
-                allergy: form.allergies || undefined,
+                allergy: form.allergy || undefined,
             });
 
             onSuccess(patient);
@@ -233,12 +233,12 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                             placeholder="ระบุประวัติการแพ้ยาหรืออาหาร (ถ้ามี)"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                             rows={3}
-                            value={form.allergies}
+                            value={form.allergy}
                             onChange={(e) =>
-                                setForm({ ...form, allergies: e.target.value })
+                                setForm({ ...form, allergy: e.target.value })
                             }
                         />
-                        {form.allergies && (
+                        {form.allergy && (
                             <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
                                 <svg
                                     className="w-5 h-5 text-warning shrink-0 mt-0.5"
