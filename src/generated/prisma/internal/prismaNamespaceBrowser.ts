@@ -96,7 +96,6 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const PatientScalarFieldEnum = {
   patient_id: 'patient_id',
   hospital_number: 'hospital_number',
-  citizen_number: 'citizen_number',
   first_name: 'first_name',
   last_name: 'last_name',
   gender: 'gender',
@@ -107,7 +106,8 @@ export const PatientScalarFieldEnum = {
   is_active: 'is_active',
   created_at: 'created_at',
   updated_at: 'updated_at',
-  deleted_at: 'deleted_at'
+  deleted_at: 'deleted_at',
+  citizen_number: 'citizen_number'
 } as const
 
 export type PatientScalarFieldEnum = (typeof PatientScalarFieldEnum)[keyof typeof PatientScalarFieldEnum]
@@ -281,12 +281,12 @@ export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnu
 export const PatientOrderByRelevanceFieldEnum = {
   patient_id: 'patient_id',
   hospital_number: 'hospital_number',
-  citizen_number: 'citizen_number',
   first_name: 'first_name',
   last_name: 'last_name',
   phone: 'phone',
   address: 'address',
-  allergy: 'allergy'
+  allergy: 'allergy',
+  citizen_number: 'citizen_number'
 } as const
 
 export type PatientOrderByRelevanceFieldEnum = (typeof PatientOrderByRelevanceFieldEnum)[keyof typeof PatientOrderByRelevanceFieldEnum]

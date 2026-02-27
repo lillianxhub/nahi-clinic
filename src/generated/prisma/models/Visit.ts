@@ -222,10 +222,10 @@ export type VisitWhereInput = {
   created_at?: Prisma.DateTimeFilter<"Visit"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Visit"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Visit"> | Date | string | null
-  patient?: Prisma.XOR<Prisma.PatientScalarRelationFilter, Prisma.PatientWhereInput>
-  visitDetails?: Prisma.Visit_DetailListRelationFilter
   drugUsages?: Prisma.Drug_UsageListRelationFilter
   incomes?: Prisma.IncomeListRelationFilter
+  visitDetails?: Prisma.Visit_DetailListRelationFilter
+  patient?: Prisma.XOR<Prisma.PatientScalarRelationFilter, Prisma.PatientWhereInput>
 }
 
 export type VisitOrderByWithRelationInput = {
@@ -239,10 +239,10 @@ export type VisitOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
-  patient?: Prisma.PatientOrderByWithRelationInput
-  visitDetails?: Prisma.Visit_DetailOrderByRelationAggregateInput
   drugUsages?: Prisma.Drug_UsageOrderByRelationAggregateInput
   incomes?: Prisma.IncomeOrderByRelationAggregateInput
+  visitDetails?: Prisma.Visit_DetailOrderByRelationAggregateInput
+  patient?: Prisma.PatientOrderByWithRelationInput
   _relevance?: Prisma.VisitOrderByRelevanceInput
 }
 
@@ -260,10 +260,10 @@ export type VisitWhereUniqueInput = Prisma.AtLeast<{
   created_at?: Prisma.DateTimeFilter<"Visit"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Visit"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Visit"> | Date | string | null
-  patient?: Prisma.XOR<Prisma.PatientScalarRelationFilter, Prisma.PatientWhereInput>
-  visitDetails?: Prisma.Visit_DetailListRelationFilter
   drugUsages?: Prisma.Drug_UsageListRelationFilter
   incomes?: Prisma.IncomeListRelationFilter
+  visitDetails?: Prisma.Visit_DetailListRelationFilter
+  patient?: Prisma.XOR<Prisma.PatientScalarRelationFilter, Prisma.PatientWhereInput>
 }, "visit_id">
 
 export type VisitOrderByWithAggregationInput = {
@@ -308,10 +308,10 @@ export type VisitCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
-  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
+  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
 }
 
 export type VisitUncheckedCreateInput = {
@@ -325,9 +325,9 @@ export type VisitUncheckedCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeUncheckedCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
 }
 
 export type VisitUpdateInput = {
@@ -340,10 +340,10 @@ export type VisitUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
-  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
+  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
 }
 
 export type VisitUncheckedUpdateInput = {
@@ -357,9 +357,9 @@ export type VisitUncheckedUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUncheckedUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
 }
 
 export type VisitCreateManyInput = {
@@ -554,9 +554,9 @@ export type VisitCreateWithoutPatientInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
 }
 
 export type VisitUncheckedCreateWithoutPatientInput = {
@@ -569,9 +569,9 @@ export type VisitUncheckedCreateWithoutPatientInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeUncheckedCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
 }
 
 export type VisitCreateOrConnectWithoutPatientInput = {
@@ -626,9 +626,9 @@ export type VisitCreateWithoutVisitDetailsInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
   drugUsages?: Prisma.Drug_UsageCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeCreateNestedManyWithoutVisitInput
+  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
 }
 
 export type VisitUncheckedCreateWithoutVisitDetailsInput = {
@@ -672,9 +672,9 @@ export type VisitUpdateWithoutVisitDetailsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
   drugUsages?: Prisma.Drug_UsageUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUpdateManyWithoutVisitNestedInput
+  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
 }
 
 export type VisitUncheckedUpdateWithoutVisitDetailsInput = {
@@ -702,9 +702,9 @@ export type VisitCreateWithoutDrugUsagesInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
-  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
+  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
 }
 
 export type VisitUncheckedCreateWithoutDrugUsagesInput = {
@@ -718,8 +718,8 @@ export type VisitUncheckedCreateWithoutDrugUsagesInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
   incomes?: Prisma.IncomeUncheckedCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
 }
 
 export type VisitCreateOrConnectWithoutDrugUsagesInput = {
@@ -748,9 +748,9 @@ export type VisitUpdateWithoutDrugUsagesInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
-  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
+  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
 }
 
 export type VisitUncheckedUpdateWithoutDrugUsagesInput = {
@@ -764,8 +764,8 @@ export type VisitUncheckedUpdateWithoutDrugUsagesInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUncheckedUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
 }
 
 export type VisitCreateWithoutIncomesInput = {
@@ -778,9 +778,9 @@ export type VisitCreateWithoutIncomesInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
-  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailCreateNestedManyWithoutVisitInput
+  patient: Prisma.PatientCreateNestedOneWithoutVisitsInput
 }
 
 export type VisitUncheckedCreateWithoutIncomesInput = {
@@ -794,8 +794,8 @@ export type VisitUncheckedCreateWithoutIncomesInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
   drugUsages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutVisitInput
+  visitDetails?: Prisma.Visit_DetailUncheckedCreateNestedManyWithoutVisitInput
 }
 
 export type VisitCreateOrConnectWithoutIncomesInput = {
@@ -824,9 +824,9 @@ export type VisitUpdateWithoutIncomesInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
-  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
+  patient?: Prisma.PatientUpdateOneRequiredWithoutVisitsNestedInput
 }
 
 export type VisitUncheckedUpdateWithoutIncomesInput = {
@@ -840,8 +840,8 @@ export type VisitUncheckedUpdateWithoutIncomesInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
 }
 
 export type VisitCreateManyPatientInput = {
@@ -866,9 +866,9 @@ export type VisitUpdateWithoutPatientInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUpdateManyWithoutVisitNestedInput
 }
 
 export type VisitUncheckedUpdateWithoutPatientInput = {
@@ -881,9 +881,9 @@ export type VisitUncheckedUpdateWithoutPatientInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
   drugUsages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutVisitNestedInput
   incomes?: Prisma.IncomeUncheckedUpdateManyWithoutVisitNestedInput
+  visitDetails?: Prisma.Visit_DetailUncheckedUpdateManyWithoutVisitNestedInput
 }
 
 export type VisitUncheckedUpdateManyWithoutPatientInput = {
@@ -904,15 +904,15 @@ export type VisitUncheckedUpdateManyWithoutPatientInput = {
  */
 
 export type VisitCountOutputType = {
-  visitDetails: number
   drugUsages: number
   incomes: number
+  visitDetails: number
 }
 
 export type VisitCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  visitDetails?: boolean | VisitCountOutputTypeCountVisitDetailsArgs
   drugUsages?: boolean | VisitCountOutputTypeCountDrugUsagesArgs
   incomes?: boolean | VisitCountOutputTypeCountIncomesArgs
+  visitDetails?: boolean | VisitCountOutputTypeCountVisitDetailsArgs
 }
 
 /**
@@ -923,13 +923,6 @@ export type VisitCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extens
    * Select specific fields to fetch from the VisitCountOutputType
    */
   select?: Prisma.VisitCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * VisitCountOutputType without action
- */
-export type VisitCountOutputTypeCountVisitDetailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.Visit_DetailWhereInput
 }
 
 /**
@@ -946,6 +939,13 @@ export type VisitCountOutputTypeCountIncomesArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.IncomeWhereInput
 }
 
+/**
+ * VisitCountOutputType without action
+ */
+export type VisitCountOutputTypeCountVisitDetailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.Visit_DetailWhereInput
+}
+
 
 export type VisitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   visit_id?: boolean
@@ -958,10 +958,10 @@ export type VisitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
-  patient?: boolean | Prisma.PatientDefaultArgs<ExtArgs>
-  visitDetails?: boolean | Prisma.Visit$visitDetailsArgs<ExtArgs>
   drugUsages?: boolean | Prisma.Visit$drugUsagesArgs<ExtArgs>
   incomes?: boolean | Prisma.Visit$incomesArgs<ExtArgs>
+  visitDetails?: boolean | Prisma.Visit$visitDetailsArgs<ExtArgs>
+  patient?: boolean | Prisma.PatientDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.VisitCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["visit"]>
 
@@ -982,20 +982,20 @@ export type VisitSelectScalar = {
 
 export type VisitOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"visit_id" | "patient_id" | "visit_date" | "symptom" | "diagnosis" | "note" | "is_active" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["visit"]>
 export type VisitInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  patient?: boolean | Prisma.PatientDefaultArgs<ExtArgs>
-  visitDetails?: boolean | Prisma.Visit$visitDetailsArgs<ExtArgs>
   drugUsages?: boolean | Prisma.Visit$drugUsagesArgs<ExtArgs>
   incomes?: boolean | Prisma.Visit$incomesArgs<ExtArgs>
+  visitDetails?: boolean | Prisma.Visit$visitDetailsArgs<ExtArgs>
+  patient?: boolean | Prisma.PatientDefaultArgs<ExtArgs>
   _count?: boolean | Prisma.VisitCountOutputTypeDefaultArgs<ExtArgs>
 }
 
 export type $VisitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Visit"
   objects: {
-    patient: Prisma.$PatientPayload<ExtArgs>
-    visitDetails: Prisma.$Visit_DetailPayload<ExtArgs>[]
     drugUsages: Prisma.$Drug_UsagePayload<ExtArgs>[]
     incomes: Prisma.$IncomePayload<ExtArgs>[]
+    visitDetails: Prisma.$Visit_DetailPayload<ExtArgs>[]
+    patient: Prisma.$PatientPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     visit_id: string
@@ -1348,10 +1348,10 @@ readonly fields: VisitFieldRefs;
  */
 export interface Prisma__VisitClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  patient<T extends Prisma.PatientDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PatientDefaultArgs<ExtArgs>>): Prisma.Prisma__PatientClient<runtime.Types.Result.GetResult<Prisma.$PatientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  visitDetails<T extends Prisma.Visit$visitDetailsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Visit$visitDetailsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Visit_DetailPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   drugUsages<T extends Prisma.Visit$drugUsagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Visit$drugUsagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Drug_UsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   incomes<T extends Prisma.Visit$incomesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Visit$incomesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IncomePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  visitDetails<T extends Prisma.Visit$visitDetailsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Visit$visitDetailsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Visit_DetailPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  patient<T extends Prisma.PatientDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PatientDefaultArgs<ExtArgs>>): Prisma.Prisma__PatientClient<runtime.Types.Result.GetResult<Prisma.$PatientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1734,30 +1734,6 @@ export type VisitDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
 }
 
 /**
- * Visit.visitDetails
- */
-export type Visit$visitDetailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Visit_Detail
-   */
-  select?: Prisma.Visit_DetailSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Visit_Detail
-   */
-  omit?: Prisma.Visit_DetailOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.Visit_DetailInclude<ExtArgs> | null
-  where?: Prisma.Visit_DetailWhereInput
-  orderBy?: Prisma.Visit_DetailOrderByWithRelationInput | Prisma.Visit_DetailOrderByWithRelationInput[]
-  cursor?: Prisma.Visit_DetailWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.Visit_DetailScalarFieldEnum | Prisma.Visit_DetailScalarFieldEnum[]
-}
-
-/**
  * Visit.drugUsages
  */
 export type Visit$drugUsagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1803,6 +1779,30 @@ export type Visit$incomesArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.IncomeScalarFieldEnum | Prisma.IncomeScalarFieldEnum[]
+}
+
+/**
+ * Visit.visitDetails
+ */
+export type Visit$visitDetailsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Visit_Detail
+   */
+  select?: Prisma.Visit_DetailSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Visit_Detail
+   */
+  omit?: Prisma.Visit_DetailOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.Visit_DetailInclude<ExtArgs> | null
+  where?: Prisma.Visit_DetailWhereInput
+  orderBy?: Prisma.Visit_DetailOrderByWithRelationInput | Prisma.Visit_DetailOrderByWithRelationInput[]
+  cursor?: Prisma.Visit_DetailWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Visit_DetailScalarFieldEnum | Prisma.Visit_DetailScalarFieldEnum[]
 }
 
 /**

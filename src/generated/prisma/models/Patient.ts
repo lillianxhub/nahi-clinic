@@ -27,7 +27,6 @@ export type AggregatePatient = {
 export type PatientMinAggregateOutputType = {
   patient_id: string | null
   hospital_number: string | null
-  citizen_number: string | null
   first_name: string | null
   last_name: string | null
   gender: $Enums.Gender | null
@@ -39,12 +38,12 @@ export type PatientMinAggregateOutputType = {
   created_at: Date | null
   updated_at: Date | null
   deleted_at: Date | null
+  citizen_number: string | null
 }
 
 export type PatientMaxAggregateOutputType = {
   patient_id: string | null
   hospital_number: string | null
-  citizen_number: string | null
   first_name: string | null
   last_name: string | null
   gender: $Enums.Gender | null
@@ -56,12 +55,12 @@ export type PatientMaxAggregateOutputType = {
   created_at: Date | null
   updated_at: Date | null
   deleted_at: Date | null
+  citizen_number: string | null
 }
 
 export type PatientCountAggregateOutputType = {
   patient_id: number
   hospital_number: number
-  citizen_number: number
   first_name: number
   last_name: number
   gender: number
@@ -73,6 +72,7 @@ export type PatientCountAggregateOutputType = {
   created_at: number
   updated_at: number
   deleted_at: number
+  citizen_number: number
   _all: number
 }
 
@@ -80,7 +80,6 @@ export type PatientCountAggregateOutputType = {
 export type PatientMinAggregateInputType = {
   patient_id?: true
   hospital_number?: true
-  citizen_number?: true
   first_name?: true
   last_name?: true
   gender?: true
@@ -92,12 +91,12 @@ export type PatientMinAggregateInputType = {
   created_at?: true
   updated_at?: true
   deleted_at?: true
+  citizen_number?: true
 }
 
 export type PatientMaxAggregateInputType = {
   patient_id?: true
   hospital_number?: true
-  citizen_number?: true
   first_name?: true
   last_name?: true
   gender?: true
@@ -109,12 +108,12 @@ export type PatientMaxAggregateInputType = {
   created_at?: true
   updated_at?: true
   deleted_at?: true
+  citizen_number?: true
 }
 
 export type PatientCountAggregateInputType = {
   patient_id?: true
   hospital_number?: true
-  citizen_number?: true
   first_name?: true
   last_name?: true
   gender?: true
@@ -126,6 +125,7 @@ export type PatientCountAggregateInputType = {
   created_at?: true
   updated_at?: true
   deleted_at?: true
+  citizen_number?: true
   _all?: true
 }
 
@@ -204,7 +204,6 @@ export type PatientGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type PatientGroupByOutputType = {
   patient_id: string
   hospital_number: string | null
-  citizen_number: string | null
   first_name: string
   last_name: string
   gender: $Enums.Gender | null
@@ -216,6 +215,7 @@ export type PatientGroupByOutputType = {
   created_at: Date
   updated_at: Date | null
   deleted_at: Date | null
+  citizen_number: string | null
   _count: PatientCountAggregateOutputType | null
   _min: PatientMinAggregateOutputType | null
   _max: PatientMaxAggregateOutputType | null
@@ -242,7 +242,6 @@ export type PatientWhereInput = {
   NOT?: Prisma.PatientWhereInput | Prisma.PatientWhereInput[]
   patient_id?: Prisma.StringFilter<"Patient"> | string
   hospital_number?: Prisma.StringNullableFilter<"Patient"> | string | null
-  citizen_number?: Prisma.StringNullableFilter<"Patient"> | string | null
   first_name?: Prisma.StringFilter<"Patient"> | string
   last_name?: Prisma.StringFilter<"Patient"> | string
   gender?: Prisma.EnumGenderNullableFilter<"Patient"> | $Enums.Gender | null
@@ -254,13 +253,13 @@ export type PatientWhereInput = {
   created_at?: Prisma.DateTimeFilter<"Patient"> | Date | string
   updated_at?: Prisma.DateTimeNullableFilter<"Patient"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableFilter<"Patient"> | Date | string | null
+  citizen_number?: Prisma.StringNullableFilter<"Patient"> | string | null
   visits?: Prisma.VisitListRelationFilter
 }
 
 export type PatientOrderByWithRelationInput = {
   patient_id?: Prisma.SortOrder
   hospital_number?: Prisma.SortOrderInput | Prisma.SortOrder
-  citizen_number?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   gender?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -272,6 +271,7 @@ export type PatientOrderByWithRelationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  citizen_number?: Prisma.SortOrderInput | Prisma.SortOrder
   visits?: Prisma.VisitOrderByRelationAggregateInput
   _relevance?: Prisma.PatientOrderByRelevanceInput
 }
@@ -300,7 +300,6 @@ export type PatientWhereUniqueInput = Prisma.AtLeast<{
 export type PatientOrderByWithAggregationInput = {
   patient_id?: Prisma.SortOrder
   hospital_number?: Prisma.SortOrderInput | Prisma.SortOrder
-  citizen_number?: Prisma.SortOrderInput | Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   gender?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -312,6 +311,7 @@ export type PatientOrderByWithAggregationInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrderInput | Prisma.SortOrder
   deleted_at?: Prisma.SortOrderInput | Prisma.SortOrder
+  citizen_number?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PatientCountOrderByAggregateInput
   _max?: Prisma.PatientMaxOrderByAggregateInput
   _min?: Prisma.PatientMinOrderByAggregateInput
@@ -323,7 +323,6 @@ export type PatientScalarWhereWithAggregatesInput = {
   NOT?: Prisma.PatientScalarWhereWithAggregatesInput | Prisma.PatientScalarWhereWithAggregatesInput[]
   patient_id?: Prisma.StringWithAggregatesFilter<"Patient"> | string
   hospital_number?: Prisma.StringNullableWithAggregatesFilter<"Patient"> | string | null
-  citizen_number?: Prisma.StringNullableWithAggregatesFilter<"Patient"> | string | null
   first_name?: Prisma.StringWithAggregatesFilter<"Patient"> | string
   last_name?: Prisma.StringWithAggregatesFilter<"Patient"> | string
   gender?: Prisma.EnumGenderNullableWithAggregatesFilter<"Patient"> | $Enums.Gender | null
@@ -335,12 +334,12 @@ export type PatientScalarWhereWithAggregatesInput = {
   created_at?: Prisma.DateTimeWithAggregatesFilter<"Patient"> | Date | string
   updated_at?: Prisma.DateTimeNullableWithAggregatesFilter<"Patient"> | Date | string | null
   deleted_at?: Prisma.DateTimeNullableWithAggregatesFilter<"Patient"> | Date | string | null
+  citizen_number?: Prisma.StringNullableWithAggregatesFilter<"Patient"> | string | null
 }
 
 export type PatientCreateInput = {
   patient_id?: string
   hospital_number?: string | null
-  citizen_number?: string | null
   first_name: string
   last_name: string
   gender?: $Enums.Gender | null
@@ -352,13 +351,13 @@ export type PatientCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  citizen_number?: string | null
   visits?: Prisma.VisitCreateNestedManyWithoutPatientInput
 }
 
 export type PatientUncheckedCreateInput = {
   patient_id?: string
   hospital_number?: string | null
-  citizen_number?: string | null
   first_name: string
   last_name: string
   gender?: $Enums.Gender | null
@@ -370,13 +369,13 @@ export type PatientUncheckedCreateInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  citizen_number?: string | null
   visits?: Prisma.VisitUncheckedCreateNestedManyWithoutPatientInput
 }
 
 export type PatientUpdateInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -388,13 +387,13 @@ export type PatientUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visits?: Prisma.VisitUpdateManyWithoutPatientNestedInput
 }
 
 export type PatientUncheckedUpdateInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -406,13 +405,13 @@ export type PatientUncheckedUpdateInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   visits?: Prisma.VisitUncheckedUpdateManyWithoutPatientNestedInput
 }
 
 export type PatientCreateManyInput = {
   patient_id?: string
   hospital_number?: string | null
-  citizen_number?: string | null
   first_name: string
   last_name: string
   gender?: $Enums.Gender | null
@@ -424,12 +423,12 @@ export type PatientCreateManyInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  citizen_number?: string | null
 }
 
 export type PatientUpdateManyMutationInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -441,12 +440,12 @@ export type PatientUpdateManyMutationInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PatientUncheckedUpdateManyInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -458,6 +457,7 @@ export type PatientUncheckedUpdateManyInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PatientOrderByRelevanceInput = {
@@ -469,7 +469,6 @@ export type PatientOrderByRelevanceInput = {
 export type PatientCountOrderByAggregateInput = {
   patient_id?: Prisma.SortOrder
   hospital_number?: Prisma.SortOrder
-  citizen_number?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   gender?: Prisma.SortOrder
@@ -481,12 +480,12 @@ export type PatientCountOrderByAggregateInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
+  citizen_number?: Prisma.SortOrder
 }
 
 export type PatientMaxOrderByAggregateInput = {
   patient_id?: Prisma.SortOrder
   hospital_number?: Prisma.SortOrder
-  citizen_number?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   gender?: Prisma.SortOrder
@@ -498,12 +497,12 @@ export type PatientMaxOrderByAggregateInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
+  citizen_number?: Prisma.SortOrder
 }
 
 export type PatientMinOrderByAggregateInput = {
   patient_id?: Prisma.SortOrder
   hospital_number?: Prisma.SortOrder
-  citizen_number?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
   gender?: Prisma.SortOrder
@@ -515,6 +514,7 @@ export type PatientMinOrderByAggregateInput = {
   created_at?: Prisma.SortOrder
   updated_at?: Prisma.SortOrder
   deleted_at?: Prisma.SortOrder
+  citizen_number?: Prisma.SortOrder
 }
 
 export type PatientScalarRelationFilter = {
@@ -547,7 +547,6 @@ export type PatientUpdateOneRequiredWithoutVisitsNestedInput = {
 export type PatientCreateWithoutVisitsInput = {
   patient_id?: string
   hospital_number?: string | null
-  citizen_number?: string | null
   first_name: string
   last_name: string
   gender?: $Enums.Gender | null
@@ -559,12 +558,12 @@ export type PatientCreateWithoutVisitsInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  citizen_number?: string | null
 }
 
 export type PatientUncheckedCreateWithoutVisitsInput = {
   patient_id?: string
   hospital_number?: string | null
-  citizen_number?: string | null
   first_name: string
   last_name: string
   gender?: $Enums.Gender | null
@@ -576,6 +575,7 @@ export type PatientUncheckedCreateWithoutVisitsInput = {
   created_at?: Date | string
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
+  citizen_number?: string | null
 }
 
 export type PatientCreateOrConnectWithoutVisitsInput = {
@@ -597,7 +597,6 @@ export type PatientUpdateToOneWithWhereWithoutVisitsInput = {
 export type PatientUpdateWithoutVisitsInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -609,12 +608,12 @@ export type PatientUpdateWithoutVisitsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PatientUncheckedUpdateWithoutVisitsInput = {
   patient_id?: Prisma.StringFieldUpdateOperationsInput | string
   hospital_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
   gender?: Prisma.NullableEnumGenderFieldUpdateOperationsInput | $Enums.Gender | null
@@ -626,6 +625,7 @@ export type PatientUncheckedUpdateWithoutVisitsInput = {
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  citizen_number?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -662,7 +662,6 @@ export type PatientCountOutputTypeCountVisitsArgs<ExtArgs extends runtime.Types.
 export type PatientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   patient_id?: boolean
   hospital_number?: boolean
-  citizen_number?: boolean
   first_name?: boolean
   last_name?: boolean
   gender?: boolean
@@ -674,6 +673,7 @@ export type PatientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
+  citizen_number?: boolean
   visits?: boolean | Prisma.Patient$visitsArgs<ExtArgs>
   _count?: boolean | Prisma.PatientCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["patient"]>
@@ -683,7 +683,6 @@ export type PatientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type PatientSelectScalar = {
   patient_id?: boolean
   hospital_number?: boolean
-  citizen_number?: boolean
   first_name?: boolean
   last_name?: boolean
   gender?: boolean
@@ -695,9 +694,10 @@ export type PatientSelectScalar = {
   created_at?: boolean
   updated_at?: boolean
   deleted_at?: boolean
+  citizen_number?: boolean
 }
 
-export type PatientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"patient_id" | "hospital_number" | "citizen_number" | "first_name" | "last_name" | "gender" | "birth_date" | "phone" | "address" | "allergy" | "is_active" | "created_at" | "updated_at" | "deleted_at", ExtArgs["result"]["patient"]>
+export type PatientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"patient_id" | "hospital_number" | "first_name" | "last_name" | "gender" | "birth_date" | "phone" | "address" | "allergy" | "is_active" | "created_at" | "updated_at" | "deleted_at" | "citizen_number", ExtArgs["result"]["patient"]>
 export type PatientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   visits?: boolean | Prisma.Patient$visitsArgs<ExtArgs>
   _count?: boolean | Prisma.PatientCountOutputTypeDefaultArgs<ExtArgs>
@@ -711,7 +711,6 @@ export type $PatientPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     patient_id: string
     hospital_number: string | null
-    citizen_number: string | null
     first_name: string
     last_name: string
     gender: $Enums.Gender | null
@@ -723,6 +722,7 @@ export type $PatientPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     created_at: Date
     updated_at: Date | null
     deleted_at: Date | null
+    citizen_number: string | null
   }, ExtArgs["result"]["patient"]>
   composites: {}
 }
@@ -1095,7 +1095,6 @@ export interface Prisma__PatientClient<T, Null = never, ExtArgs extends runtime.
 export interface PatientFieldRefs {
   readonly patient_id: Prisma.FieldRef<"Patient", 'String'>
   readonly hospital_number: Prisma.FieldRef<"Patient", 'String'>
-  readonly citizen_number: Prisma.FieldRef<"Patient", 'String'>
   readonly first_name: Prisma.FieldRef<"Patient", 'String'>
   readonly last_name: Prisma.FieldRef<"Patient", 'String'>
   readonly gender: Prisma.FieldRef<"Patient", 'Gender'>
@@ -1107,6 +1106,7 @@ export interface PatientFieldRefs {
   readonly created_at: Prisma.FieldRef<"Patient", 'DateTime'>
   readonly updated_at: Prisma.FieldRef<"Patient", 'DateTime'>
   readonly deleted_at: Prisma.FieldRef<"Patient", 'DateTime'>
+  readonly citizen_number: Prisma.FieldRef<"Patient", 'String'>
 }
     
 
