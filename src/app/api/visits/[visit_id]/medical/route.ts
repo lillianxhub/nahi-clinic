@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(req: Request, { params }: { params: { visit_id: string } }) {
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ visit_id: string }> },
+) {
     try {
-        const { visit_id } = params;
+        const { visit_id } = await params;
         const body = await req.json();
 
         const visit = await prisma.visit.update({
@@ -14,8 +17,8 @@ export async function PATCH(req: Request, { params }: { params: { visit_id: stri
                 diagnosis: body.diagnosis,
                 note: body.note,
                 updated_at: new Date(),
-            }
-        })
+            },
+        });
 
         return NextResponse.json(visit);
     } catch (error: any) {

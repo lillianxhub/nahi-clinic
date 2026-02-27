@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useDebounce } from "use-debounce";
 import { Plus, Package, Search } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { DrugLot, Medicine } from "@/interface/medicine";
@@ -18,6 +19,7 @@ export default function MedicinesPage() {
     const [loading, setLoading] = useState(true);
 
     const [search, setSearch] = useState("");
+    const [debouncedSearch] = useDebounce(search, 500);
     const [status, setStatus] = useState<"all" | "normal" | "low">("all");
     const [openLot, setOpenLot] = useState(false);
     const [selectedDrug, setSelectedDrug] = useState<Medicine | null>(null);
@@ -28,8 +30,12 @@ export default function MedicinesPage() {
     const [openEdit, setOpenEdit] = useState(false);
 
     useEffect(() => {
+        setPage(1); // Reset page on filter change
+    }, [debouncedSearch, status]);
+
+    useEffect(() => {
         fetchMedicines();
-    }, [page]);
+    }, [page, debouncedSearch, status]);
 
     const fetchMedicines = async () => {
         try {
@@ -38,8 +44,31 @@ export default function MedicinesPage() {
                 pageSize: 6,
                 orderBy: "name",
                 order: "asc",
+                ...(debouncedSearch && { q: debouncedSearch }),
+                ...(status !== "all" && { status }),
             });
-            setMedicines(res.data);
+            // Map the quantities correctly from the backend since we removed client-side calculation
+            const mappedMedicines = res.data.map((m) => {
+                const totalQty =
+                    m.lots?.reduce((sum, lot) => sum + lot.qty_remaining, 0) ??
+                    0;
+
+                const nearestExpire =
+                    m.lots
+                        ?.map((l) => new Date(l.expire_date))
+                        .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
+
+                const isLowStock = totalQty <= m.min_stock;
+
+                return {
+                    ...m,
+                    totalQty,
+                    nearestExpire,
+                    isLowStock,
+                };
+            });
+
+            setMedicines(mappedMedicines);
             setTotalPages(res.meta.pagination.pageCount);
             setLowStockTotal(res.summary?.lowStockCount ?? 0);
         } catch (error) {
@@ -49,41 +78,7 @@ export default function MedicinesPage() {
         }
     };
 
-    const withComputed = useMemo(() => {
-        return medicines.map((m) => {
-            const minQuantity = m.min_stock;
-            const totalQty =
-                m.lots?.reduce((sum, lot) => sum + lot.qty_remaining, 0) ?? 0;
-
-            const nearestExpire =
-                m.lots
-                    ?.map((l) => new Date(l.expire_date))
-                    .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
-
-            const isLowStock = totalQty <= minQuantity;
-
-            return {
-                ...m,
-                totalQty,
-                nearestExpire,
-                isLowStock,
-            };
-        });
-    }, [medicines]);
-
-    const filteredMedicines = withComputed.filter((m) => {
-        if (
-            search &&
-            !m.drug_name.toLowerCase().includes(search.toLowerCase())
-        ) {
-            return false;
-        }
-
-        if (status === "low" && !m.isLowStock) return false;
-        if (status === "normal" && m.isLowStock) return false;
-
-        return true;
-    });
+    // client-side filtering removed
 
     const openLotModal = async (drug_id: string) => {
         try {
@@ -95,36 +90,7 @@ export default function MedicinesPage() {
         }
     };
 
-    const mapLotsWithStatus = (lots: DrugLot[]) => {
-        const today = new Date();
-
-        return lots.map((lot) => {
-            const expireDate = new Date(lot.expire_date);
-            const diffDays =
-                (expireDate.getTime() - today.getTime()) /
-                (1000 * 60 * 60 * 24);
-
-            let status: "normal" | "expiring" | "out_of_stock" | "expired" =
-                "normal";
-
-            if (diffDays < 0) {
-                status = "expired";
-            } else if (lot.qty_remaining === 0) {
-                status = "out_of_stock";
-            } else if (diffDays <= 30) {
-                status = "expiring";
-            }
-
-            return {
-                lot_id: lot.lot_id,
-                lot_no: lot.lot_no,
-                expire_date: lot.expire_date,
-                qty_remaining: lot.qty_remaining,
-                buy_price: lot.buy_price,
-                status,
-            };
-        });
-    };
+    // mapLotsWithStatus removed since MedicineLotModal fetches lots directly
 
     if (loading) {
         return <div className="p-6">กำลังโหลดข้อมูล...</div>;
@@ -177,7 +143,7 @@ export default function MedicinesPage() {
             </div>
 
             <div className="space-y-3">
-                {filteredMedicines.map((medicine) => (
+                {medicines.map((medicine) => (
                     <MedicineCard
                         key={medicine.drug_id}
                         medicine={medicine}
@@ -227,15 +193,17 @@ export default function MedicinesPage() {
                     open={openLot}
                     onClose={() => setOpenLot(false)}
                     drugName={selectedDrug.drug_name}
-                    lots={mapLotsWithStatus(selectedDrug.lots)}
+                    drugId={selectedDrug.drug_id}
                     onRefresh={() => {
-                        openLotModal(selectedDrug.drug_id);
+                        // We do not need to call openLotModal again since it refetches everything
+                        // The modal refetches its own lots, but we should refetch medicines
+                        // so the parent view reflects updated quantity
                         fetchMedicines();
                     }}
                 />
             )}
 
-            {filteredMedicines.length === 0 && (
+            {medicines.length === 0 && (
                 <div className="text-center py-16 bg-white rounded-lg border border-gray-200 mt-6">
                     <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
