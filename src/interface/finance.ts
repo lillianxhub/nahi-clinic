@@ -1,4 +1,4 @@
-import { PaymentMethod, ExpenseType } from "../../generated/prisma/client";
+import { PaymentMethod, ExpenseType } from "@/generated/prisma/client";
 
 export interface Income {
     income_id: string;

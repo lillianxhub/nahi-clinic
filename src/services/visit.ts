@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ItemType, PaymentMethod } from "../../generated/prisma/client";
+import { ItemType, PaymentMethod } from "@/generated/prisma/client";
 
 export class StockNotEnoughError extends Error {
     constructor(message: string = "Stock not enough") {
