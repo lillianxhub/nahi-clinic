@@ -2,7 +2,7 @@ import { prisma } from "../src/lib/prisma";
 import { Gender } from "../src/generated/prisma/client";
 import bcrypt from "bcrypt";
 
-const TOTAL_DAYS = 730;
+const TOTAL_DAYS = 365;
 
 function daysAgo(days: number) {
     const d = new Date();
@@ -34,6 +34,33 @@ function shuffle<T>(arr: T[]): T[] {
     return arr;
 }
 
+function calculateAge(birthDate: Date, visitDate: Date) {
+    let years = visitDate.getFullYear() - birthDate.getFullYear();
+    let months = visitDate.getMonth() - birthDate.getMonth();
+    let days = visitDate.getDate() - birthDate.getDate();
+
+    if (days < 0) {
+        months--;
+        const lastMonth = new Date(
+            visitDate.getFullYear(),
+            visitDate.getMonth(),
+            0,
+        );
+        days += lastMonth.getDate();
+    }
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+    return { years, months, days };
+}
+
+function randomBP() {
+    const systolic = randomInt(90, 140);
+    const diastolic = randomInt(60, 90);
+    return `${systolic}/${diastolic}`;
+}
+
 async function main() {
     console.log("🧹 กำลังล้างข้อมูลเก่า...");
     await prisma.drug_Usage.deleteMany();
@@ -48,7 +75,9 @@ async function main() {
     await prisma.drug_Category.deleteMany();
     await prisma.patient.deleteMany();
 
-    console.log(`🚀 เริ่มต้นการ Seed ข้อมูลระดับ 2 ปี (${TOTAL_DAYS} วัน)...`);
+    console.log(
+        `🚀 เริ่มต้นการ Seed ข้อมูลระดับ ${TOTAL_DAYS / 365} ปี (${TOTAL_DAYS} วัน)...`,
+    );
 
     // 1. Admin (เหมือนเดิม)
     const adminExists = await prisma.user.findFirst({
@@ -263,12 +292,24 @@ async function main() {
         const dailyVisits = isWeekend ? randomInt(10, 15) : randomInt(4, 8);
         for (let v = 0; v < dailyVisits; v++) {
             const patient = patients[randomInt(0, patients.length - 1)];
+
+            const age = patient.birth_date
+                ? calculateAge(patient.birth_date, date)
+                : { years: 0, months: 0, days: 0 };
+
             const visit = await prisma.visit.create({
                 data: {
                     patient_id: patient.patient_id,
                     visit_date: date,
                     symptom: symptoms[randomInt(0, symptoms.length - 1)],
                     diagnosis: diagnoses[randomInt(0, diagnoses.length - 1)],
+                    blood_pressure: randomBP(),
+                    heart_rate: randomInt(60, 100),
+                    weight: randomInt(40, 100),
+                    height: randomInt(150, 185),
+                    age_years: age.years,
+                    age_months: age.months,
+                    age_days: age.days,
                 },
             });
 
@@ -327,7 +368,7 @@ async function main() {
         if (day % 100 === 0)
             console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
     }
-    console.log("✅ Seed ข้อมูล 2 ปีเรียบร้อย!");
+    console.log("✅ Seed ข้อมูล " + TOTAL_DAYS / 365 + " ปีเรียบร้อย!");
 }
 
 main()
