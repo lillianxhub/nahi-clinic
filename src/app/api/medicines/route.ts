@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
             where.drug_id = { in: filteredDrugIds };
         }
 
-        const [data, total, lowStockCount] = await Promise.all([
+        const [data, total, summaryData] = await Promise.all([
             prisma.drug.findMany({
                 skip,
                 take,
@@ -84,26 +84,44 @@ export async function GET(req: NextRequest) {
                     select: {
                         min_stock: true,
                         lots: {
-                            select: { qty_remaining: true },
+                            select: { qty_remaining: true, expire_date: true },
+                            where: { is_active: true, deleted_at: null }
                         },
                     },
                     where: { is_active: true, deleted_at: null },
                 });
 
-                return drugs.filter((drug) => {
+                let lowCount = 0;
+                let expiringCount = 0;
+
+                const targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() + 30);
+
+                drugs.forEach((drug) => {
                     const totalQty = drug.lots.reduce(
                         (sum, lot) => sum + lot.qty_remaining,
                         0,
                     );
-                    return totalQty <= drug.min_stock;
-                }).length;
+                    if (totalQty <= drug.min_stock) {
+                        lowCount++;
+                    }
+
+                    drug.lots.forEach(lot => {
+                        if (lot.qty_remaining > 0 && lot.expire_date <= targetDate) {
+                            expiringCount++;
+                        }
+                    });
+                });
+
+                return { lowStockCount: lowCount, expiringLotsCount: expiringCount };
             })(),
         ]);
 
         return NextResponse.json({
             data,
             summary: {
-                lowStockCount,
+                lowStockCount: summaryData.lowStockCount,
+                expiringLotsCount: summaryData.expiringLotsCount,
             },
             meta: {
                 pagination: {

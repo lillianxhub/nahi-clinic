@@ -51,4 +51,5 @@ export interface Medicine {
 
 export interface MedicineSummary {
   lowStockCount: number;
+  expiringLotsCount?: number;
 }
