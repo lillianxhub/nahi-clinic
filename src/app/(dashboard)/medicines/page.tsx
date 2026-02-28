@@ -28,6 +28,7 @@ export default function MedicinesPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [lowStockTotal, setLowStockTotal] = useState(0);
+    const [expiringTotal, setExpiringTotal] = useState(0);
     const [openAdd, setOpenAdd] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
 
@@ -73,6 +74,7 @@ export default function MedicinesPage() {
             setMedicines(mappedMedicines);
             setTotalPages(res.meta.pagination.pageCount);
             setLowStockTotal(res.summary?.lowStockCount ?? 0);
+            setExpiringTotal(res.summary?.expiringLotsCount ?? 0);
         } catch (error) {
             console.error("โหลดข้อมูลยาไม่สำเร็จ", error);
         } finally {
@@ -135,13 +137,15 @@ export default function MedicinesPage() {
                     <option value="low">ใกล้หมด</option>
                 </select>
 
-                <button
-                    className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-red-200 transition-colors"
-                    onClick={() => setOpenExpiring(true)}
-                >
-                    <AlertTriangle className="w-4 h-4" />
-                    ตรวจสอบยาหมดอายุ
-                </button>
+                {expiringTotal > 0 && (
+                    <button
+                        className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-red-200 transition-colors"
+                        onClick={() => setOpenExpiring(true)}
+                    >
+                        <AlertTriangle className="w-4 h-4" />
+                        ตรวจสอบยาหมดอายุ ({expiringTotal})
+                    </button>
+                )}
 
                 <button
                     className="cursor-pointer ml-auto bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"

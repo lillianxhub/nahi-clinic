@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Pencil, Check, Search, Trash2 } from "lucide-react";
+import { X, Pencil, Check, Search, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import Badge from "../Badge";
 import { medicineService } from "@/services/medicine";
@@ -164,6 +164,14 @@ export default function MedicineLotModal({
         }
     };
 
+    const handleSort = (column: string) => {
+        if (sort.startsWith(column)) {
+            setSort(sort.endsWith("asc") ? `${column}_desc` : `${column}_asc`);
+        } else {
+            setSort(`${column}_asc`);
+        }
+    };
+
     return (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
             <div className="bg-card rounded-xl w-full max-w-4xl p-6 shadow-lg">
@@ -201,17 +209,6 @@ export default function MedicineLotModal({
                         <option value="out_of_stock">หมดสต็อก</option>
                         <option value="expired">หมดอายุ</option>
                     </select>
-
-                    <select
-                        value={sort}
-                        onChange={(e) => setSort(e.target.value)}
-                        className="bg-card border border-border rounded-lg px-3 py-2 text-sm max-w-48"
-                    >
-                        <option value="expire_date_asc">วันหมดอายุ (ใกล้ - ไกล)</option>
-                        <option value="expire_date_desc">วันหมดอายุ (ไกล - ใกล้)</option>
-                        <option value="qty_remaining_asc">จำนวนคงเหลือ (น้อย - มาก)</option>
-                        <option value="qty_remaining_desc">จำนวนคงเหลือ (มาก - น้อย)</option>
-                    </select>
                 </div>
 
                 {/* Table */}
@@ -224,9 +221,39 @@ export default function MedicineLotModal({
                         <table className="w-full text-sm border-collapse">
                             <thead>
                                 <tr className="text-left border-b font-medium text-gray-500">
-                                    <th className="py-3 px-2">Lot No.</th>
-                                    <th className="py-3">หมดอายุ</th>
-                                    <th className="py-3">คงเหลือ</th>
+                                    <th
+                                        className="py-3 px-2 cursor-pointer hover:text-gray-700 select-none group"
+                                        onClick={() => handleSort("lot_no")}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Lot No.
+                                            <span className="text-gray-400 transition-colors">
+                                                {sort === "lot_no_asc" ? <ArrowUp size={14} className="text-primary" /> : sort === "lot_no_desc" ? <ArrowDown size={14} className="text-primary" /> : <ArrowUpDown size={14} className="opacity-0 group-hover:opacity-50" />}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        className="py-3 cursor-pointer hover:text-gray-700 select-none group"
+                                        onClick={() => handleSort("expire_date")}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            หมดอายุ
+                                            <span className="text-gray-400 transition-colors">
+                                                {sort === "expire_date_asc" ? <ArrowUp size={14} className="text-primary" /> : sort === "expire_date_desc" ? <ArrowDown size={14} className="text-primary" /> : <ArrowUpDown size={14} className="opacity-0 group-hover:opacity-50" />}
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th
+                                        className="py-3 cursor-pointer hover:text-gray-700 select-none group"
+                                        onClick={() => handleSort("qty_remaining")}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            คงเหลือ
+                                            <span className="text-gray-400 transition-colors">
+                                                {sort === "qty_remaining_asc" ? <ArrowUp size={14} className="text-primary" /> : sort === "qty_remaining_desc" ? <ArrowDown size={14} className="text-primary" /> : <ArrowUpDown size={14} className="opacity-0 group-hover:opacity-50" />}
+                                            </span>
+                                        </div>
+                                    </th>
                                     <th className="py-3">สถานะ</th>
                                     <th className="py-3 text-right pr-2">
                                         จัดการ
