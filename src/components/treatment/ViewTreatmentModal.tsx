@@ -92,7 +92,7 @@ export default function ViewTreatmentModal({
                         <div className="space-y-8">
                             {/* Basic Info Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-gray-100">
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-muted font-medium uppercase tracking-wider flex items-center gap-1.5">
                                             <User
@@ -111,9 +111,17 @@ export default function ViewTreatmentModal({
                                             {treatment?.patient
                                                 ?.hospital_number || "-"}
                                         </p>
+                                        <div className="space-y-1">
+                                            <label className="text-xs text-muted font-medium uppercase">
+                                                อายุ
+                                            </label>
+                                            <p className="text-foreground font-medium text-sm">
+                                                {treatment?.age_formatted || "-"}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4 text-right md:text-left">
+                                <div className="space-y-2 text-right md:text-left">
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-muted font-medium uppercase tracking-wider flex items-center gap-1.5 md:justify-start">
                                             <Calendar
@@ -125,15 +133,52 @@ export default function ViewTreatmentModal({
                                         <p className="text-foreground font-medium">
                                             {treatment?.visit_date
                                                 ? format(
-                                                      new Date(
-                                                          treatment.visit_date,
-                                                      ),
-                                                      "d MMMM yyyy HH:mm น.",
-                                                      { locale: th },
-                                                  )
+                                                    new Date(
+                                                        treatment.visit_date,
+                                                    ),
+                                                    "d MMMM yyyy HH:mm น.",
+                                                    { locale: th },
+                                                )
                                                 : "-"}
                                         </p>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Vital Signs Section */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-b border-gray-100">
+
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted font-medium uppercase">
+                                        ความดันโลหิต
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.blood_pressure ? `${treatment.blood_pressure} mmHg` : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted font-medium uppercase">
+                                        อัตราเต้นหัวใจ
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.heart_rate ? `${treatment.heart_rate} bpm` : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted font-medium uppercase">
+                                        น้ำหนัก
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.weight ? `${treatment.weight} kg` : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs text-muted font-medium uppercase">
+                                        ส่วนสูง
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.height ? `${treatment.height} cm` : "-"}
+                                    </p>
                                 </div>
                             </div>
 
@@ -196,7 +241,7 @@ export default function ViewTreatmentModal({
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
                                                 {treatment?.visitDetails &&
-                                                treatment.visitDetails.length >
+                                                    treatment.visitDetails.length >
                                                     0 ? (
                                                     treatment.visitDetails.map(
                                                         (item, idx) => (
@@ -211,7 +256,7 @@ export default function ViewTreatmentModal({
                                                                     </div>
                                                                     <div className="text-[11px] text-muted">
                                                                         {item.item_type ===
-                                                                        "drug"
+                                                                            "drug"
                                                                             ? "ยารักษา"
                                                                             : "ค่าบริการ/อื่นๆ"}
                                                                     </div>
@@ -254,7 +299,7 @@ export default function ViewTreatmentModal({
                                             </tbody>
                                             {treatment?.visitDetails &&
                                                 treatment.visitDetails.length >
-                                                    0 && (
+                                                0 && (
                                                     <tfoot className="bg-gray-50/80 font-bold border-t border-gray-100">
                                                         <tr>
                                                             <td
@@ -275,9 +320,9 @@ export default function ViewTreatmentModal({
                                                                             Number(
                                                                                 item.quantity,
                                                                             ) *
-                                                                                Number(
-                                                                                    item.unit_price,
-                                                                                ),
+                                                                            Number(
+                                                                                item.unit_price,
+                                                                            ),
                                                                         0,
                                                                     )
                                                                     .toLocaleString()}
