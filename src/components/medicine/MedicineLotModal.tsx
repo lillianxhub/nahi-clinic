@@ -60,6 +60,7 @@ export default function MedicineLotModal({
     const [status, setStatus] = useState<
         "all" | "normal" | "expiring" | "out_of_stock" | "expired"
     >("all");
+    const [sort, setSort] = useState("expire_date_asc");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -71,23 +72,28 @@ export default function MedicineLotModal({
     useEffect(() => {
         if (!open) return;
         setPage(1);
-    }, [debouncedSearch, status, open]);
+    }, [debouncedSearch, status, sort, open]);
 
     useEffect(() => {
         if (open && drugId) {
             fetchLots();
         }
-    }, [page, debouncedSearch, status, open, drugId]);
+    }, [page, debouncedSearch, status, sort, open, drugId]);
 
     const fetchLots = async () => {
         if (!drugId) return;
         try {
             setLoading(true);
+            const orderBy = sort.replace(/_(asc|desc)$/, "");
+            const orderType = sort.endsWith("desc") ? "desc" : "asc";
+
             const res = await medicineService.getMedicineLots(drugId, {
                 page,
                 pageSize: 5,
                 ...(debouncedSearch && { q: debouncedSearch }),
                 ...(status !== "all" && { status }),
+                orderBy,
+                orderType,
             });
             setLots(res.data);
             setTotalPages(res.meta?.pagination?.pageCount ?? 1);
@@ -148,7 +154,7 @@ export default function MedicineLotModal({
 
                     <select
                         value={status}
-                        onChange={(e) => setStatus(e.target.value as any)}
+                        onChange={(e) => setStatus(e.target.value as "all" | "normal" | "expiring" | "out_of_stock" | "expired")}
                         className="bg-card border border-border rounded-lg px-3 py-2 text-sm max-w-37.5"
                     >
                         <option value="all">สถานะทั้งหมด</option>
@@ -156,6 +162,17 @@ export default function MedicineLotModal({
                         <option value="expiring">ใกล้หมดอายุ</option>
                         <option value="out_of_stock">หมดสต็อก</option>
                         <option value="expired">หมดอายุ</option>
+                    </select>
+
+                    <select
+                        value={sort}
+                        onChange={(e) => setSort(e.target.value)}
+                        className="bg-card border border-border rounded-lg px-3 py-2 text-sm max-w-48"
+                    >
+                        <option value="expire_date_asc">วันหมดอายุ (ใกล้ - ไกล)</option>
+                        <option value="expire_date_desc">วันหมดอายุ (ไกล - ใกล้)</option>
+                        <option value="qty_remaining_asc">จำนวนคงเหลือ (น้อย - มาก)</option>
+                        <option value="qty_remaining_desc">จำนวนคงเหลือ (มาก - น้อย)</option>
                     </select>
                 </div>
 

@@ -1,0 +1,268 @@
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(auth)\login\page.tsx[24m[0m
+[0m  [2m18:11[22m  [33mwarning[39m  'router' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(dashboard)\dashboard\page.tsx[24m[0m
+[0m   [2m18:8[22m   [33mwarning[39m  'PieWithLegend' is defined but never used           [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m72:11[22m  [31merror[39m    Unexpected any. Specify a different type            [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m106:12[22m  [33mwarning[39m  'treatmentData' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m106:38[22m  [31merror[39m    Unexpected any. Specify a different type            [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(dashboard)\finance\page.tsx[24m[0m
+[0m   [2m15:5[22m   [33mwarning[39m  'Check' is defined but never used                                                                                         [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m49:11[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m171:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchDashboardData'. Either include it or remove the dependency array     [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m175:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchTransactionsData'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m284:68[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(dashboard)\medicines\page.tsx[24m[0m
+[0m    [2m3:21[22m  [33mwarning[39m  'useMemo' is defined but never used                                                                                [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m40:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchMedicines'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m163:34[22m  [33mwarning[39m  'id' is defined but never used                                                                                     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m188:42[22m  [33mwarning[39m  'error' is defined but never used                                                                                  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(dashboard)\patients\page.tsx[24m[0m
+[0m   [2m87:11[22m  [33mwarning[39m  'router' is assigned a value but never used                                                                       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m90:12[22m  [33mwarning[39m  'loading' is assigned a value but never used                                                                      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m129:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchPatients'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m165:22[22m  [33mwarning[39m  'error' is defined but never used                                                                                 [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\(dashboard)\treatments\page.tsx[24m[0m
+[0m   [2m20:11[22m  [33mwarning[39m  'router' is assigned a value but never used                                                                         [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m24:12[22m  [33mwarning[39m  'loading' is assigned a value but never used                                                                        [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m62:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchTreatments'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m156:22[22m  [33mwarning[39m  'error' is defined but never used                                                                                   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\auth\register\route.ts[24m[0m
+[0m  [2m43:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\dashboard\revenueExpense-chart\route.ts[24m[0m
+[0m  [2m10:13[22m  [31merror[39m  'startDate' is never reassigned. Use 'const' instead  [2mprefer-const[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\drug-adjustments\route.ts[24m[0m
+[0m  [2m49:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\drug-lots\[lot_id]\route.ts[24m[0m
+[0m  [2m28:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\drug-lots\expiring\route.ts[24m[0m
+[0m  [2m49:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\drug-lots\route.ts[24m[0m
+[0m  [2m41:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\drug-usages\route.ts[24m[0m
+[0m  [2m44:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m78:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\expenses\[expense_id]\route.ts[24m[0m
+[0m  [2m28:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m54:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m76:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\expenses\route.ts[24m[0m
+[0m  [2m41:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\finance\bar-chart\route.ts[24m[0m
+[0m   [2m8:5[22m  [33mwarning[39m  'startOfYear' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m9:5[22m  [33mwarning[39m  'endOfYear' is defined but never used    [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m12:5[22m  [33mwarning[39m  'subYears' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\finance\income\route.ts[24m[0m
+[0m  [2m151:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\finance\table\route.ts[24m[0m
+[0m   [2m18:28[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m19:29[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m74:22[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m75:23[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m126:65[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m169:21[22m  [33mwarning[39m  'timestamp' is defined but never used     [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\incomes\[income_id]\route.ts[24m[0m
+[0m  [2m35:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m61:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m83:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\incomes\route.ts[24m[0m
+[0m  [2m41:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m65:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\medicines\[drug_id]\lots\route.ts[24m[0m
+[0m  [2m39:37[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\medicines\[drug_id]\route.ts[24m[0m
+[0m   [2m76:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m100:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\medicines\categories\route.ts[24m[0m
+[0m  [2m12:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m43:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\medicines\lots\[lot_id]\route.ts[24m[0m
+[0m  [2m32:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\medicines\route.ts[24m[0m
+[0m   [2m28:37[22m  [31merror[39m  Unexpected any. Specify a different type                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m33:13[22m  [31merror[39m  'activeStatus' is never reassigned. Use 'const' instead  [2mprefer-const[22m[0m
+[0m  [2m117:21[22m  [31merror[39m  Unexpected any. Specify a different type                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m224:21[22m  [31merror[39m  Unexpected any. Specify a different type                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\patients\[patient_id]\route.ts[24m[0m
+[0m   [2m78:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m110:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\patients\route.ts[24m[0m
+[0m   [2m17:28[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m51:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m106:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\treatments\[treatment_id]\route.ts[24m[0m
+[0m  [2m179:60[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m187:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\treatments\route.ts[24m[0m
+[0m   [2m14:22[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m73:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m173:60[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m181:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\visit-details\route.ts[24m[0m
+[0m  [2m44:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m68:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\visits\[visit_id]\medical\route.ts[24m[0m
+[0m  [2m24:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\visits\[visit_id]\route.ts[24m[0m
+[0m  [2m39:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m66:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m89:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\app\api\visits\route.ts[24m[0m
+[0m  [2m46:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m68:21[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\cards\StatCard.tsx[24m[0m
+[0m  [2m4:11[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\charts\PieWithLegend.tsx[24m[0m
+[0m  [2m7:5[22m  [33mwarning[39m  'PieLabelRenderProps' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\charts\RevenueExpenseChart.tsx[24m[0m
+[0m  [2m11:63[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\finance\AddTransactionModal.tsx[24m[0m
+[0m   [2m54:42[22m  [31merror[39m  Unexpected any. Specify a different type                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m95:17[22m  [31merror[39m  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m  [2m144:50[22m  [31merror[39m  Unexpected any. Specify a different type                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\finance\EditTransactionModal.tsx[24m[0m
+[0m    [2m9:5[22m   [33mwarning[39m  'ArrowUpRight' is defined but never used                                                                                             [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m10:5[22m   [33mwarning[39m  'ArrowDownRight' is defined but never used                                                                                           [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m18:5[22m   [33mwarning[39m  'Income' is defined but never used                                                                                                   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m19:5[22m   [33mwarning[39m  'Expense' is defined but never used                                                                                                  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m   [2m45:46[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m58:42[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m100:17[22m  [31merror[39m    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m  [2m107:29[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m122:8[22m   [33mwarning[39m  React Hook useEffect has missing dependencies: 'formData' and 'selectedVisitId'. Either include them or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m134:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchDetails'. Either include it or remove the dependency array                      [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m152:17[22m  [31merror[39m    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m  [2m154:21[22m  [31merror[39m    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m  [2m156:21[22m  [31merror[39m    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\finance\ViewTransactionModal.tsx[24m[0m
+[0m  [2m5:5[22m  [33mwarning[39m  'DollarSign' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\layout\Navbar.tsx[24m[0m
+[0m  [2m5:10[22m  [33mwarning[39m  'UserCircle' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\layout\Sidebar.tsx[24m[0m
+[0m  [2m12:5[22m   [33mwarning[39m  'FileText' is defined but never used       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m13:5[22m   [33mwarning[39m  'Settings' is defined but never used       [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m33:13[22m  [33mwarning[39m  'user' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\medicine\ExpiringMedicineModal.tsx[24m[0m
+[0m  [2m57:29[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\medicine\MedicineCard.tsx[24m[0m
+[0m  [2m5:10[22m  [33mwarning[39m  'useState' is defined but never used         [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m6:10[22m  [33mwarning[39m  'medicineService' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\medicine\MedicineLotModal.tsx[24m[0m
+[0m  [2m81:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchLots'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\patient\ViewPatientModal.tsx[24m[0m
+[0m  [2m40:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchPatient'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\table\Table.tsx[24m[0m
+[0m  [2m77:55[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\treatment\AddTreatmentModal.tsx[24m[0m
+[0m  [2m48:56[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\treatment\EditTreatmentModal.tsx[24m[0m
+[0m   [2m35:56[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m46:29[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m   [2m54:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchLatestTreatment'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m   [2m77:56[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m124:28[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m138:42[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m162:38[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m282:60[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m302:60[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m476:52[22m  [31merror[39m    Unexpected any. Specify a different type                                                                                 [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\components\treatment\ViewTreatmentModal.tsx[24m[0m
+[0m  [2m39:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchTreatment'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\context\AuthContext.tsx[24m[0m
+[0m  [2m36:18[22m  [33mwarning[39m  'error' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\interface\patient.ts[24m[0m
+[0m  [2m14:14[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m37:14[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\interface\treatment.ts[24m[0m
+[0m  [2m13:26[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\lib\auth.ts[24m[0m
+[0m   [2m8:40[22m  [31merror[39m    Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m20:14[22m  [33mwarning[39m  'error' is defined but never used         [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\middleware.ts[24m[0m
+[0m  [2m25:22[22m  [33mwarning[39m  'e' is defined but never used      [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m40:14[22m  [33mwarning[39m  'error' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\services\apiClient.ts[24m[0m
+[0m  [2m27:11[22m  [33mwarning[39m  'text' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\services\finance.ts[24m[0m
+[0m  [2m3:5[22m  [33mwarning[39m  'IncomeApiResponse' is defined but never used   [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m  [2m4:5[22m  [33mwarning[39m  'ExpenseApiResponse' is defined but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\services\medicine.ts[24m[0m
+[0m  [2m25:40[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m27:54[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m51:35[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m52:41[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m55:52[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m56:42[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m78:29[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m78:36[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m81:43[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m81:50[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\services\treatment.ts[24m[0m
+[0m  [2m6:7[22m  [33mwarning[39m  'getApiUrl' is assigned a value but never used  [2m@typescript-eslint/no-unused-vars[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\utils\buildInclude.ts[24m[0m
+[0m  [2m8:37[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\KKU_files\year2_semester2\CP352004\Project_CN\nahi-clinic\src\utils\prismaQuery.ts[24m[0m
+[0m  [2m13:20[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[31m[1m✖ 144 problems (96 errors, 48 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[31m[1m  2 errors and 0 warnings potentially fixable with the `--fix` option.[22m[39m[0m
+[0m[31m[1m[22m[39m[0m
