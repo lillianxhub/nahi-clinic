@@ -26,7 +26,8 @@ export default function MedicineCard({
 
     const nearestExpire =
         medicine.lots
-            ?.map((lot) => new Date(lot.expire_date))
+            ?.filter((lot) => lot.qty_remaining > 0)
+            .map((lot) => new Date(lot.expire_date))
             .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
 
     const isOutOfStock = totalQuantity === 0;
@@ -35,7 +36,10 @@ export default function MedicineCard({
 
     const isOutOfDate = nearestExpire && nearestExpire < new Date();
 
+    const isInactive = medicine.status === "inactive";
+
     const getBackgroundColor = () => {
+        if (isInactive) return "bg-gray-100 border-gray-200";
         if (isOutOfStock) return "bg-danger/15 border-red-200";
         if (isLowStock) return "bg-warning/15 border-yellow-200";
         if (isOutOfDate) return "bg-danger/15 border-red-200";
@@ -43,6 +47,9 @@ export default function MedicineCard({
     };
 
     const getStatusColor = () => {
+        if (isInactive) {
+            return "bg-gray-200 text-gray-800 border-gray-300";
+        }
         if (isOutOfStock) {
             return "bg-red-100 text-red-800 border-red-200";
         }
@@ -56,6 +63,7 @@ export default function MedicineCard({
     };
 
     const getStatusText = () => {
+        if (isInactive) return "ระงับการใช้งาน";
         if (isOutOfStock) return "หมด";
         if (isLowStock) return "ต่ำ";
         if (isOutOfDate) return "หมดอายุ";

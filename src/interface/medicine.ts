@@ -20,6 +20,21 @@ export interface DrugLot {
   buy_price: number;
 }
 
+export interface ExpiringLot extends DrugLot {
+  drug: {
+    drug_name: string;
+    unit: string;
+  };
+}
+
+export interface DrugAdjustment {
+  adjustment_id: string;
+  lot_id: string;
+  quantity_lost: number;
+  reason: string;
+  created_at: string;
+}
+
 export interface Medicine {
   drug_id: string;
   drug_name: string;

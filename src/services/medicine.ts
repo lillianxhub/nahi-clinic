@@ -71,4 +71,25 @@ export const medicineService = {
             qty_remaining,
         });
     },
+
+    async getExpiringLots(
+        days: number = 30,
+        params?: QueryParams,
+    ): Promise<ResponseData<any[], any>> {
+        const query = buildQuery(params);
+        const separator = query ? "&" : "?";
+        return apiClient.get<ResponseData<any[], any>>(
+            `/api/drug-lots/expiring${query}${separator}days=${days}`,
+        );
+    },
+
+    async discardDrugLot(
+        lot_id: string,
+        reason: string,
+    ): Promise<void> {
+        return apiClient.post("/api/drug-adjustments", {
+            lot_id,
+            reason,
+        });
+    },
 };

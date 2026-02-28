@@ -128,9 +128,23 @@ model Drug_Lot {
   drug          Drug               @relation(fields: [drug_id], references: [drug_id])
   usages        Drug_Usage[]
   expenseLots   Expense_Drug_Lot[]
+  adjustments   Drug_Adjustment[]
 
   @@index([drug_id], map: "drug_lots_drug_id_fkey")
   @@map("drug_lots")
+}
+
+model Drug_Adjustment {
+  adjustment_id   String   @id @default(uuid()) @db.Char(36)
+  lot_id          String   @db.Char(36)
+  quantity_lost   Int
+  reason          String?  @db.VarChar(255)
+  created_at      DateTime @default(now())
+
+  lot             Drug_Lot @relation(fields: [lot_id], references: [lot_id])
+
+  @@index([lot_id], map: "drug_adjustments_lot_id_fkey")
+  @@map("drug_adjustments")
 }
 
 model Drug_Usage {

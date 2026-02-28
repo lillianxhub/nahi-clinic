@@ -283,6 +283,7 @@ export type Drug_LotWhereInput = {
   drug?: Prisma.XOR<Prisma.DrugScalarRelationFilter, Prisma.DrugWhereInput>
   usages?: Prisma.Drug_UsageListRelationFilter
   expenseLots?: Prisma.Expense_Drug_LotListRelationFilter
+  adjustments?: Prisma.Drug_AdjustmentListRelationFilter
 }
 
 export type Drug_LotOrderByWithRelationInput = {
@@ -301,6 +302,7 @@ export type Drug_LotOrderByWithRelationInput = {
   drug?: Prisma.DrugOrderByWithRelationInput
   usages?: Prisma.Drug_UsageOrderByRelationAggregateInput
   expenseLots?: Prisma.Expense_Drug_LotOrderByRelationAggregateInput
+  adjustments?: Prisma.Drug_AdjustmentOrderByRelationAggregateInput
   _relevance?: Prisma.Drug_LotOrderByRelevanceInput
 }
 
@@ -323,6 +325,7 @@ export type Drug_LotWhereUniqueInput = Prisma.AtLeast<{
   drug?: Prisma.XOR<Prisma.DrugScalarRelationFilter, Prisma.DrugWhereInput>
   usages?: Prisma.Drug_UsageListRelationFilter
   expenseLots?: Prisma.Expense_Drug_LotListRelationFilter
+  adjustments?: Prisma.Drug_AdjustmentListRelationFilter
 }, "lot_id">
 
 export type Drug_LotOrderByWithAggregationInput = {
@@ -378,6 +381,7 @@ export type Drug_LotCreateInput = {
   drug: Prisma.DrugCreateNestedOneWithoutLotsInput
   usages?: Prisma.Drug_UsageCreateNestedManyWithoutLotInput
   expenseLots?: Prisma.Expense_Drug_LotCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotUncheckedCreateInput = {
@@ -395,6 +399,7 @@ export type Drug_LotUncheckedCreateInput = {
   deleted_at?: Date | string | null
   usages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutLotInput
   expenseLots?: Prisma.Expense_Drug_LotUncheckedCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotUpdateInput = {
@@ -412,6 +417,7 @@ export type Drug_LotUpdateInput = {
   drug?: Prisma.DrugUpdateOneRequiredWithoutLotsNestedInput
   usages?: Prisma.Drug_UsageUpdateManyWithoutLotNestedInput
   expenseLots?: Prisma.Expense_Drug_LotUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotUncheckedUpdateInput = {
@@ -429,6 +435,7 @@ export type Drug_LotUncheckedUpdateInput = {
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   usages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutLotNestedInput
   expenseLots?: Prisma.Expense_Drug_LotUncheckedUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotCreateManyInput = {
@@ -595,6 +602,20 @@ export type Drug_LotUncheckedUpdateManyWithoutDrugNestedInput = {
   deleteMany?: Prisma.Drug_LotScalarWhereInput | Prisma.Drug_LotScalarWhereInput[]
 }
 
+export type Drug_LotCreateNestedOneWithoutAdjustmentsInput = {
+  create?: Prisma.XOR<Prisma.Drug_LotCreateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedCreateWithoutAdjustmentsInput>
+  connectOrCreate?: Prisma.Drug_LotCreateOrConnectWithoutAdjustmentsInput
+  connect?: Prisma.Drug_LotWhereUniqueInput
+}
+
+export type Drug_LotUpdateOneRequiredWithoutAdjustmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.Drug_LotCreateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedCreateWithoutAdjustmentsInput>
+  connectOrCreate?: Prisma.Drug_LotCreateOrConnectWithoutAdjustmentsInput
+  upsert?: Prisma.Drug_LotUpsertWithoutAdjustmentsInput
+  connect?: Prisma.Drug_LotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.Drug_LotUpdateToOneWithWhereWithoutAdjustmentsInput, Prisma.Drug_LotUpdateWithoutAdjustmentsInput>, Prisma.Drug_LotUncheckedUpdateWithoutAdjustmentsInput>
+}
+
 export type Drug_LotCreateNestedOneWithoutUsagesInput = {
   create?: Prisma.XOR<Prisma.Drug_LotCreateWithoutUsagesInput, Prisma.Drug_LotUncheckedCreateWithoutUsagesInput>
   connectOrCreate?: Prisma.Drug_LotCreateOrConnectWithoutUsagesInput
@@ -637,6 +658,7 @@ export type Drug_LotCreateWithoutDrugInput = {
   deleted_at?: Date | string | null
   usages?: Prisma.Drug_UsageCreateNestedManyWithoutLotInput
   expenseLots?: Prisma.Expense_Drug_LotCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotUncheckedCreateWithoutDrugInput = {
@@ -653,6 +675,7 @@ export type Drug_LotUncheckedCreateWithoutDrugInput = {
   deleted_at?: Date | string | null
   usages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutLotInput
   expenseLots?: Prisma.Expense_Drug_LotUncheckedCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotCreateOrConnectWithoutDrugInput = {
@@ -699,6 +722,90 @@ export type Drug_LotScalarWhereInput = {
   deleted_at?: Prisma.DateTimeNullableFilter<"Drug_Lot"> | Date | string | null
 }
 
+export type Drug_LotCreateWithoutAdjustmentsInput = {
+  lot_id?: string
+  lot_no?: string | null
+  received_date: Date | string
+  expire_date: Date | string
+  qty_received: number
+  qty_remaining: number
+  buy_price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
+  drug: Prisma.DrugCreateNestedOneWithoutLotsInput
+  usages?: Prisma.Drug_UsageCreateNestedManyWithoutLotInput
+  expenseLots?: Prisma.Expense_Drug_LotCreateNestedManyWithoutLotInput
+}
+
+export type Drug_LotUncheckedCreateWithoutAdjustmentsInput = {
+  lot_id?: string
+  drug_id: string
+  lot_no?: string | null
+  received_date: Date | string
+  expire_date: Date | string
+  qty_received: number
+  qty_remaining: number
+  buy_price: runtime.Decimal | runtime.DecimalJsLike | number | string
+  is_active?: boolean
+  created_at?: Date | string
+  updated_at?: Date | string | null
+  deleted_at?: Date | string | null
+  usages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutLotInput
+  expenseLots?: Prisma.Expense_Drug_LotUncheckedCreateNestedManyWithoutLotInput
+}
+
+export type Drug_LotCreateOrConnectWithoutAdjustmentsInput = {
+  where: Prisma.Drug_LotWhereUniqueInput
+  create: Prisma.XOR<Prisma.Drug_LotCreateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedCreateWithoutAdjustmentsInput>
+}
+
+export type Drug_LotUpsertWithoutAdjustmentsInput = {
+  update: Prisma.XOR<Prisma.Drug_LotUpdateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedUpdateWithoutAdjustmentsInput>
+  create: Prisma.XOR<Prisma.Drug_LotCreateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedCreateWithoutAdjustmentsInput>
+  where?: Prisma.Drug_LotWhereInput
+}
+
+export type Drug_LotUpdateToOneWithWhereWithoutAdjustmentsInput = {
+  where?: Prisma.Drug_LotWhereInput
+  data: Prisma.XOR<Prisma.Drug_LotUpdateWithoutAdjustmentsInput, Prisma.Drug_LotUncheckedUpdateWithoutAdjustmentsInput>
+}
+
+export type Drug_LotUpdateWithoutAdjustmentsInput = {
+  lot_id?: Prisma.StringFieldUpdateOperationsInput | string
+  lot_no?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  received_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expire_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qty_received?: Prisma.IntFieldUpdateOperationsInput | number
+  qty_remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  buy_price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  drug?: Prisma.DrugUpdateOneRequiredWithoutLotsNestedInput
+  usages?: Prisma.Drug_UsageUpdateManyWithoutLotNestedInput
+  expenseLots?: Prisma.Expense_Drug_LotUpdateManyWithoutLotNestedInput
+}
+
+export type Drug_LotUncheckedUpdateWithoutAdjustmentsInput = {
+  lot_id?: Prisma.StringFieldUpdateOperationsInput | string
+  drug_id?: Prisma.StringFieldUpdateOperationsInput | string
+  lot_no?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  received_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  expire_date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  qty_received?: Prisma.IntFieldUpdateOperationsInput | number
+  qty_remaining?: Prisma.IntFieldUpdateOperationsInput | number
+  buy_price?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  is_active?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  usages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutLotNestedInput
+  expenseLots?: Prisma.Expense_Drug_LotUncheckedUpdateManyWithoutLotNestedInput
+}
+
 export type Drug_LotCreateWithoutUsagesInput = {
   lot_id?: string
   lot_no?: string | null
@@ -713,6 +820,7 @@ export type Drug_LotCreateWithoutUsagesInput = {
   deleted_at?: Date | string | null
   drug: Prisma.DrugCreateNestedOneWithoutLotsInput
   expenseLots?: Prisma.Expense_Drug_LotCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotUncheckedCreateWithoutUsagesInput = {
@@ -729,6 +837,7 @@ export type Drug_LotUncheckedCreateWithoutUsagesInput = {
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
   expenseLots?: Prisma.Expense_Drug_LotUncheckedCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotCreateOrConnectWithoutUsagesInput = {
@@ -761,6 +870,7 @@ export type Drug_LotUpdateWithoutUsagesInput = {
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   drug?: Prisma.DrugUpdateOneRequiredWithoutLotsNestedInput
   expenseLots?: Prisma.Expense_Drug_LotUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotUncheckedUpdateWithoutUsagesInput = {
@@ -777,6 +887,7 @@ export type Drug_LotUncheckedUpdateWithoutUsagesInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expenseLots?: Prisma.Expense_Drug_LotUncheckedUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotCreateWithoutExpenseLotsInput = {
@@ -793,6 +904,7 @@ export type Drug_LotCreateWithoutExpenseLotsInput = {
   deleted_at?: Date | string | null
   drug: Prisma.DrugCreateNestedOneWithoutLotsInput
   usages?: Prisma.Drug_UsageCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotUncheckedCreateWithoutExpenseLotsInput = {
@@ -809,6 +921,7 @@ export type Drug_LotUncheckedCreateWithoutExpenseLotsInput = {
   updated_at?: Date | string | null
   deleted_at?: Date | string | null
   usages?: Prisma.Drug_UsageUncheckedCreateNestedManyWithoutLotInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedCreateNestedManyWithoutLotInput
 }
 
 export type Drug_LotCreateOrConnectWithoutExpenseLotsInput = {
@@ -841,6 +954,7 @@ export type Drug_LotUpdateWithoutExpenseLotsInput = {
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   drug?: Prisma.DrugUpdateOneRequiredWithoutLotsNestedInput
   usages?: Prisma.Drug_UsageUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotUncheckedUpdateWithoutExpenseLotsInput = {
@@ -857,6 +971,7 @@ export type Drug_LotUncheckedUpdateWithoutExpenseLotsInput = {
   updated_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   usages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotCreateManyDrugInput = {
@@ -887,6 +1002,7 @@ export type Drug_LotUpdateWithoutDrugInput = {
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   usages?: Prisma.Drug_UsageUpdateManyWithoutLotNestedInput
   expenseLots?: Prisma.Expense_Drug_LotUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotUncheckedUpdateWithoutDrugInput = {
@@ -903,6 +1019,7 @@ export type Drug_LotUncheckedUpdateWithoutDrugInput = {
   deleted_at?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   usages?: Prisma.Drug_UsageUncheckedUpdateManyWithoutLotNestedInput
   expenseLots?: Prisma.Expense_Drug_LotUncheckedUpdateManyWithoutLotNestedInput
+  adjustments?: Prisma.Drug_AdjustmentUncheckedUpdateManyWithoutLotNestedInput
 }
 
 export type Drug_LotUncheckedUpdateManyWithoutDrugInput = {
@@ -927,11 +1044,13 @@ export type Drug_LotUncheckedUpdateManyWithoutDrugInput = {
 export type Drug_LotCountOutputType = {
   usages: number
   expenseLots: number
+  adjustments: number
 }
 
 export type Drug_LotCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   usages?: boolean | Drug_LotCountOutputTypeCountUsagesArgs
   expenseLots?: boolean | Drug_LotCountOutputTypeCountExpenseLotsArgs
+  adjustments?: boolean | Drug_LotCountOutputTypeCountAdjustmentsArgs
 }
 
 /**
@@ -958,6 +1077,13 @@ export type Drug_LotCountOutputTypeCountExpenseLotsArgs<ExtArgs extends runtime.
   where?: Prisma.Expense_Drug_LotWhereInput
 }
 
+/**
+ * Drug_LotCountOutputType without action
+ */
+export type Drug_LotCountOutputTypeCountAdjustmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.Drug_AdjustmentWhereInput
+}
+
 
 export type Drug_LotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   lot_id?: boolean
@@ -975,6 +1101,7 @@ export type Drug_LotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   drug?: boolean | Prisma.DrugDefaultArgs<ExtArgs>
   usages?: boolean | Prisma.Drug_Lot$usagesArgs<ExtArgs>
   expenseLots?: boolean | Prisma.Drug_Lot$expenseLotsArgs<ExtArgs>
+  adjustments?: boolean | Prisma.Drug_Lot$adjustmentsArgs<ExtArgs>
   _count?: boolean | Prisma.Drug_LotCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["drug_Lot"]>
 
@@ -1000,6 +1127,7 @@ export type Drug_LotInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   drug?: boolean | Prisma.DrugDefaultArgs<ExtArgs>
   usages?: boolean | Prisma.Drug_Lot$usagesArgs<ExtArgs>
   expenseLots?: boolean | Prisma.Drug_Lot$expenseLotsArgs<ExtArgs>
+  adjustments?: boolean | Prisma.Drug_Lot$adjustmentsArgs<ExtArgs>
   _count?: boolean | Prisma.Drug_LotCountOutputTypeDefaultArgs<ExtArgs>
 }
 
@@ -1009,6 +1137,7 @@ export type $Drug_LotPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     drug: Prisma.$DrugPayload<ExtArgs>
     usages: Prisma.$Drug_UsagePayload<ExtArgs>[]
     expenseLots: Prisma.$Expense_Drug_LotPayload<ExtArgs>[]
+    adjustments: Prisma.$Drug_AdjustmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     lot_id: string
@@ -1366,6 +1495,7 @@ export interface Prisma__Drug_LotClient<T, Null = never, ExtArgs extends runtime
   drug<T extends Prisma.DrugDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DrugDefaultArgs<ExtArgs>>): Prisma.Prisma__DrugClient<runtime.Types.Result.GetResult<Prisma.$DrugPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   usages<T extends Prisma.Drug_Lot$usagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_Lot$usagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Drug_UsagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   expenseLots<T extends Prisma.Drug_Lot$expenseLotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_Lot$expenseLotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Expense_Drug_LotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  adjustments<T extends Prisma.Drug_Lot$adjustmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Drug_Lot$adjustmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$Drug_AdjustmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1795,6 +1925,30 @@ export type Drug_Lot$expenseLotsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.Expense_Drug_LotScalarFieldEnum | Prisma.Expense_Drug_LotScalarFieldEnum[]
+}
+
+/**
+ * Drug_Lot.adjustments
+ */
+export type Drug_Lot$adjustmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Drug_Adjustment
+   */
+  select?: Prisma.Drug_AdjustmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Drug_Adjustment
+   */
+  omit?: Prisma.Drug_AdjustmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.Drug_AdjustmentInclude<ExtArgs> | null
+  where?: Prisma.Drug_AdjustmentWhereInput
+  orderBy?: Prisma.Drug_AdjustmentOrderByWithRelationInput | Prisma.Drug_AdjustmentOrderByWithRelationInput[]
+  cursor?: Prisma.Drug_AdjustmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.Drug_AdjustmentScalarFieldEnum | Prisma.Drug_AdjustmentScalarFieldEnum[]
 }
 
 /**
