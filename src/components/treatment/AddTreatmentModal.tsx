@@ -32,6 +32,10 @@ export default function AddTreatmentModal({
         minute: getLocalTime(now).minute,
         symptom: "",
         diagnosis: "",
+        blood_pressure: "",
+        heart_rate: "",
+        weight: "",
+        height: "",
     });
 
     // Patient Search States
@@ -185,6 +189,9 @@ export default function AddTreatmentModal({
                 visit_date: isoDateTime,
                 payment_method: paymentMethod,
                 items: selectedItems,
+                heart_rate: formData.heart_rate ? Number(formData.heart_rate) : undefined,
+                weight: formData.weight ? Number(formData.weight) : undefined,
+                height: formData.height ? Number(formData.height) : undefined,
             } as CreateTreatmentDTO);
 
             // Reset form
@@ -196,6 +203,10 @@ export default function AddTreatmentModal({
                 minute: getLocalTime(resetNow).minute,
                 symptom: "",
                 diagnosis: "",
+                blood_pressure: "",
+                heart_rate: "",
+                weight: "",
+                height: "",
             });
             setSelectedPatient(null);
             setSearchTerm("");
@@ -439,6 +450,78 @@ export default function AddTreatmentModal({
                                 onChange={handleChange}
                                 required
                             />
+                        </div>
+
+                        {/* Vital Signs Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Blood Pressure */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText size={16} className="text-primary" />
+                                    ความดันโลหิต (mmHg)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="blood_pressure"
+                                    placeholder="เช่น 120/80"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    value={formData.blood_pressure}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            {/* Heart Rate */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText size={16} className="text-primary" />
+                                    อัตราการเต้นหัวใจ (bpm)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="heart_rate"
+                                    placeholder="เช่น 80"
+                                    min="1"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    value={formData.heart_rate}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            {/* Weight */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText size={16} className="text-primary" />
+                                    น้ำหนัก (kg)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="weight"
+                                    placeholder="เช่น 65.5"
+                                    min="0.1"
+                                    step="0.1"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    value={formData.weight}
+                                    onChange={handleChange}
+                                />
+                            </div>
+
+                            {/* Height */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText size={16} className="text-primary" />
+                                    ส่วนสูง (cm)
+                                </label>
+                                <input
+                                    type="number"
+                                    name="height"
+                                    placeholder="เช่น 170"
+                                    min="1"
+                                    step="0.1"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    value={formData.height}
+                                    onChange={handleChange}
+                                />
+                            </div>
                         </div>
 
                         {/* Diagnosis */}
@@ -689,8 +772,8 @@ export default function AddTreatmentModal({
                             )}
                         </button>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
 
             <AddPatientModal
                 open={openAddPatient}
