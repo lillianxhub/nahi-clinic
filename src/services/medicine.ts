@@ -89,7 +89,7 @@ export const medicineService = {
         lot_id: string,
         reason: string,
     ): Promise<void> {
-        return apiClient.post("/api/drug-adjustments", {
+        return apiClient.post(`/api/medicines/lots/${lot_id}/drug-adjustments`, {
             lot_id,
             reason,
         });
