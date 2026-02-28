@@ -56,6 +56,15 @@ model Visit {
   visitDetails Visit_Detail[]
   patient      Patient        @relation(fields: [patient_id], references: [patient_id])
 
+  //เพิ่มข้อมูลผู้ป่วยเพิ่มเติม
+  blood_pressure String?  @db.VarChar(20) // e.g. "120/80"
+  heart_rate     Int? // bpm
+  weight         Decimal? @db.Decimal(5, 2) // kg
+  height         Decimal? @db.Decimal(5, 2) // cm
+  age_years      Int?
+  age_months     Int?
+  age_days       Int?
+
   @@index([patient_id], map: "visits_patient_id_fkey")
   @@map("visits")
 }
@@ -135,13 +144,13 @@ model Drug_Lot {
 }
 
 model Drug_Adjustment {
-  adjustment_id   String   @id @default(uuid()) @db.Char(36)
-  lot_id          String   @db.Char(36)
-  quantity_lost   Int
-  reason          String?  @db.VarChar(255)
-  created_at      DateTime @default(now())
+  adjustment_id String   @id @default(uuid()) @db.Char(36)
+  lot_id        String   @db.Char(36)
+  quantity_lost Int
+  reason        String?  @db.VarChar(255)
+  created_at    DateTime @default(now())
 
-  lot             Drug_Lot @relation(fields: [lot_id], references: [lot_id])
+  lot Drug_Lot @relation(fields: [lot_id], references: [lot_id])
 
   @@index([lot_id], map: "drug_adjustments_lot_id_fkey")
   @@map("drug_adjustments")
