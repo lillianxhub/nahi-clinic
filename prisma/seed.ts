@@ -368,7 +368,7 @@ async function main() {
         if (day % 100 === 0)
             console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
     }
-    console.log("✅ Seed ข้อมูล 2 ปีเรียบร้อย!");
+    console.log("✅ Seed ข้อมูล " + TOTAL_DAYS / 365 + " ปีเรียบร้อย!");
 }
 
 main()
