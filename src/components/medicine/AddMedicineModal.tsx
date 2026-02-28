@@ -11,10 +11,12 @@ import {
     Layers,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
-import { DrugCategory } from "@/interface/medicine";
+import { DrugCategory, Medicine } from "@/interface/medicine";
 import AddCategoryModal from "@/components/medicine/AddCategoryModal";
 import swal from "sweetalert2";
 import { formatLocalDate } from "@/utils/dateUtils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useRef } from "react";
 
 interface AddMedicineModalProps {
     open: boolean;
@@ -30,6 +32,13 @@ export default function AddMedicineModal({
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
+
+    // Auto-complete states
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [searchingMedicines, setSearchingMedicines] = useState(false);
+    const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const getTodayStr = () => formatLocalDate(new Date());
 
     const generateLotNo = (dateStr: string) => {
@@ -51,6 +60,46 @@ export default function AddMedicineModal({
         expiry_date: "",
         lot_no: generateLotNo(getTodayStr()),
     });
+
+    const debouncedMedicineSearch = useDebounce(formData.medicine_name, 500);
+
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            if (debouncedMedicineSearch.length < 2) {
+                setMedicines([]);
+                return;
+            }
+
+            try {
+                setSearchingMedicines(true);
+                const res = await medicineService.getMedicines({
+                    q: debouncedMedicineSearch,
+                    pageSize: 5,
+                    status: "active",
+                });
+                setMedicines(res.data);
+            } catch (error) {
+                console.error("ค้นหายาล้มเหลว", error);
+            } finally {
+                setSearchingMedicines(false);
+            }
+        };
+
+        if (showMedicineDropdown) {
+            fetchMedicines();
+        }
+    }, [debouncedMedicineSearch, showMedicineDropdown]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowMedicineDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (open) {
@@ -209,20 +258,73 @@ export default function AddMedicineModal({
                     className="p-6 space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto"
                 >
                     {/* Medicine Name */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 relative" ref={dropdownRef}>
                         <label className="text-sm font-medium text-foreground flex items-center gap-2">
                             <Pill size={16} className="text-primary" />
                             ชื่อยา <span className="text-danger">*</span>
                         </label>
-                        <input
-                            type="text"
-                            name="medicine_name"
-                            placeholder="กรอกชื่อยา"
-                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.medicine_name}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="medicine_name"
+                                placeholder="กรอกชื่อยา"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.medicine_name}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    setShowMedicineDropdown(true);
+                                }}
+                                onFocus={() => setShowMedicineDropdown(true)}
+                                required
+                            />
+
+                            {/* Medicine Dropdown */}
+                            {showMedicineDropdown &&
+                                (formData.medicine_name.length >= 2 ||
+                                    medicines.length > 0) && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                        {searchingMedicines ? (
+                                            <div className="p-4 text-center text-muted text-sm">
+                                                กำลังค้นหา...
+                                            </div>
+                                        ) : medicines.length > 0 ? (
+                                            <div className="py-1">
+                                                {medicines.map((m) => (
+                                                    <button
+                                                        key={m.drug_id}
+                                                        type="button"
+                                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                        onClick={() => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                medicine_name: m.drug_name,
+                                                                category_id: m.category?.category_id || "",
+                                                                unit: m.unit,
+                                                                sell_price: m.sell_price ? m.sell_price.toString() : "",
+                                                                buy_price: m.lots && m.lots.length > 0 ? m.lots[0].buy_price.toString() : prev.buy_price,
+                                                            }));
+                                                            setShowMedicineDropdown(false);
+                                                        }}
+                                                    >
+                                                        <div>
+                                                            <div className="font-medium text-foreground group-hover:text-primary">
+                                                                {m.drug_name}
+                                                            </div>
+                                                            <div className="text-xs text-muted">
+                                                                หมวดหมู่: {m.category?.category_name || "-"} | หน่วย: {m.unit}
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 text-center text-muted text-sm">
+                                                ไม่พบข้อมูลยา
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
