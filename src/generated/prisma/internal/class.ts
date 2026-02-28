@@ -250,14 +250,14 @@ export interface PrismaClient<
     get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
 
     /**
-     * `prisma.patient`: Exposes CRUD operations for the **Patient** model.
+     * `prisma.user`: Exposes CRUD operations for the **User** model.
      * Example usage:
      * ```ts
-     * // Fetch zero or more Patients
-     * const patients = await prisma.patient.findMany()
+     * // Fetch zero or more Users
+     * const users = await prisma.user.findMany()
      * ```
      */
-    get patient(): Prisma.PatientDelegate<ExtArgs, { omit: OmitOpts }>;
+    get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
 
     /**
      * `prisma.visit`: Exposes CRUD operations for the **Visit** model.
