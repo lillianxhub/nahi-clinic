@@ -8,6 +8,14 @@ export interface Treatment {
     symptom?: string;
     diagnosis?: string;
     note?: string;
+    blood_pressure?: string;
+    heart_rate?: number;
+    weight?: number;
+    height?: number;
+    age_years?: number;
+    age_months?: number;
+    age_days?: number;
+    age_formatted?: string;
 
     patient: {
         hospital_number: any;
@@ -32,6 +40,10 @@ export interface CreateTreatmentDTO {
     diagnosis?: string;
     note?: string;
     payment_method: string;
+    blood_pressure?: string;
+    heart_rate?: number;
+    weight?: number;
+    height?: number;
 
     items: {
         item_type: ItemType;
