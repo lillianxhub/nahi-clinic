@@ -58,6 +58,7 @@ export const ModelName = {
   Drug_Category: 'Drug_Category',
   Drug: 'Drug',
   Drug_Lot: 'Drug_Lot',
+  Drug_Adjustment: 'Drug_Adjustment',
   Drug_Usage: 'Drug_Usage',
   Income: 'Income',
   Expense: 'Expense',
@@ -191,6 +192,17 @@ export const Drug_LotScalarFieldEnum = {
 } as const
 
 export type Drug_LotScalarFieldEnum = (typeof Drug_LotScalarFieldEnum)[keyof typeof Drug_LotScalarFieldEnum]
+
+
+export const Drug_AdjustmentScalarFieldEnum = {
+  adjustment_id: 'adjustment_id',
+  lot_id: 'lot_id',
+  quantity_lost: 'quantity_lost',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Drug_AdjustmentScalarFieldEnum = (typeof Drug_AdjustmentScalarFieldEnum)[keyof typeof Drug_AdjustmentScalarFieldEnum]
 
 
 export const Drug_UsageScalarFieldEnum = {
@@ -338,6 +350,15 @@ export const Drug_LotOrderByRelevanceFieldEnum = {
 } as const
 
 export type Drug_LotOrderByRelevanceFieldEnum = (typeof Drug_LotOrderByRelevanceFieldEnum)[keyof typeof Drug_LotOrderByRelevanceFieldEnum]
+
+
+export const Drug_AdjustmentOrderByRelevanceFieldEnum = {
+  adjustment_id: 'adjustment_id',
+  lot_id: 'lot_id',
+  reason: 'reason'
+} as const
+
+export type Drug_AdjustmentOrderByRelevanceFieldEnum = (typeof Drug_AdjustmentOrderByRelevanceFieldEnum)[keyof typeof Drug_AdjustmentOrderByRelevanceFieldEnum]
 
 
 export const Drug_UsageOrderByRelevanceFieldEnum = {
