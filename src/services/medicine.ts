@@ -63,13 +63,15 @@ export const medicineService = {
         return apiClient.delete(`/api/medicines/${drug_id}`);
     },
 
-    async updateLotQuantity(
+    async updateLotDetails(
         lot_id: string,
-        qty_remaining: number,
+        data: { qty_remaining?: number; expire_date?: string },
     ): Promise<void> {
-        return apiClient.patch(`/api/medicines/lots/${lot_id}`, {
-            qty_remaining,
-        });
+        return apiClient.patch(`/api/medicines/lots/${lot_id}`, data);
+    },
+
+    async deleteLot(lot_id: string): Promise<void> {
+        return apiClient.delete(`/api/medicines/lots/${lot_id}`);
     },
 
     async getExpiringLots(

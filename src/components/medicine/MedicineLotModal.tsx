@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Pencil, Check, Search } from "lucide-react";
+import { X, Pencil, Check, Search, Trash2 } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import Badge from "../Badge";
 import { medicineService } from "@/services/medicine";
 import { DrugLot } from "@/interface/medicine";
 import Pagination from "../Pagination";
+import Swal from "sweetalert2";
 
 type Props = {
     open: boolean;
@@ -64,9 +65,12 @@ export default function MedicineLotModal({
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    // Edit qty state
+    // Edit state
     const [editingLotId, setEditingLotId] = useState<string | null>(null);
-    const [editingQty, setEditingQty] = useState<string>("");
+    const [editForm, setEditForm] = useState<{
+        qty_remaining: string;
+        expire_date: string;
+    }>({ qty_remaining: "", expire_date: "" });
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -108,21 +112,55 @@ export default function MedicineLotModal({
 
     const handleStartEdit = (lot: DrugLot) => {
         setEditingLotId(lot.lot_id);
-        setEditingQty(String(lot.qty_remaining));
+        setEditForm({
+            qty_remaining: String(lot.qty_remaining),
+            expire_date: new Date(lot.expire_date).toISOString().split("T")[0],
+        });
     };
 
     const handleSaveQty = async (lot_id: string) => {
         try {
             setSaving(true);
-            await medicineService.updateLotQuantity(lot_id, Number(editingQty));
+            await medicineService.updateLotDetails(lot_id, {
+                qty_remaining: Number(editForm.qty_remaining),
+                expire_date: editForm.expire_date,
+            });
             setEditingLotId(null);
             fetchLots();
             onRefresh?.();
         } catch (error) {
-            console.error("บันทึกจำนวนไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาดในการบันทึกจำนวนยา");
+            console.error("บันทึกข้อมูลไม่สำเร็จ", error);
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล Lot ยา");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteLot = async (lot_id: string, lot_no: string | null) => {
+        const confirm = await Swal.fire({
+            title: "ยืนยันการลบ Lot ยา?",
+            html: `คุณกำลังจะลบ Lot <b>${lot_no || "-"}</b><br/><br/><span class="text-sm text-red-500">การกระทำนี้จะไม่สามารถย้อนกลับได้ และข้อมูลที่เชื่อมโยงกับ Lot นี้จะถูกลบไปด้วย</span>`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "ลบข้อมูล",
+            cancelButtonText: "ยกเลิก",
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                setLoading(true);
+                await medicineService.deleteLot(lot_id);
+                Swal.fire("สำเร็จ!", "ลบ Lot ยาเรียบร้อยแล้ว", "success");
+                await fetchLots();
+                onRefresh?.();
+            } catch (error: any) {
+                console.error("ลบ Lot ไม่สำเร็จ", error);
+                Swal.fire("เกิดข้อผิดพลาด", error.message || "ไม่สามารถลบ Lot ยาได้", "error");
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -215,23 +253,36 @@ export default function MedicineLotModal({
                                                 {lot.lot_no}
                                             </td>
                                             <td className="py-3">
-                                                {
+                                                {editingLotId === lot.lot_id ? (
+                                                    <input
+                                                        type="date"
+                                                        className="w-32 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        value={editForm.expire_date}
+                                                        onChange={(e) =>
+                                                            setEditForm({
+                                                                ...editForm,
+                                                                expire_date: e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                ) : (
                                                     lot.expire_date
                                                         .toString()
                                                         .split("T")[0]
-                                                }
+                                                )}
                                             </td>
                                             <td className="py-3">
                                                 {editingLotId === lot.lot_id ? (
                                                     <input
                                                         type="number"
                                                         className="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                        value={editingQty}
+                                                        value={editForm.qty_remaining}
                                                         min="0"
                                                         onChange={(e) =>
-                                                            setEditingQty(
-                                                                e.target.value,
-                                                            )
+                                                            setEditForm({
+                                                                ...editForm,
+                                                                qty_remaining: e.target.value,
+                                                            })
                                                         }
                                                     />
                                                 ) : (
@@ -269,30 +320,39 @@ export default function MedicineLotModal({
                                                 })()}
                                             </td>
                                             <td className="py-3 text-right pr-2">
-                                                {editingLotId === lot.lot_id ? (
+                                                <div className="flex justify-end gap-2">
+                                                    {editingLotId === lot.lot_id ? (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleSaveQty(
+                                                                    lot.lot_id,
+                                                                )
+                                                            }
+                                                            disabled={saving}
+                                                            className="cursor-pointer p-1.5 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50"
+                                                            title="บันทึก"
+                                                        >
+                                                            <Check size={16} />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleStartEdit(lot)
+                                                            }
+                                                            className="cursor-pointer p-1.5 hover:bg-gray-100 text-gray-600 rounded transition-colors"
+                                                            title="แก้ไขข้อมูล"
+                                                        >
+                                                            <Pencil size={16} />
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={() =>
-                                                            handleSaveQty(
-                                                                lot.lot_id,
-                                                            )
-                                                        }
-                                                        disabled={saving}
-                                                        className="cursor-pointer ml-auto p-1.5 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50"
-                                                        title="บันทึก"
+                                                        onClick={() => handleDeleteLot(lot.lot_id, lot.lot_no)}
+                                                        className="cursor-pointer p-1.5 hover:bg-red-100 text-red-500 rounded transition-colors"
+                                                        title="ลบ Lot"
                                                     >
-                                                        <Check size={16} />
+                                                        <Trash2 size={16} />
                                                     </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() =>
-                                                            handleStartEdit(lot)
-                                                        }
-                                                        className="cursor-pointer ml-auto p-1.5 hover:bg-gray-100 text-gray-600 rounded transition-colors"
-                                                        title="แก้ไขจำนวน"
-                                                    >
-                                                        <Pencil size={16} />
-                                                    </button>
-                                                )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
