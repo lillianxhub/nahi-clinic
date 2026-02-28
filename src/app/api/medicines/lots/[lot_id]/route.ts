@@ -26,8 +26,10 @@ export async function DELETE(req: Request, { params }: Params) {
         console.error("Delete lot error:", error);
         return NextResponse.json(
             {
-                message: "เกิดข้อผิดพลาดในการลบ Lot ยา",
+                message: `เกิดข้อผิดพลาดในการลบ Lot ยา: ${error.message || "ไม่ระบุสาเหตุ"}`,
                 error: error.message,
+                stack: error.stack,
+                details: error,
             },
             { status: 500 },
         );
