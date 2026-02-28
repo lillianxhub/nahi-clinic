@@ -10,7 +10,7 @@ export function getInclude(params: URLSearchParams, allowed: string[]) {
     if (!includeParam) return undefined;
 
     const includes = includeParam.split(",");
-    const include: any = {};
+    const include: Record<string, boolean> = {};
 
     for (const key of includes) {
         if (allowed.includes(key)) {

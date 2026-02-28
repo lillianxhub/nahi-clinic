@@ -75,6 +75,11 @@ export type Drug = Prisma.DrugModel
  */
 export type Drug_Lot = Prisma.Drug_LotModel
 /**
+ * Model Drug_Adjustment
+ * 
+ */
+export type Drug_Adjustment = Prisma.Drug_AdjustmentModel
+/**
  * Model Drug_Usage
  * 
  */

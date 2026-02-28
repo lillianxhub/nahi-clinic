@@ -391,6 +391,7 @@ export const ModelName = {
   Drug_Category: 'Drug_Category',
   Drug: 'Drug',
   Drug_Lot: 'Drug_Lot',
+  Drug_Adjustment: 'Drug_Adjustment',
   Drug_Usage: 'Drug_Usage',
   Income: 'Income',
   Expense: 'Expense',
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "patient" | "visit" | "visit_Detail" | "drug_Category" | "drug" | "drug_Lot" | "drug_Usage" | "income" | "expense" | "expense_Drug_Lot"
+    modelProps: "user" | "patient" | "visit" | "visit_Detail" | "drug_Category" | "drug" | "drug_Lot" | "drug_Adjustment" | "drug_Usage" | "income" | "expense" | "expense_Drug_Lot"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -876,6 +877,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Drug_Adjustment: {
+      payload: Prisma.$Drug_AdjustmentPayload<ExtArgs>
+      fields: Prisma.Drug_AdjustmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.Drug_AdjustmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.Drug_AdjustmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        findFirst: {
+          args: Prisma.Drug_AdjustmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.Drug_AdjustmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        findMany: {
+          args: Prisma.Drug_AdjustmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>[]
+        }
+        create: {
+          args: Prisma.Drug_AdjustmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        createMany: {
+          args: Prisma.Drug_AdjustmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.Drug_AdjustmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        update: {
+          args: Prisma.Drug_AdjustmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.Drug_AdjustmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.Drug_AdjustmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.Drug_AdjustmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$Drug_AdjustmentPayload>
+        }
+        aggregate: {
+          args: Prisma.Drug_AdjustmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDrug_Adjustment>
+        }
+        groupBy: {
+          args: Prisma.Drug_AdjustmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Drug_AdjustmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.Drug_AdjustmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Drug_AdjustmentCountAggregateOutputType> | number
+        }
+      }
+    }
     Drug_Usage: {
       payload: Prisma.$Drug_UsagePayload<ExtArgs>
       fields: Prisma.Drug_UsageFieldRefs
@@ -1292,6 +1359,17 @@ export const Drug_LotScalarFieldEnum = {
 export type Drug_LotScalarFieldEnum = (typeof Drug_LotScalarFieldEnum)[keyof typeof Drug_LotScalarFieldEnum]
 
 
+export const Drug_AdjustmentScalarFieldEnum = {
+  adjustment_id: 'adjustment_id',
+  lot_id: 'lot_id',
+  quantity_lost: 'quantity_lost',
+  reason: 'reason',
+  created_at: 'created_at'
+} as const
+
+export type Drug_AdjustmentScalarFieldEnum = (typeof Drug_AdjustmentScalarFieldEnum)[keyof typeof Drug_AdjustmentScalarFieldEnum]
+
+
 export const Drug_UsageScalarFieldEnum = {
   usage_id: 'usage_id',
   visit_id: 'visit_id',
@@ -1437,6 +1515,15 @@ export const Drug_LotOrderByRelevanceFieldEnum = {
 } as const
 
 export type Drug_LotOrderByRelevanceFieldEnum = (typeof Drug_LotOrderByRelevanceFieldEnum)[keyof typeof Drug_LotOrderByRelevanceFieldEnum]
+
+
+export const Drug_AdjustmentOrderByRelevanceFieldEnum = {
+  adjustment_id: 'adjustment_id',
+  lot_id: 'lot_id',
+  reason: 'reason'
+} as const
+
+export type Drug_AdjustmentOrderByRelevanceFieldEnum = (typeof Drug_AdjustmentOrderByRelevanceFieldEnum)[keyof typeof Drug_AdjustmentOrderByRelevanceFieldEnum]
 
 
 export const Drug_UsageOrderByRelevanceFieldEnum = {
@@ -1659,6 +1746,7 @@ export type GlobalOmitConfig = {
   drug_Category?: Prisma.Drug_CategoryOmit
   drug?: Prisma.DrugOmit
   drug_Lot?: Prisma.Drug_LotOmit
+  drug_Adjustment?: Prisma.Drug_AdjustmentOmit
   drug_Usage?: Prisma.Drug_UsageOmit
   income?: Prisma.IncomeOmit
   expense?: Prisma.ExpenseOmit

@@ -41,6 +41,7 @@ async function main() {
     await prisma.income.deleteMany();
     await prisma.visit_Detail.deleteMany();
     await prisma.visit.deleteMany();
+    await prisma.drug_Adjustment.deleteMany();
     await prisma.drug_Lot.deleteMany();
     await prisma.expense.deleteMany();
     await prisma.drug.deleteMany();

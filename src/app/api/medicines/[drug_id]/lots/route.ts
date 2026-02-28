@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPagination } from "@/utils/pagination";
-
+import { getOrderBy } from "@/utils/prismaQuery";
 type Params = {
     params: Promise<{
         drug_id: string;
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: Params) {
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
-        const where: Record<string, any> = { drug_id, deleted_at: null };
+        const where: any = { drug_id, deleted_at: null };
         if (q) {
             where.lot_no = { contains: q };
         }
@@ -65,14 +65,14 @@ export async function GET(req: NextRequest, { params }: Params) {
             where.qty_remaining = { gt: 0 };
         }
 
+        const orderBy = getOrderBy(searchParams, "expire_date");
+
         const [data, total] = await Promise.all([
             prisma.drug_Lot.findMany({
                 skip,
                 take,
                 where,
-                orderBy: {
-                    expire_date: "asc",
-                },
+                orderBy,
             }),
             prisma.drug_Lot.count({ where }),
         ]);
@@ -88,10 +88,10 @@ export async function GET(req: NextRequest, { params }: Params) {
                 },
             },
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Get medicine lots error:", error);
         return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
+            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error instanceof Error ? error.message : "Unknown error" },
             { status: 500 },
         );
     }
