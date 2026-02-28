@@ -221,7 +221,7 @@ export default function MedicineLotModal({
                                                     <span
                                                         className={
                                                             lot.qty_remaining ===
-                                                            0
+                                                                0
                                                                 ? "text-red-500 font-semibold"
                                                                 : ""
                                                         }
