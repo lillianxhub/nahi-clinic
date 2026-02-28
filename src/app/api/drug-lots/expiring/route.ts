@@ -19,6 +19,10 @@ export async function GET(req: Request) {
                 expire_date: { lte: targetDate },
                 is_active: true,
                 deleted_at: null,
+                drug: {
+                    is_active: true,
+                    deleted_at: null,
+                },
             },
             include: {
                 drug: {
@@ -39,6 +43,10 @@ export async function GET(req: Request) {
                 expire_date: { lte: targetDate },
                 is_active: true,
                 deleted_at: null,
+                drug: {
+                    is_active: true,
+                    deleted_at: null,
+                },
             },
         });
 
