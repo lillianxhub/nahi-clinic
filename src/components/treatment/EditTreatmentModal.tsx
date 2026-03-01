@@ -8,6 +8,7 @@ import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 
 interface EditTreatmentModalProps {
     open: boolean;
@@ -476,62 +477,14 @@ export default function EditTreatmentModal({
                             />
 
                             {/* Drug Dropdown */}
-                            {showDrugDropdown &&
-                                (drugSearchTerm.length >= 2 ||
-                                    medicines.length > 0) && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searchingMedicines ? (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                กำลังค้นหา...
-                                            </div>
-                                        ) : medicines.length > 0 ? (
-                                            <div className="py-1">
-                                                {medicines.map(
-                                                    (m: Medicine) => (
-                                                        <button
-                                                            key={m.drug_id}
-                                                            type="button"
-                                                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                            onClick={() =>
-                                                                handleSelectMedicine(
-                                                                    m,
-                                                                )
-                                                            }
-                                                        >
-                                                            <div>
-                                                                <div className="font-medium text-foreground group-hover:text-primary">
-                                                                    {
-                                                                        m.drug_name
-                                                                    }
-                                                                </div>
-                                                                <div className="text-xs text-muted">
-                                                                    ราคา:{" "}
-                                                                    {m.sell_price.toLocaleString()}{" "}
-                                                                    บาท |
-                                                                    คงเหลือ:{" "}
-                                                                    {m.lots?.reduce(
-                                                                        (
-                                                                            sum,
-                                                                            lot,
-                                                                        ) =>
-                                                                            sum +
-                                                                            lot.qty_remaining,
-                                                                        0,
-                                                                    ) ?? 0}{" "}
-                                                                    {m.unit}
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ),
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                ไม่พบข้อมูลยา/บริการ
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                            <UnifiedDrugDropdown
+                                isOpen={showDrugDropdown}
+                                searchTerm={drugSearchTerm}
+                                items={medicines}
+                                isSearching={searchingMedicines}
+                                displayMode="inventory"
+                                onSelect={handleSelectMedicine}
+                            />
                         </div>
 
                         {/* ตารางสรุปรายการ */}

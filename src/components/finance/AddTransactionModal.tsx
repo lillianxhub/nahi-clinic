@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     X,
     ArrowUpRight,
@@ -6,12 +6,27 @@ import {
     Search,
     User,
     Calendar,
+    Trash2,
+    Plus,
+    Minus,
 } from "lucide-react";
 import { financeService } from "@/services/finance";
 import { patientService } from "@/services/patient";
+import { Medicine } from "@/interface/medicine";
 import { Patient } from "@/interface/patient";
+import { PaymentMethod } from "@/interface/finance";
+import { medicineService } from "@/services/medicine";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+
+interface SelectedItem {
+    item_type: "drug" | "service";
+    drug_id?: string;
+    description?: string;
+    quantity: number;
+    unit_price: number;
+}
 
 interface AddTransactionModalProps {
     isOpen: boolean;
@@ -38,6 +53,7 @@ export default function AddTransactionModal({
         amount: "",
         description: "",
         status: "completed",
+        payment_method: "cash" as PaymentMethod,
     });
 
     // Patient Search States
@@ -54,6 +70,28 @@ export default function AddTransactionModal({
     const [visits, setVisits] = useState<any[]>([]);
     const [loadingVisits, setLoadingVisits] = useState(false);
     const [selectedVisitId, setSelectedVisitId] = useState("");
+
+    // Drug Search States
+    const [drugSearchTerm, setDrugSearchTerm] = useState("");
+    const debouncedDrugSearch = useDebounce(drugSearchTerm, 500);
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [searchingMedicines, setSearchingMedicines] = useState(false);
+    const [showDrugDropdown, setShowDrugDropdown] = useState(false);
+
+    // Selected Items for "ค่ายา"
+    const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+
+    // Calculate total amount from items
+    const totalFromItems = useMemo(() => {
+        return selectedItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    }, [selectedItems]);
+
+    // Update amount if category is "ค่ายา"
+    useEffect(() => {
+        if (formData.category === "ค่ายา") {
+            setFormData(prev => ({ ...prev, amount: totalFromItems.toString() }));
+        }
+    }, [totalFromItems, formData.category]);
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -108,6 +146,63 @@ export default function AddTransactionModal({
         fetchPatientDetails();
     }, [selectedPatient]);
 
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            if (!debouncedDrugSearch || debouncedDrugSearch.length < 2) {
+                setMedicines([]);
+                return;
+            }
+
+            try {
+                setSearchingMedicines(true);
+                const res = await medicineService.getMedicines({
+                    q: debouncedDrugSearch,
+                    pageSize: 5,
+                });
+                setMedicines(res.data);
+            } catch (error) {
+                console.error("ค้นหายาล้มเหลว", error);
+            } finally {
+                setSearchingMedicines(false);
+            }
+        };
+
+        fetchMedicines();
+    }, [debouncedDrugSearch]);
+
+    const handleSelectMedicine = (medicine: Medicine) => {
+        const existingIndex = selectedItems.findIndex(item => item.drug_id === medicine.drug_id);
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "drug",
+                    drug_id: medicine.drug_id,
+                    description: medicine.drug_name,
+                    quantity: 1,
+                    unit_price: medicine.sell_price,
+                }
+            ]);
+        }
+        setDrugSearchTerm("");
+        setShowDrugDropdown(false);
+    };
+
+    const handleRemoveItem = (index: number) => {
+        setSelectedItems(selectedItems.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateQuantity = (index: number, quantity: number) => {
+        if (quantity < 1) return;
+        const newItems = [...selectedItems];
+        newItems[index].quantity = quantity;
+        setSelectedItems(newItems);
+    };
+
     const handleSave = async () => {
         if (!formData.amount || !formData.category) {
             alert("กรุณากรอกข้อมูลให้ครบถ้วน");
@@ -129,9 +224,10 @@ export default function AddTransactionModal({
                 await financeService.createIncome({
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
-                    payment_method: "cash",
+                    payment_method: formData.payment_method,
                     visit_id: selectedVisitId,
                     income_category: formData.category,
+                    items: formData.category === "ค่ายา" ? selectedItems : undefined,
                 });
             } else {
                 let expenseType = "general";
@@ -155,6 +251,7 @@ export default function AddTransactionModal({
                 date: formatLocalDate(resetNow),
                 hour: getLocalTime(resetNow).hour,
                 minute: getLocalTime(resetNow).minute,
+                payment_method: "cash",
                 category: "",
                 amount: "",
                 description: "",
@@ -164,9 +261,10 @@ export default function AddTransactionModal({
             setSearchTerm("");
             setVisits([]);
             setSelectedVisitId("");
-        } catch (error) {
+            setSelectedItems([]);
+        } catch (error: any) {
             console.error("Failed to save transaction:", error);
-            alert("ไม่สามารถบันทึกข้อมูลได้");
+            alert("ไม่สามารถบันทึกข้อมูลได้: " + (error.message || "Unknown error"));
         } finally {
             setLoading(false);
         }
@@ -512,13 +610,13 @@ export default function AddTransactionModal({
                                         <option value="ค่าบริการ">
                                             ค่าบริการ
                                         </option>
-                                        <option value="วัคซีน">วัคซีน</option>
+                                        {/* <option value="วัคซีน">วัคซีน</option> */}
                                     </>
                                 ) : (
                                     <>
-                                        <option value="ค่ายา/เวชภัณฑ์">
-                                            ค่ายา/เวชภัณฑ์
-                                        </option>
+                                        {/* <option value="ค่ายา">
+                                            ค่ายา
+                                        </option> */}
                                         <option value="เงินเดือนพนักงาน">
                                             เงินเดือนพนักงาน
                                         </option>
@@ -532,9 +630,121 @@ export default function AddTransactionModal({
                         </div>
                     </div>
 
+                    {transactionType === "income" && formData.category === "ค่ายา" && (
+                        <div className="space-y-4 pt-4 border-t animate-in fade-in duration-300">
+                            <div className="space-y-1.5 relative">
+                                <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                    <Plus size={16} /> ค้นหายาและเวชภัณฑ์
+                                </label>
+                                <div className="relative">
+                                    <Search
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                        size={18}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาชื่อยา..."
+                                        value={drugSearchTerm}
+                                        onChange={(e) => {
+                                            setDrugSearchTerm(e.target.value);
+                                            setShowDrugDropdown(true);
+                                        }}
+                                        onFocus={() => setShowDrugDropdown(true)}
+                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                    />
+                                </div>
+
+                                <UnifiedDrugDropdown
+                                    isOpen={showDrugDropdown}
+                                    searchTerm={drugSearchTerm}
+                                    items={medicines}
+                                    isSearching={searchingMedicines}
+                                    displayMode="inventory"
+                                    onSelect={handleSelectMedicine}
+                                />
+                            </div>
+
+                            {/* สรุปรายการ Table */}
+                            <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-100 text-gray-600 border-b border-gray-200 uppercase text-xs">
+                                        <tr>
+                                            <th className="text-left p-3 font-semibold">รายการ</th>
+                                            <th className="text-center p-3 font-semibold w-28">จำนวน</th>
+                                            <th className="text-right p-3 font-semibold w-24">ราคา/หน่วย</th>
+                                            <th className="text-right p-3 font-semibold w-24">รวม</th>
+                                            <th className="w-10"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {selectedItems.length > 0 ? (
+                                            selectedItems.map((item, index) => (
+                                                <tr key={index} className="bg-white hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-3 font-medium text-gray-800">
+                                                        {item.description}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-lg p-1 border border-gray-100">
+                                                            <button
+                                                                onClick={() => handleUpdateQuantity(index, item.quantity - 1)}
+                                                                className="p-1 hover:bg-white rounded-md text-gray-500 hover:text-primary hover:shadow-sm transition-all"
+                                                            >
+                                                                <Minus size={14} />
+                                                            </button>
+                                                            <span className="w-8 text-center font-bold text-gray-700">
+                                                                {item.quantity}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleUpdateQuantity(index, item.quantity + 1)}
+                                                                className="p-1 hover:bg-white rounded-md text-gray-500 hover:text-primary hover:shadow-sm transition-all"
+                                                            >
+                                                                <Plus size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 text-right text-gray-600 tabular-nums">
+                                                        ฿{Number(item.unit_price).toLocaleString()}
+                                                    </td>
+                                                    <td className="p-3 text-right font-bold text-primary tabular-nums">
+                                                        ฿{(item.quantity * Number(item.unit_price)).toLocaleString()}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <button
+                                                            onClick={() => handleRemoveItem(index)}
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={5} className="p-8 text-center text-gray-400 bg-white italic">
+                                                    ยังไม่มีรายการที่เลือก กรุณาค้นหายาด้านบน
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                    {selectedItems.length > 0 && (
+                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                            <tr>
+                                                <td colSpan={3} className="p-3 text-right font-semibold text-gray-600">ราคารวมทั้งสิ้น:</td>
+                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                    ฿{totalFromItems.toLocaleString()}
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700">
-                            จำนวนเงิน (บาท)
+                            จำนวนเงินรวม (บาท)
                         </label>
                         <div className="relative">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
@@ -543,6 +753,7 @@ export default function AddTransactionModal({
                             <input
                                 type="number"
                                 value={formData.amount}
+                                readOnly={formData.category === "ค่ายา"}
                                 onChange={(e) =>
                                     setFormData({
                                         ...formData,
@@ -550,9 +761,17 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                className={`w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none transition-all ${formData.category === "ค่ายา"
+                                    ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
+                                    : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                    }`}
                             />
                         </div>
+                        {formData.category === "ค่ายา" && (
+                            <p className="text-xs text-muted mt-1 px-1">
+                                * คำนวณอัตโนมัติจากรายการยาและเวชภัณฑ์
+                            </p>
+                        )}
                     </div>
 
                     {transactionType === "expense" && (
@@ -593,6 +812,28 @@ export default function AddTransactionModal({
                             <option value="pending">รอดำเนินการ</option>
                         </select>
                     </div>
+
+                    {transactionType === "income" && (
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-semibold text-gray-700">
+                                วิธีการชำระเงิน
+                            </label>
+                            <select
+                                value={formData.payment_method}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        payment_method: e.target.value as PaymentMethod,
+                                    })
+                                }
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                            >
+                                <option value="cash">เงินสด</option>
+                                <option value="transfer">เงินโอน</option>
+                                <option value="credit">บัตรเครดิต</option>
+                            </select>
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
                         <button
