@@ -239,14 +239,14 @@ export default function ViewTransactionModal({
                 <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-5 py-2.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition-colors"
+                        className="px-5 h-10 text-gray-600 font-semibold hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                     >
                         ปิด
                     </button>
                     {onEdit && (
                         <button
                             onClick={() => onEdit(transaction)}
-                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
+                            className="px-6 h-10 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
                         >
                             แก้ไขข้อมูล
                         </button>

@@ -389,13 +389,13 @@ export default function AddTransactionModal({
                                         onFocus={() =>
                                             setShowPatientDropdown(true)
                                         }
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                        className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                     />
                                 </div>
 
                                 {showPatientDropdown &&
                                     (searchTerm?.length ?? 0) >= 2 && (
-                                        <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                                        <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
                                             {searchingPatients ? (
                                                 <div className="p-4 text-center text-gray-500 text-sm">
                                                     กำลังค้นหา...
@@ -470,7 +470,7 @@ export default function AddTransactionModal({
                                                         e.target.value,
                                                     )
                                                 }
-                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none"
+                                                className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none text-sm"
                                             >
                                                 {visits.map((visit) => (
                                                     <option
@@ -514,7 +514,7 @@ export default function AddTransactionModal({
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-xl border border-red-100 flex items-center gap-2">
+                                        <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
                                             <X size={16} />
                                             ไม่พบประวัติการเข้าตรวจสำหรับผู้ป่วยรายนี้
                                         </div>
@@ -567,7 +567,7 @@ export default function AddTransactionModal({
                                         category: e.target.value,
                                     })
                                 }
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                className="w-full h-10 px-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                             >
                                 <option value="">เลือกหมวดหมู่</option>
                                 {transactionType === "income" ? (
@@ -624,7 +624,7 @@ export default function AddTransactionModal({
                                             onFocus={() =>
                                                 setShowDrugDropdown(true)
                                             }
-                                            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                            className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                         />
                                     </div>
 
@@ -799,7 +799,7 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className={`w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none transition-all ${
+                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
                                     formData.category === "ค่ายา"
                                         ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
                                         : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -828,7 +828,7 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="ระบุรายละเอียดการใช้จ่าย..."
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
                             />
                         </div>
                     )}
@@ -845,7 +845,7 @@ export default function AddTransactionModal({
                                     status: e.target.value,
                                 })
                             }
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                            className="w-full h-10 px-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                         >
                             <option value="completed">เสร็จสิ้น</option>
                             <option value="pending">รอดำเนินการ</option>
@@ -866,7 +866,7 @@ export default function AddTransactionModal({
                                             .value as PaymentMethod,
                                     })
                                 }
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                className="w-full h-10 px-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                             >
                                 <option value="cash">เงินสด</option>
                                 <option value="transfer">เงินโอน</option>
@@ -878,14 +878,14 @@ export default function AddTransactionModal({
                     <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
                         <button
                             onClick={onClose}
-                            className="px-6 py-2.5 rounded-xl border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                            className="px-6 h-10 rounded-lg border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
                         >
                             ยกเลิก
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 py-2.5 rounded-xl text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
+                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
                                 loading
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-primary hover:bg-primary-dark shadow-primary/20"
