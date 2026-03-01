@@ -144,6 +144,7 @@ export async function POST(request: Request) {
                 amount: body.amount,
                 payment_method: body.payment_method,
                 receipt_no: body.receipt_no,
+                income_category: body.income_category,
             },
         });
 

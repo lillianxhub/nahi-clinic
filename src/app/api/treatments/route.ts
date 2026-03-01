@@ -59,8 +59,19 @@ export async function GET(req: Request) {
             prisma.visit.count({ where }),
         ]);
 
+        const formattedVisits = visits.map((visit) => {
+            let age_formatted = "-";
+            if (visit.age_years !== null) {
+                age_formatted = `${visit.age_years} ปี ${visit.age_months || 0} เดือน ${visit.age_days || 0} วัน`;
+            }
+            return {
+                ...visit,
+                age_formatted,
+            };
+        });
+
         return NextResponse.json({
-            data: visits,
+            data: formattedVisits,
             meta: {
                 pagination: {
                     page,
@@ -83,7 +94,48 @@ export async function POST(req: Request) {
     try {
         const body: CreateTreatmentDTO = await req.json();
 
+        if (body.heart_rate !== undefined && Number(body.heart_rate) <= 0) {
+            throw new Error("heart rate ไม่ถูกต้อง");
+        }
+
+        if (body.weight !== undefined && Number(body.weight) <= 0) {
+            throw new Error("น้ำหนักไม่ถูกต้อง");
+        }
+
+        if (body.height !== undefined && Number(body.height) <= 0) {
+            throw new Error("ส่วนสูงไม่ถูกต้อง");
+        }
+
         const result = await prisma.$transaction(async (tx) => {
+            const patient = await tx.patient.findUnique({
+                where: { patient_id: body.patient_id },
+                select: { birth_date: true },
+            });
+
+            let age_years = null,
+                age_months = null,
+                age_days = null;
+
+            if (patient?.birth_date) {
+                const visitDate = new Date(body.visit_date);
+                const birthDate = new Date(patient.birth_date);
+                let y = visitDate.getFullYear() - birthDate.getFullYear();
+                let m = visitDate.getMonth() - birthDate.getMonth();
+                let d = visitDate.getDate() - birthDate.getDate();
+
+                if (d < 0) {
+                    m -= 1;
+                    d += new Date(visitDate.getFullYear(), visitDate.getMonth(), 0).getDate();
+                }
+                if (m < 0) {
+                    y -= 1;
+                    m += 12;
+                }
+                age_years = Math.max(0, y);
+                age_months = Math.max(0, m);
+                age_days = Math.max(0, d);
+            }
+
             // 1. Create Visit
             const visit = await tx.visit.create({
                 data: {
@@ -92,6 +144,13 @@ export async function POST(req: Request) {
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
                     note: body.note,
+                    blood_pressure: body.blood_pressure,
+                    heart_rate: body.heart_rate ? Number(body.heart_rate) : null,
+                    weight: body.weight ? Number(body.weight) : null,
+                    height: body.height ? Number(body.height) : null,
+                    age_years,
+                    age_months,
+                    age_days,
                 },
             });
 

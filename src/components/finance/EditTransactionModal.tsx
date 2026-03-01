@@ -146,6 +146,7 @@ export default function EditTransactionModal({
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
+                    category: res.income_category || "ค่าตรวจรักษา",
                 });
                 setSelectedVisitId(res.visit_id);
 
@@ -198,6 +199,7 @@ export default function EditTransactionModal({
                     payment_method: formData.payment_method,
                     receipt_no: formData.receipt_no,
                     visit_id: selectedVisitId,
+                    income_category: formData.category,
                 };
                 await financeService.updateIncome(transaction.id, payload);
             } else {
@@ -542,35 +544,64 @@ export default function EditTransactionModal({
 
                             {/* Type Specific Fields */}
                             {isIncome ? (
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <CreditCard
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        วิธีการชำระเงิน{" "}
-                                        <span className="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={formData?.payment_method || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                payment_method: e.target.value,
-                                            })
-                                        }
-                                        required
-                                    >
-                                        <option value="cash">เงินสด</option>
-                                        <option value="transfer">
-                                            เงินโอน
-                                        </option>
-                                        <option value="credit">
-                                            บัตรเครดิต
-                                        </option>
-                                    </select>
-                                </div>
+                                <>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <Tag
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            หมวดหมู่รายการ{" "}
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={formData?.category || ""}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    category: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="">เลือกหมวดหมู่</option>
+                                            <option value="ค่าตรวจรักษา">ค่าตรวจรักษา</option>
+                                            <option value="ค่ายา">ค่ายา</option>
+                                            <option value="ค่าบริการ">ค่าบริการ</option>
+                                            <option value="วัคซีน">วัคซีน</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <CreditCard
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            วิธีการชำระเงิน{" "}
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={formData?.payment_method || ""}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    payment_method: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="cash">เงินสด</option>
+                                            <option value="transfer">
+                                                เงินโอน
+                                            </option>
+                                            <option value="credit">
+                                                บัตรเครดิต
+                                            </option>
+                                        </select>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">

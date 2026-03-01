@@ -36,7 +36,12 @@ export async function GET(_: Request, { params }: Params) {
             );
         }
 
-        return NextResponse.json({ data: visit });
+        let age_formatted = "-";
+        if (visit.age_years !== null) {
+            age_formatted = `${visit.age_years} ปี ${visit.age_months || 0} เดือน ${visit.age_days || 0} วัน`;
+        }
+
+        return NextResponse.json({ data: { ...visit, age_formatted } });
     } catch (error) {
         console.error("Get treatment by id error:", error);
         return NextResponse.json(
@@ -51,6 +56,18 @@ export async function PATCH(req: Request, { params }: Params) {
         const { treatment_id } = await params;
         const body: CreateTreatmentDTO = await req.json();
         console.log("PATCH Treatment Request Body:", JSON.stringify(body, null, 2));
+
+        if (body.heart_rate !== undefined && Number(body.heart_rate) <= 0) {
+            throw new Error("heart rate ไม่ถูกต้อง");
+        }
+
+        if (body.weight !== undefined && Number(body.weight) <= 0) {
+            throw new Error("น้ำหนักไม่ถูกต้อง");
+        }
+
+        if (body.height !== undefined && Number(body.height) <= 0) {
+            throw new Error("ส่วนสูงไม่ถูกต้อง");
+        }
 
         const result = await prisma.$transaction(async (tx) => {
             // 1. Check if visit exists and include necessary relations
@@ -87,6 +104,35 @@ export async function PATCH(req: Request, { params }: Params) {
                 where: { visit_id: treatment_id },
             });
 
+            const patient = await tx.patient.findUnique({
+                where: { patient_id: existing.patient_id },
+                select: { birth_date: true },
+            });
+
+            let age_years = null,
+                age_months = null,
+                age_days = null;
+
+            if (patient?.birth_date) {
+                const visitDate = new Date(body.visit_date ? body.visit_date : existing.visit_date);
+                const birthDate = new Date(patient.birth_date);
+                let y = visitDate.getFullYear() - birthDate.getFullYear();
+                let m = visitDate.getMonth() - birthDate.getMonth();
+                let d = visitDate.getDate() - birthDate.getDate();
+
+                if (d < 0) {
+                    m -= 1;
+                    d += new Date(visitDate.getFullYear(), visitDate.getMonth(), 0).getDate();
+                }
+                if (m < 0) {
+                    y -= 1;
+                    m += 12;
+                }
+                age_years = Math.max(0, y);
+                age_months = Math.max(0, m);
+                age_days = Math.max(0, d);
+            }
+
             // 4. Update basic visit information
             const visit = await tx.visit.update({
                 where: { visit_id: treatment_id },
@@ -95,6 +141,13 @@ export async function PATCH(req: Request, { params }: Params) {
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
                     note: body.note,
+                    blood_pressure: body.blood_pressure,
+                    heart_rate: body.heart_rate ? Number(body.heart_rate) : null,
+                    weight: body.weight ? Number(body.weight) : null,
+                    height: body.height ? Number(body.height) : null,
+                    age_years,
+                    age_months,
+                    age_days,
                 },
             });
 

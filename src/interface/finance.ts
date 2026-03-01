@@ -7,6 +7,7 @@ export interface Income {
     amount: number;
     payment_method: PaymentMethod;
     receipt_no: string | null;
+    income_category: string | null;
     is_active: boolean;
     created_at: string;
     updated_at: string | null;
@@ -133,4 +134,5 @@ export interface CreateIncomePayload {
     amount: number;
     payment_method: PaymentMethod;
     receipt_no?: string;
+    income_category?: string;
 }
