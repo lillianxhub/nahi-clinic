@@ -175,17 +175,18 @@ model Drug_Usage {
 }
 
 model Income {
-  income_id      String        @id @default(uuid()) @db.Char(36)
-  visit_id       String        @db.Char(36)
-  income_date    DateTime
-  amount         Decimal       @db.Decimal(10, 2)
-  payment_method PaymentMethod
-  receipt_no     String?       @db.VarChar(100)
-  is_active      Boolean       @default(true)
-  created_at     DateTime      @default(now())
-  updated_at     DateTime?
-  deleted_at     DateTime?
-  visit          Visit         @relation(fields: [visit_id], references: [visit_id])
+  income_id       String        @id @default(uuid()) @db.Char(36)
+  visit_id        String        @db.Char(36)
+  income_date     DateTime
+  amount          Decimal       @db.Decimal(10, 2)
+  payment_method  PaymentMethod
+  receipt_no      String?       @db.VarChar(100)
+  income_category String?       @db.VarChar(100)
+  is_active       Boolean       @default(true)
+  created_at      DateTime      @default(now())
+  updated_at      DateTime?
+  deleted_at      DateTime?
+  visit           Visit         @relation(fields: [visit_id], references: [visit_id])
 
   @@index([visit_id], map: "incomes_visit_id_fkey")
   @@map("incomes")

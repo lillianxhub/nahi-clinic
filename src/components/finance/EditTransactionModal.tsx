@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     X,
     DollarSign,
@@ -12,6 +12,9 @@ import {
     CreditCard,
     Save,
     Loader2,
+    Trash2,
+    Plus,
+    Minus,
 } from "lucide-react";
 import {
     TransactionItem,
@@ -19,13 +22,25 @@ import {
     Expense,
     CreateIncomePayload,
     CreateExpensePayload,
+    PaymentMethod,
 } from "@/interface/finance";
 import { financeService } from "@/services/finance";
 import { patientService } from "@/services/patient";
+import { Medicine } from "@/interface/medicine";
+import { medicineService } from "@/services/medicine";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search, User } from "lucide-react";
+import { Search, User, Calendar as CalendarIcon } from "lucide-react";
 import { formatLocalDate } from "@/utils/dateUtils";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+
+interface SelectedItem {
+    item_type: "drug" | "service";
+    drug_id?: string;
+    description?: string;
+    quantity: number;
+    unit_price: number;
+}
 
 interface EditTransactionModalProps {
     isOpen: boolean;
@@ -58,6 +73,85 @@ export default function EditTransactionModal({
     const [visits, setVisits] = useState<any[]>([]);
     const [loadingVisits, setLoadingVisits] = useState(false);
     const [selectedVisitId, setSelectedVisitId] = useState("");
+
+    // Drug Search States
+    const [drugSearchTerm, setDrugSearchTerm] = useState("");
+    const debouncedDrugSearch = useDebounce(drugSearchTerm, 500);
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [searchingMedicines, setSearchingMedicines] = useState(false);
+    const [showDrugDropdown, setShowDrugDropdown] = useState(false);
+
+    // Selected Items for "ค่ายา"
+    const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+
+    // Calculate total amount from items
+    const totalFromItems = useMemo(() => {
+        return selectedItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+    }, [selectedItems]);
+
+    // Update amount if category is "ค่ายา"
+    useEffect(() => {
+        if (formData?.category === "ค่ายา") {
+            setFormData((prev: any) => ({ ...prev, amount: totalFromItems.toFixed(2) }));
+        }
+    }, [totalFromItems, formData?.category]);
+
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            if (!debouncedDrugSearch || debouncedDrugSearch.length < 2) {
+                setMedicines([]);
+                return;
+            }
+
+            try {
+                setSearchingMedicines(true);
+                const res = await medicineService.getMedicines({
+                    q: debouncedDrugSearch,
+                    pageSize: 5,
+                });
+                setMedicines(res.data);
+            } catch (error) {
+                console.error("ค้นหายาล้มเหลว", error);
+            } finally {
+                setSearchingMedicines(false);
+            }
+        };
+
+        fetchMedicines();
+    }, [debouncedDrugSearch]);
+
+    const handleSelectMedicine = (medicine: Medicine) => {
+        const existingIndex = selectedItems.findIndex(item => item.drug_id === medicine.drug_id);
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "drug",
+                    drug_id: medicine.drug_id,
+                    description: medicine.drug_name,
+                    quantity: 1,
+                    unit_price: Number(medicine.sell_price),
+                }
+            ]);
+        }
+        setDrugSearchTerm("");
+        setShowDrugDropdown(false);
+    };
+
+    const handleRemoveItem = (index: number) => {
+        setSelectedItems(selectedItems.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateQuantity = (index: number, quantity: number) => {
+        if (quantity < 1) return;
+        const newItems = [...selectedItems];
+        newItems[index].quantity = quantity;
+        setSelectedItems(newItems);
+    };
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -126,10 +220,10 @@ export default function EditTransactionModal({
             fetchDetails();
         } else {
             // Reset states when closed
-            setSelectedPatient(null);
-            setSearchTerm("");
             setVisits([]);
             setSelectedVisitId("");
+            setSelectedItems([]);
+            setDrugSearchTerm("");
         }
     }, [isOpen, transaction]);
 
@@ -146,6 +240,7 @@ export default function EditTransactionModal({
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
+                    category: res.income_category || "ค่าตรวจรักษา",
                 });
                 setSelectedVisitId(res.visit_id);
 
@@ -155,6 +250,17 @@ export default function EditTransactionModal({
                     setSelectedPatient(res.visit.patient);
                     // @ts-ignore
                     setSearchTerm(res.visit.patient.fullName || "");
+
+                    // Set initial items from visit details
+                    if (res.visit.visitDetails) {
+                        setSelectedItems(res.visit.visitDetails.map((vd: any) => ({
+                            item_type: vd.item_type,
+                            drug_id: vd.drug_id,
+                            description: vd.description,
+                            quantity: vd.quantity,
+                            unit_price: Number(vd.unit_price)
+                        })));
+                    }
                 }
             } else {
                 const res = await financeService.getExpenseById(transaction.id);
@@ -195,9 +301,11 @@ export default function EditTransactionModal({
                 const payload: Partial<CreateIncomePayload> = {
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
-                    payment_method: formData.payment_method,
+                    payment_method: formData.payment_method as PaymentMethod,
                     receipt_no: formData.receipt_no,
                     visit_id: selectedVisitId,
+                    income_category: formData.category,
+                    items: formData.category === "ค่ายา" ? selectedItems : undefined,
                 };
                 await financeService.updateIncome(transaction.id, payload);
             } else {
@@ -258,7 +366,7 @@ export default function EditTransactionModal({
                     </div>
                 </div>
 
-                {fetching ? (
+                {fetching || !formData ? (
                     <div className="p-20 flex justify-center flex-col items-center gap-4">
                         <Loader2
                             className="animate-spin text-primary"
@@ -542,35 +650,184 @@ export default function EditTransactionModal({
 
                             {/* Type Specific Fields */}
                             {isIncome ? (
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <CreditCard
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        วิธีการชำระเงิน{" "}
-                                        <span className="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={formData?.payment_method || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                payment_method: e.target.value,
-                                            })
-                                        }
-                                        required
-                                    >
-                                        <option value="cash">เงินสด</option>
-                                        <option value="transfer">
-                                            เงินโอน
-                                        </option>
-                                        <option value="credit">
-                                            บัตรเครดิต
-                                        </option>
-                                    </select>
-                                </div>
+                                <>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <Tag
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            หมวดหมู่รายการ{" "}
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={formData?.category || ""}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    category: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="">เลือกหมวดหมู่</option>
+                                            <option value="ค่าตรวจรักษา">ค่าตรวจรักษา</option>
+                                            <option value="ค่ายา">ค่ายา</option>
+                                            <option value="ค่าบริการ">ค่าบริการ</option>
+                                            <option value="วัคซีน">วัคซีน</option>
+                                        </select>
+                                    </div>
+
+                                    {formData?.category === "ค่ายา" && (
+                                        <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="relative">
+                                                <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                                    เพิ่มรายการยา{" "}
+                                                    <span className="text-red-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Search
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={18}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="ค้นหายาด้วยชื่อ..."
+                                                        value={drugSearchTerm}
+                                                        onChange={(e) => {
+                                                            setDrugSearchTerm(e.target.value);
+                                                            setShowDrugDropdown(true);
+                                                        }}
+                                                        onFocus={() => setShowDrugDropdown(true)}
+                                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                                    />
+                                                </div>
+
+                                                <UnifiedDrugDropdown
+                                                    isOpen={showDrugDropdown}
+                                                    searchTerm={drugSearchTerm}
+                                                    items={medicines}
+                                                    isSearching={searchingMedicines}
+                                                    displayMode="inventory"
+                                                    onSelect={(m) => handleSelectMedicine(m)}
+                                                />
+                                            </div>
+
+                                            {/* Medicine Table */}
+                                            <div className="overflow-hidden border border-gray-200 rounded-xl bg-white shadow-sm">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                                        <tr className="text-gray-500 font-semibold">
+                                                            <th className="p-3 text-left">รายการ</th>
+                                                            <th className="p-3 text-center">จำนวน</th>
+                                                            <th className="p-3 text-right">ราคาหน่วย</th>
+                                                            <th className="p-3 text-right">รวม</th>
+                                                            <th className="p-3 w-10"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {selectedItems.length > 0 ? (
+                                                            selectedItems.map((item, index) => (
+                                                                <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                                                    <td className="p-3">
+                                                                        <p className="font-semibold text-gray-800">{item.description}</p>
+                                                                    </td>
+                                                                    <td className="p-3">
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleUpdateQuantity(index, item.quantity - 1)}
+                                                                                className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
+                                                                            >
+                                                                                <Minus size={14} />
+                                                                            </button>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={item.quantity}
+                                                                                onChange={(e) => handleUpdateQuantity(index, parseInt(e.target.value) || 0)}
+                                                                                className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                            />
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleUpdateQuantity(index, item.quantity + 1)}
+                                                                                className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
+                                                                            >
+                                                                                <Plus size={14} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-gray-600 tabular-nums">
+                                                                        ฿{Number(item.unit_price).toLocaleString()}
+                                                                    </td>
+                                                                    <td className="p-3 text-right font-bold text-primary tabular-nums">
+                                                                        ฿{(item.quantity * Number(item.unit_price)).toLocaleString()}
+                                                                    </td>
+                                                                    <td className="p-3">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemoveItem(index)}
+                                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={5} className="p-8 text-center text-gray-400 bg-white italic">
+                                                                    ยังไม่มีรายการที่เลือก กรุณาค้นหายาด้านบน
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                    {selectedItems.length > 0 && (
+                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                            <tr>
+                                                                <td colSpan={3} className="p-3 text-right font-semibold text-gray-600">ราคารวมทั้งสิ้น:</td>
+                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                    ฿{totalFromItems.toLocaleString()}
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    )}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <CreditCard
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            วิธีการชำระเงิน{" "}
+                                            <span className="text-danger">*</span>
+                                        </label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={formData?.payment_method || ""}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    payment_method: e.target.value,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="cash">เงินสด</option>
+                                            <option value="transfer">
+                                                เงินโอน
+                                            </option>
+                                            <option value="credit">
+                                                บัตรเครดิต
+                                            </option>
+                                        </select>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -618,9 +875,11 @@ export default function EditTransactionModal({
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    className={`w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${formData?.category === "ค่ายา" ? "bg-gray-50 text-primary font-bold cursor-not-allowed" : ""
+                                        }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
+                                    readOnly={formData?.category === "ค่ายา"}
                                     onChange={(e) =>
                                         setFormData({
                                             ...formData,
@@ -629,6 +888,11 @@ export default function EditTransactionModal({
                                     }
                                     required
                                 />
+                                {formData?.category === "ค่ายา" && (
+                                    <p className="text-xs text-muted mt-1 px-1">
+                                        * คำนวณอัตโนมัติจากรายการยาและเวชภัณฑ์
+                                    </p>
+                                )}
                             </div>
 
                             {/* Description (Only for Expense) */}

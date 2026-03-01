@@ -8,6 +8,7 @@ import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 
 interface EditTreatmentModalProps {
     open: boolean;
@@ -30,6 +31,10 @@ export default function EditTreatmentModal({
         symptom: "",
         diagnosis: "",
         note: "",
+        blood_pressure: "",
+        heart_rate: "",
+        weight: "",
+        height: "",
     });
 
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
@@ -68,6 +73,10 @@ export default function EditTreatmentModal({
                 symptom: data.symptom || "",
                 diagnosis: data.diagnosis || "",
                 note: data.note || "",
+                blood_pressure: data.blood_pressure || "",
+                heart_rate: data.heart_rate ? String(data.heart_rate) : "",
+                weight: data.weight ? String(data.weight) : "",
+                height: data.height ? String(data.height) : "",
             });
 
             // Map existing visitDetails to selectedItems
@@ -188,6 +197,10 @@ export default function EditTreatmentModal({
                 note: formData.note,
                 payment_method: paymentMethod,
                 items: selectedItems,
+                blood_pressure: formData.blood_pressure,
+                heart_rate: formData.heart_rate ? Number(formData.heart_rate) : undefined,
+                weight: formData.weight ? Number(formData.weight) : undefined,
+                height: formData.height ? Number(formData.height) : undefined,
             } as CreateTreatmentDTO);
 
             onSuccess();
@@ -318,6 +331,78 @@ export default function EditTreatmentModal({
                         </div>
                     </div>
 
+                    {/* Vital Signs Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Blood Pressure */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <FileText size={16} className="text-primary" />
+                                ความดันโลหิต (mmHg)
+                            </label>
+                            <input
+                                type="text"
+                                name="blood_pressure"
+                                placeholder="เช่น 120/80"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.blood_pressure}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        {/* Heart Rate */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <FileText size={16} className="text-primary" />
+                                อัตราการเต้นหัวใจ (bpm)
+                            </label>
+                            <input
+                                type="number"
+                                name="heart_rate"
+                                placeholder="เช่น 80"
+                                min="1"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.heart_rate}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        {/* Weight */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <FileText size={16} className="text-primary" />
+                                น้ำหนัก (kg)
+                            </label>
+                            <input
+                                type="number"
+                                name="weight"
+                                placeholder="เช่น 65.5"
+                                min="0.1"
+                                step="0.1"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.weight}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        {/* Height */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <FileText size={16} className="text-primary" />
+                                ส่วนสูง (cm)
+                            </label>
+                            <input
+                                type="number"
+                                name="height"
+                                placeholder="เช่น 170"
+                                min="1"
+                                step="0.1"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.height}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+
                     {/* Symptom */}
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -392,62 +477,14 @@ export default function EditTreatmentModal({
                             />
 
                             {/* Drug Dropdown */}
-                            {showDrugDropdown &&
-                                (drugSearchTerm.length >= 2 ||
-                                    medicines.length > 0) && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searchingMedicines ? (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                กำลังค้นหา...
-                                            </div>
-                                        ) : medicines.length > 0 ? (
-                                            <div className="py-1">
-                                                {medicines.map(
-                                                    (m: Medicine) => (
-                                                        <button
-                                                            key={m.drug_id}
-                                                            type="button"
-                                                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                            onClick={() =>
-                                                                handleSelectMedicine(
-                                                                    m,
-                                                                )
-                                                            }
-                                                        >
-                                                            <div>
-                                                                <div className="font-medium text-foreground group-hover:text-primary">
-                                                                    {
-                                                                        m.drug_name
-                                                                    }
-                                                                </div>
-                                                                <div className="text-xs text-muted">
-                                                                    ราคา:{" "}
-                                                                    {m.sell_price.toLocaleString()}{" "}
-                                                                    บาท |
-                                                                    คงเหลือ:{" "}
-                                                                    {m.lots?.reduce(
-                                                                        (
-                                                                            sum,
-                                                                            lot,
-                                                                        ) =>
-                                                                            sum +
-                                                                            lot.qty_remaining,
-                                                                        0,
-                                                                    ) ?? 0}{" "}
-                                                                    {m.unit}
-                                                                </div>
-                                                            </div>
-                                                        </button>
-                                                    ),
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                ไม่พบข้อมูลยา/บริการ
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                            <UnifiedDrugDropdown
+                                isOpen={showDrugDropdown}
+                                searchTerm={drugSearchTerm}
+                                items={medicines}
+                                isSearching={searchingMedicines}
+                                displayMode="inventory"
+                                onSelect={handleSelectMedicine}
+                            />
                         </div>
 
                         {/* ตารางสรุปรายการ */}
