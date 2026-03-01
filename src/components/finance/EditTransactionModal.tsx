@@ -744,62 +744,26 @@ export default function EditTransactionModal({
                                                                             </p>
                                                                         </td>
                                                                         <td className="p-3">
-                                                                            <div className="flex items-center justify-center gap-2">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() =>
-                                                                                        handleUpdateQuantity(
-                                                                                            index,
-                                                                                            item.quantity -
-                                                                                                1,
-                                                                                        )
-                                                                                    }
-                                                                                    className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                                                                >
-                                                                                    <Minus
-                                                                                        size={
-                                                                                            14
-                                                                                        }
-                                                                                    />
-                                                                                </button>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    value={
-                                                                                        item.quantity
-                                                                                    }
-                                                                                    onChange={(
-                                                                                        e,
-                                                                                    ) =>
-                                                                                        handleUpdateQuantity(
-                                                                                            index,
-                                                                                            parseInt(
-                                                                                                e
-                                                                                                    .target
-                                                                                                    .value,
-                                                                                            ) ||
-                                                                                                0,
-                                                                                        )
-                                                                                    }
-                                                                                    className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
-                                                                                />
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() =>
-                                                                                        handleUpdateQuantity(
-                                                                                            index,
-                                                                                            item.quantity +
-                                                                                                1,
-                                                                                        )
-                                                                                    }
-                                                                                    className="p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
-                                                                                >
-                                                                                    <Plus
-                                                                                        size={
-                                                                                            14
-                                                                                        }
-                                                                                    />
-                                                                                </button>
-                                                                            </div>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={
+                                                                                    item.quantity
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleUpdateQuantity(
+                                                                                        index,
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0,
+                                                                                    )
+                                                                                }
+                                                                                className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                            />
                                                                         </td>
                                                                         <td className="p-3 text-right text-gray-600 tabular-nums">
                                                                             ฿

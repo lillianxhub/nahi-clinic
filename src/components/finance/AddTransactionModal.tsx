@@ -672,45 +672,26 @@ export default function AddTransactionModal({
                                                                 }
                                                             </td>
                                                             <td className="p-3">
-                                                                <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-lg p-1 border border-gray-100">
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            handleUpdateQuantity(
-                                                                                index,
-                                                                                item.quantity -
-                                                                                    1,
-                                                                            )
-                                                                        }
-                                                                        className="p-1 hover:bg-white rounded-md text-gray-500 hover:text-primary hover:shadow-sm transition-all"
-                                                                    >
-                                                                        <Minus
-                                                                            size={
-                                                                                14
-                                                                            }
-                                                                        />
-                                                                    </button>
-                                                                    <span className="w-8 text-center font-bold text-gray-700">
-                                                                        {
-                                                                            item.quantity
-                                                                        }
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            handleUpdateQuantity(
-                                                                                index,
-                                                                                item.quantity +
-                                                                                    1,
-                                                                            )
-                                                                        }
-                                                                        className="p-1 hover:bg-white rounded-md text-gray-500 hover:text-primary hover:shadow-sm transition-all"
-                                                                    >
-                                                                        <Plus
-                                                                            size={
-                                                                                14
-                                                                            }
-                                                                        />
-                                                                    </button>
-                                                                </div>
+                                                                <input
+                                                                    type="number"
+                                                                    value={
+                                                                        item.quantity
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleUpdateQuantity(
+                                                                            index,
+                                                                            parseInt(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            ) ||
+                                                                                0,
+                                                                        )
+                                                                    }
+                                                                    className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                />
                                                             </td>
                                                             <td className="p-3 text-right text-gray-600 tabular-nums">
                                                                 ฿

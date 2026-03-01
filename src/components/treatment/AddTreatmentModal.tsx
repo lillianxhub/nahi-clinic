@@ -1,7 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, FileText, Calendar, Search, User, Plus, Clock } from "lucide-react";
+import {
+    X,
+    FileText,
+    Calendar,
+    Search,
+    User,
+    Plus,
+    Clock,
+    Activity,
+    Pill,
+    Trash2,
+    Edit3,
+} from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
 import { treatmentService } from "@/services/treatment";
@@ -11,6 +23,7 @@ import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
 import AddPatientModal from "../patient/AddPatientModal";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
+import DressingLocationModal from "./DressingLocationModal";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
@@ -60,6 +73,7 @@ export default function AddTreatmentModal({
     const [medicines, setMedicines] = useState<Medicine[]>([]);
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
+    const [isDressingModalOpen, setIsDressingModalOpen] = useState(false);
 
     const totalAmount = selectedItems.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
@@ -153,12 +167,43 @@ export default function AddTreatmentModal({
                     drug_id: medicine.drug_id,
                     description: medicine.drug_name,
                     quantity: 1,
-                    unit_price: medicine.sell_price,
+                    unit_price: Number(medicine.sell_price),
+                    instruction: "",
                 },
             ]);
         }
         setDrugSearchTerm("");
         setShowDrugDropdown(false);
+    };
+
+    const handleAddService = (
+        name: string,
+        price: number,
+        location?: string,
+    ) => {
+        setSelectedItems([
+            ...selectedItems,
+            {
+                item_type: "service",
+                description: location ? `${name} (${location})` : name,
+                quantity: 1,
+                unit_price: price,
+            },
+        ]);
+    };
+
+    const handleUpdatePrice = (index: number, price: number) => {
+        setSelectedItems(
+            selectedItems.map((item, idx) =>
+                idx === index ? { ...item, unit_price: price } : item,
+            ),
+        );
+    };
+
+    const handleUpdateInstruction = (index: number, instruction: string) => {
+        const newItems = [...selectedItems];
+        newItems[index].instruction = instruction;
+        setSelectedItems(newItems);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -190,7 +235,13 @@ export default function AddTreatmentModal({
                 ...formData,
                 visit_date: isoDateTime,
                 payment_method: paymentMethod,
-                items: selectedItems,
+                items: selectedItems.map((item) => ({
+                    ...item,
+                    description:
+                        item.item_type === "drug" && item.instruction
+                            ? `${item.description} : ${item.instruction}`
+                            : item.description,
+                })),
                 heart_rate: formData.heart_rate
                     ? Number(formData.heart_rate)
                     : undefined,
@@ -239,7 +290,7 @@ export default function AddTreatmentModal({
         <>
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div
-                    className="bg-card w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+                    className="bg-card w-full max-w-4xl lg:max-w-5xl rounded-2xl shadow-2xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header with gradient */}
@@ -268,395 +319,571 @@ export default function AddTreatmentModal({
                     {/* Form Content */}
                     <form
                         onSubmit={handleSubmit}
-                        className="p-6 space-y-5 max-h-[calc(100vh-280px)] overflow-y-auto"
+                        className="p-6 lg:p-8 space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start max-h-[calc(100vh-200px)] overflow-y-auto"
                     >
-                        {/* Patient Name Search */}
-                        <div className="space-y-1.5 relative">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <User size={16} className="text-primary" />
-                                ชื่อผู้ป่วย{" "}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <div className="relative">
-                                <Search
-                                    size={18}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="ค้นหาชื่อหรือรหัสผู้ป่วย..."
-                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={searchTerm}
-                                    onChange={(e) => {
-                                        setSearchTerm(e.target.value);
-                                        setShowDropdown(true);
-                                        if (
-                                            selectedPatient &&
-                                            e.target.value !==
-                                                selectedPatient.fullName
-                                        ) {
-                                            setSelectedPatient(null);
+                        {/* Left Column: Clinical Info */}
+                        <div className="space-y-5">
+                            {/* Patient Name Search */}
+                            <div className="space-y-1.5 relative">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <User size={16} className="text-primary" />
+                                    ชื่อผู้ป่วย{" "}
+                                    <span className="text-danger">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Search
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาชื่อหรือรหัสผู้ป่วย..."
+                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={searchTerm}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setShowDropdown(true);
+                                            if (
+                                                selectedPatient &&
+                                                e.target.value !==
+                                                    selectedPatient.fullName
+                                            ) {
+                                                setSelectedPatient(null);
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    patient_id: "",
+                                                }));
+                                            }
+                                        }}
+                                        onFocus={() => setShowDropdown(true)}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Patient Dropdown */}
+                                {showDropdown &&
+                                    (searchTerm.length >= 2 ||
+                                        patients.length > 0) && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                            {searching ? (
+                                                <div className="p-4 text-center text-muted text-sm">
+                                                    กำลังค้นหา...
+                                                </div>
+                                            ) : patients.length > 0 ? (
+                                                <div className="py-1">
+                                                    {patients.map((p) => (
+                                                        <button
+                                                            key={p.patient_id}
+                                                            type="button"
+                                                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                            onClick={() =>
+                                                                handleSelectPatient(
+                                                                    p,
+                                                                )
+                                                            }
+                                                        >
+                                                            <div>
+                                                                <div className="font-medium text-foreground group-hover:text-primary">
+                                                                    {p.fullName}
+                                                                </div>
+                                                                <div className="text-xs text-muted">
+                                                                    HN:{" "}
+                                                                    {
+                                                                        p.hospital_number
+                                                                    }{" "}
+                                                                    |{" "}
+                                                                    {p.phone ||
+                                                                        "ไม่มีเบอร์โทร"}
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-4 text-center text-muted text-sm">
+                                                    ไม่พบข้อมูลผู้ป่วย
+                                                </div>
+                                            )}
+
+                                            {/* Add New Patient Option */}
+                                            <div className="border-t border-gray-100 p-1">
+                                                <button
+                                                    type="button"
+                                                    className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
+                                                    onClick={() => {
+                                                        setOpenAddPatient(true);
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    <Plus size={16} />
+                                                    เพิ่มผู้ป่วยใหม่
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                            </div>
+
+                            {/* Visit Date & Time */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <Calendar
+                                        size={16}
+                                        className="text-primary"
+                                    />
+                                    วันที่และเวลา{" "}
+                                    <span className="text-danger">*</span>
+                                </label>
+                                <DateTimePicker24hour
+                                    date={
+                                        new Date(
+                                            `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
+                                        )
+                                    }
+                                    setDate={(date) => {
+                                        if (date) {
                                             setFormData((prev) => ({
                                                 ...prev,
-                                                patient_id: "",
+                                                visit_date:
+                                                    formatLocalDate(date),
+                                                hour: date
+                                                    .getHours()
+                                                    .toString()
+                                                    .padStart(2, "0"),
+                                                minute: date
+                                                    .getMinutes()
+                                                    .toString()
+                                                    .padStart(2, "0"),
                                             }));
                                         }
                                     }}
-                                    onFocus={() => setShowDropdown(true)}
+                                />
+                            </div>
+
+                            {/* Symptom */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText
+                                        size={16}
+                                        className="text-primary"
+                                    />
+                                    อาการ <span className="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    name="symptom"
+                                    placeholder="อธิบายอาการของผู้ป่วย"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                    rows={3}
+                                    value={formData.symptom}
+                                    onChange={handleChange}
                                     required
                                 />
                             </div>
 
-                            {/* Patient Dropdown */}
-                            {showDropdown &&
-                                (searchTerm.length >= 2 ||
-                                    patients.length > 0) && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searching ? (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                กำลังค้นหา...
-                                            </div>
-                                        ) : patients.length > 0 ? (
-                                            <div className="py-1">
-                                                {patients.map((p) => (
-                                                    <button
-                                                        key={p.patient_id}
-                                                        type="button"
-                                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                        onClick={() =>
-                                                            handleSelectPatient(
-                                                                p,
-                                                            )
-                                                        }
-                                                    >
-                                                        <div>
-                                                            <div className="font-medium text-foreground group-hover:text-primary">
-                                                                {p.fullName}
-                                                            </div>
-                                                            <div className="text-xs text-muted">
-                                                                HN:{" "}
-                                                                {
-                                                                    p.hospital_number
-                                                                }{" "}
-                                                                |{" "}
-                                                                {p.phone ||
-                                                                    "ไม่มีเบอร์โทร"}
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                ไม่พบข้อมูลผู้ป่วย
-                                            </div>
-                                        )}
+                            {/* Vital Signs Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Blood Pressure */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        ความดันโลหิต (mmHg)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="blood_pressure"
+                                        placeholder="เช่น 120/80"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.blood_pressure}
+                                        onChange={handleChange}
+                                    />
+                                </div>
 
-                                        {/* Add New Patient Option */}
-                                        <div className="border-t border-gray-100 p-1">
-                                            <button
-                                                type="button"
-                                                className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
-                                                onClick={() => {
-                                                    setOpenAddPatient(true);
-                                                    setShowDropdown(false);
-                                                }}
-                                            >
-                                                <Plus size={16} />
-                                                เพิ่มผู้ป่วยใหม่
-                                            </button>
-                                        </div>
+                                {/* Heart Rate */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        อัตราการเต้นหัวใจ (bpm)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="heart_rate"
+                                        placeholder="เช่น 80"
+                                        min="1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.heart_rate}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                {/* Weight */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        น้ำหนัก (kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="weight"
+                                        placeholder="เช่น 65.5"
+                                        min="0.1"
+                                        step="0.1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.weight}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                {/* Height */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        ส่วนสูง (cm)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="height"
+                                        placeholder="เช่น 170"
+                                        min="1"
+                                        step="0.1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.height}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Diagnosis */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText
+                                        size={16}
+                                        className="text-primary"
+                                    />
+                                    การวินิจฉัย{" "}
+                                    <span className="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    name="diagnosis"
+                                    placeholder="ผลการวินิจฉัยของแพทย์"
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right Column: Treatment Items & Payment */}
+                        <div className="space-y-6">
+                            {/* Section A: Procedures */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                        <Activity
+                                            size={18}
+                                            className="text-primary"
+                                        />
+                                        รายการหัตถการ
+                                    </h3>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setIsDressingModalOpen(true)
+                                        }
+                                        className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all gap-1 group"
+                                    >
+                                        <Plus
+                                            size={16}
+                                            className="text-gray-400 group-hover:text-primary"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">
+                                            ล้างแผล (Dressing)
+                                        </span>
+                                        <span className="text-xs text-muted">
+                                            100 บาท
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleAddService(
+                                                "ตัดไหม (Suture Removal)",
+                                                150,
+                                            )
+                                        }
+                                        className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all gap-1 group"
+                                    >
+                                        <Plus
+                                            size={16}
+                                            className="text-gray-400 group-hover:text-primary"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">
+                                            ตัดไหม (Suture Removal)
+                                        </span>
+                                        <span className="text-xs text-muted">
+                                            150 บาท
+                                        </span>
+                                    </button>
+                                </div>
+
+                                {selectedItems.filter(
+                                    (i) => i.item_type === "service",
+                                ).length > 0 && (
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 font-semibold">
+                                                        หัตถการ
+                                                    </th>
+                                                    <th className="text-right px-4 py-2 font-semibold w-24">
+                                                        ราคา
+                                                    </th>
+                                                    <th className="w-10"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedItems.map(
+                                                    (item, index) =>
+                                                        item.item_type ===
+                                                            "service" && (
+                                                            <tr
+                                                                key={index}
+                                                                className="bg-white"
+                                                            >
+                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                    {
+                                                                        item.description
+                                                                    }
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right text-gray-600 font-medium">
+                                                                    ฿
+                                                                    {item.unit_price.toLocaleString()}
+                                                                </td>
+                                                                <td className="px-2 py-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleRemoveItem(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                )}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
-                        </div>
+                            </div>
 
-                        {/* Visit Date & Time */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันที่และเวลา{" "}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <DateTimePicker24hour
-                                date={
-                                    new Date(
-                                        `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
-                                    )
-                                }
-                                setDate={(date) => {
-                                    if (date) {
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            visit_date: formatLocalDate(date),
-                                            hour: date
-                                                .getHours()
-                                                .toString()
-                                                .padStart(2, "0"),
-                                            minute: date
-                                                .getMinutes()
-                                                .toString()
-                                                .padStart(2, "0"),
-                                        }));
-                                    }
-                                }}
-                            />
-                        </div>
+                            {/* Section B: Medications */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <Pill size={18} className="text-primary" />
+                                    รายการยา
+                                </h3>
 
-                        {/* Symptom */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <FileText size={16} className="text-primary" />
-                                อาการ <span className="text-danger">*</span>
-                            </label>
-                            <textarea
-                                name="symptom"
-                                placeholder="อธิบายอาการของผู้ป่วย"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                                rows={3}
-                                value={formData.symptom}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        {/* Vital Signs Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                            {/* Blood Pressure */}
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <FileText
-                                        size={16}
-                                        className="text-primary"
+                                <div className="relative">
+                                    <Search
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
                                     />
-                                    ความดันโลหิต (mmHg)
-                                </label>
-                                <input
-                                    type="text"
-                                    name="blood_pressure"
-                                    placeholder="เช่น 120/80"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={formData.blood_pressure}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            {/* Heart Rate */}
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <FileText
-                                        size={16}
-                                        className="text-primary"
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาชื่อยาเพื่อเพิ่ม..."
+                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 h-10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                                        value={drugSearchTerm}
+                                        onChange={(e) => {
+                                            setDrugSearchTerm(e.target.value);
+                                            setShowDrugDropdown(true);
+                                        }}
+                                        onFocus={() =>
+                                            setShowDrugDropdown(true)
+                                        }
                                     />
-                                    อัตราการเต้นหัวใจ (bpm)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="heart_rate"
-                                    placeholder="เช่น 80"
-                                    min="1"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={formData.heart_rate}
-                                    onChange={handleChange}
-                                />
-                            </div>
 
-                            {/* Weight */}
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <FileText
-                                        size={16}
-                                        className="text-primary"
+                                    <UnifiedDrugDropdown
+                                        isOpen={showDrugDropdown}
+                                        searchTerm={drugSearchTerm}
+                                        items={medicines}
+                                        isSearching={searchingMedicines}
+                                        displayMode="inventory"
+                                        onSelect={handleSelectMedicine}
                                     />
-                                    น้ำหนัก (kg)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="weight"
-                                    placeholder="เช่น 65.5"
-                                    min="0.1"
-                                    step="0.1"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={formData.weight}
-                                    onChange={handleChange}
-                                />
-                            </div>
+                                </div>
 
-                            {/* Height */}
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <FileText
-                                        size={16}
-                                        className="text-primary"
-                                    />
-                                    ส่วนสูง (cm)
-                                </label>
-                                <input
-                                    type="number"
-                                    name="height"
-                                    placeholder="เช่น 170"
-                                    min="1"
-                                    step="0.1"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={formData.height}
-                                    onChange={handleChange}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Diagnosis */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <FileText size={16} className="text-primary" />
-                                การวินิจฉัย{" "}
-                                <span className="text-danger">*</span>
-                            </label>
-                            <textarea
-                                name="diagnosis"
-                                placeholder="ผลการวินิจฉัยของแพทย์"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                                rows={3}
-                                value={formData.diagnosis}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-3 pt-4 border-t">
-                            <h3 className="font-semibold flex items-center gap-2">
-                                <Plus size={18} /> รายการยาและค่าบริการ
-                            </h3>
-
-                            {/* ส่วนค้นหาและเลือกยา/บริการ */}
-                            <div className="relative">
-                                <Search
-                                    size={18}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="ค้นหาชื่อยาหรือบริการ..."
-                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={drugSearchTerm}
-                                    onChange={(e) => {
-                                        setDrugSearchTerm(e.target.value);
-                                        setShowDrugDropdown(true);
-                                    }}
-                                    onFocus={() => setShowDrugDropdown(true)}
-                                />
-
-                                {/* Drug Dropdown */}
-                                <UnifiedDrugDropdown
-                                    isOpen={showDrugDropdown}
-                                    searchTerm={drugSearchTerm}
-                                    items={medicines}
-                                    isSearching={searchingMedicines}
-                                    displayMode="inventory"
-                                    onSelect={handleSelectMedicine}
-                                />
-                            </div>
-
-                            {/* ตารางสรุปรายการ */}
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b text-muted uppercase text-xs">
-                                            <th className="text-left py-2 font-semibold">
-                                                รายการ
-                                            </th>
-                                            <th className="text-center py-2 font-semibold w-24">
-                                                จำนวน
-                                            </th>
-                                            <th className="text-right py-2 font-semibold w-24">
-                                                ราคา/หน่วย
-                                            </th>
-                                            <th className="text-right py-2 font-semibold w-24">
-                                                รวม
-                                            </th>
-                                            <th className="w-8"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {selectedItems.length > 0 ? (
-                                            selectedItems.map((item, index) => (
-                                                <tr key={index}>
-                                                    <td className="py-3 font-medium">
-                                                        {item.description}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <input
-                                                                type="number"
-                                                                min="1"
-                                                                value={
-                                                                    item.quantity
-                                                                }
-                                                                onChange={(e) =>
-                                                                    handleUpdateQuantity(
+                                {selectedItems.filter(
+                                    (i) => i.item_type === "drug",
+                                ).length > 0 && (
+                                    <div className="space-y-3">
+                                        {selectedItems.map(
+                                            (item, index) =>
+                                                item.item_type === "drug" && (
+                                                    <div
+                                                        key={index}
+                                                        className="p-4 border border-gray-200 rounded-xl bg-white space-y-3 shadow-sm hover:shadow-md transition-shadow"
+                                                    >
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <p className="font-bold text-gray-800">
+                                                                    {
+                                                                        item.description
+                                                                    }
+                                                                </p>
+                                                                <p className="text-xs text-muted">
+                                                                    ราคาต่อหน่วย:
+                                                                    ฿
+                                                                    {Number(
+                                                                        item.unit_price,
+                                                                    ).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleRemoveItem(
                                                                         index,
-                                                                        parseInt(
+                                                                    )
+                                                                }
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            >
+                                                                <Trash2
+                                                                    size={16}
+                                                                />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-12 gap-4 items-end">
+                                                            <div className="col-span-4 space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase">
+                                                                    จำนวน
+                                                                </label>
+                                                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleUpdateQuantity(
+                                                                                index,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    1,
+                                                                            )
+                                                                        }
+                                                                        className="w-full text-center text-sm font-semibold focus:outline-none bg-transparent"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-span-8 space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                                                                    <Edit3
+                                                                        size={
+                                                                            10
+                                                                        }
+                                                                    />{" "}
+                                                                    วิธีใช้ /
+                                                                    หมายเหตุ
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
+                                                                    value={
+                                                                        item.instruction ||
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleUpdateInstruction(
+                                                                            index,
                                                                             e
                                                                                 .target
                                                                                 .value,
-                                                                        ) || 1,
-                                                                    )
-                                                                }
-                                                                className="w-16 border rounded text-center py-1"
-                                                            />
+                                                                        )
+                                                                    }
+                                                                    className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all font-medium"
+                                                                />
+                                                            </div>
                                                         </div>
-                                                    </td>
-                                                    <td className="py-3 text-right">
-                                                        {item.unit_price.toLocaleString()}
-                                                    </td>
-                                                    <td className="py-3 text-right font-semibold">
-                                                        {(
-                                                            item.quantity *
-                                                            item.unit_price
-                                                        ).toLocaleString()}
-                                                    </td>
-                                                    <td className="py-3 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                handleRemoveItem(
-                                                                    index,
-                                                                )
-                                                            }
-                                                            className="text-danger hover:text-danger-dark p-1"
-                                                        >
-                                                            <X size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            <tr>
-                                                <td
-                                                    colSpan={5}
-                                                    className="py-8 text-center text-muted italic"
-                                                >
-                                                    ยังไม่มีรายการ
-                                                </td>
-                                            </tr>
+
+                                                        <div className="flex justify-end pt-1">
+                                                            <p className="text-sm font-bold text-primary">
+                                                                รวม: ฿
+                                                                {(
+                                                                    item.quantity *
+                                                                    item.unit_price
+                                                                ).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ),
                                         )}
-                                    </tbody>
-                                </table>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* เลือกวิธีชำระเงิน */}
-                            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                                <select
-                                    value={paymentMethod}
-                                    onChange={(e) =>
-                                        setPaymentMethod(e.target.value)
-                                    }
-                                    className="border rounded px-2 py-1"
-                                >
-                                    <option value="cash">เงินสด</option>
-                                    <option value="transfer">โอนเงิน</option>
-                                    <option value="credit">บัตรเครดิต</option>
-                                </select>
-                                <div className="text-lg font-bold text-primary">
-                                    รวมทั้งสิ้น: {totalAmount.toLocaleString()}{" "}
-                                    บาท
+                            {/* Payment Method Summary */}
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-200/50">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">
+                                            วิธีชำระเงิน
+                                        </label>
+                                        <select
+                                            value={paymentMethod}
+                                            onChange={(e) =>
+                                                setPaymentMethod(e.target.value)
+                                            }
+                                            className="block w-full text-sm font-semibold text-gray-700 bg-transparent border-none focus:ring-0 p-0"
+                                        >
+                                            <option value="cash">
+                                                เงินสด (Cash)
+                                            </option>
+                                            <option value="transfer">
+                                                เงินโอน (Transfer)
+                                            </option>
+                                            <option value="credit">
+                                                บัตรเครดิต (Credit)
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">
+                                            ยอดรวมสุทธิ
+                                        </p>
+                                        <p className="text-2xl font-black text-primary">
+                                            ฿{totalAmount.toLocaleString()}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -707,6 +934,14 @@ export default function AddTreatmentModal({
                     </div>
                 </div>
             </div>
+
+            <DressingLocationModal
+                isOpen={isDressingModalOpen}
+                onClose={() => setIsDressingModalOpen(false)}
+                onConfirm={(location, price) =>
+                    handleAddService("ล้างแผล (Dressing)", price, location)
+                }
+            />
 
             <AddPatientModal
                 open={openAddPatient}
