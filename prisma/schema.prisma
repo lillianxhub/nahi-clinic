@@ -33,10 +33,11 @@ model Patient {
   created_at      DateTime  @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
-  citizen_number  String?   @db.Char(13)
+  // citizen_number  String?   @db.Char(13)
   visits          Visit[]
 
-  @@unique([citizen_number, hospital_number])
+  // @@unique([citizen_number, hospital_number])
+  @@unique([hospital_number])
   @@map("patients")
 }
 

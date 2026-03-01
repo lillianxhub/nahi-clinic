@@ -228,7 +228,7 @@ async function main() {
                 last_name: patientsData[i].l,
                 gender: patientsData[i].g,
                 citizen_number: generateCitizenId(i + 1),
-                hospital_number: `HN-67${(i + 1).toString().padStart(4, "0")}`,
+                hospital_number: `HN67${(i + 1).toString().padStart(4, "0")}`,
                 phone: `0${randomInt(6, 9)}${randomInt(10000000, 99999999)}`,
                 address: `${randomInt(1, 99)}/${randomInt(1, 99)} หมู่ ${randomInt(1, 12)} ต.ในเมือง อ.เมือง จ.ขอนแก่น`,
                 birth_date: daysAgo(randomInt(7000, 18000)),

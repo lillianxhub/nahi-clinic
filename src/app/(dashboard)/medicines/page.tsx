@@ -12,6 +12,8 @@ import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
 import AddMedicineModal from "@/components/medicine/AddMedicineModal";
 import EditMedicineModal from "@/components/medicine/EditMedicineModal";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 
 export default function MedicinesPage() {
@@ -115,13 +117,13 @@ export default function MedicinesPage() {
 
             <div className="flex flex-wrap gap-4 items-center">
                 <div className="relative flex-1 min-w-62.5">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10" />
+                    <Input
                         type="text"
                         placeholder="ค้นหาชื่อยา..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="bg-card w-full pl-9 pr-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="pl-10 h-10 bg-card"
                     />
                 </div>
 
@@ -138,22 +140,23 @@ export default function MedicinesPage() {
                 </select>
 
                 {expiringTotal > 0 && (
-                    <button
-                        className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg flex items-center gap-2 text-sm border border-red-200 transition-colors"
+                    <Button
+                        variant="outline"
+                        className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
                         onClick={() => setOpenExpiring(true)}
                     >
                         <AlertTriangle className="w-4 h-4" />
                         ตรวจสอบยาหมดอายุ ({expiringTotal})
-                    </button>
+                    </Button>
                 )}
 
-                <button
-                    className="cursor-pointer ml-auto bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+                <Button
+                    className="cursor-pointer ml-auto text-center"
                     onClick={() => setOpenAdd(true)}
                 >
                     <Plus className="w-4 h-4" />
                     เพิ่มยา
-                </button>
+                </Button>
             </div>
 
             <div className="space-y-3">

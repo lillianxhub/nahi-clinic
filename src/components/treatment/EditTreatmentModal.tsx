@@ -9,6 +9,7 @@ import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface EditTreatmentModalProps {
     open: boolean;
@@ -25,9 +26,21 @@ export default function EditTreatmentModal({
 }: EditTreatmentModalProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        visit_date: "",
-        hour: "00",
-        minute: "00",
+        visit_date: treatment?.visit_date
+            ? formatLocalDate(new Date(treatment.visit_date))
+            : formatLocalDate(new Date()),
+        hour: treatment?.visit_date
+            ? new Date(treatment.visit_date)
+                  .getHours()
+                  .toString()
+                  .padStart(2, "0")
+            : new Date().getHours().toString().padStart(2, "0"),
+        minute: treatment?.visit_date
+            ? new Date(treatment.visit_date)
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")
+            : new Date().getMinutes().toString().padStart(2, "0"),
         symptom: "",
         diagnosis: "",
         note: "",
@@ -61,8 +74,13 @@ export default function EditTreatmentModal({
     const fetchLatestTreatment = async () => {
         try {
             setLoading(true);
-            console.log("Fetching latest treatment data for ID:", treatment?.visit_id);
-            const data = await treatmentService.getTreatmentById(treatment!.visit_id);
+            console.log(
+                "Fetching latest treatment data for ID:",
+                treatment?.visit_id,
+            );
+            const data = await treatmentService.getTreatmentById(
+                treatment!.visit_id,
+            );
             console.log("Latest Treatment Data received from API:", data);
 
             const dateObj = new Date(data.visit_date);
@@ -198,7 +216,9 @@ export default function EditTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems,
                 blood_pressure: formData.blood_pressure,
-                heart_rate: formData.heart_rate ? Number(formData.heart_rate) : undefined,
+                heart_rate: formData.heart_rate
+                    ? Number(formData.heart_rate)
+                    : undefined,
                 weight: formData.weight ? Number(formData.weight) : undefined,
                 height: formData.height ? Number(formData.height) : undefined,
             } as CreateTreatmentDTO);
@@ -267,68 +287,36 @@ export default function EditTreatmentModal({
                     </div>
 
                     {/* Visit Date & Time */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันที่ <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                name="visit_date"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.visit_date}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Clock size={16} className="text-primary" />
-                                เวลา <span className="text-danger">*</span>
-                            </label>
-                            <div className="flex items-center gap-2">
-                                <select
-                                    name="hour"
-                                    value={formData.hour}
-                                    onChange={(e) =>
-                                        setFormData((prev: any) => ({
-                                            ...prev,
-                                            hour: e.target.value,
-                                        }))
-                                    }
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
-                                >
-                                    {Array.from({ length: 24 }, (_, i) =>
-                                        i.toString().padStart(2, "0"),
-                                    ).map((h) => (
-                                        <option key={h} value={h}>
-                                            {h}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span className="font-bold">:</span>
-                                <select
-                                    name="minute"
-                                    value={formData.minute}
-                                    onChange={(e) =>
-                                        setFormData((prev: any) => ({
-                                            ...prev,
-                                            minute: e.target.value,
-                                        }))
-                                    }
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
-                                >
-                                    {Array.from({ length: 60 }, (_, i) =>
-                                        i.toString().padStart(2, "0"),
-                                    ).map((m) => (
-                                        <option key={m} value={m}>
-                                            {m}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Calendar size={16} className="text-primary" />
+                            วันที่และเวลา <span className="text-danger">*</span>
+                        </label>
+                        <DateTimePicker24hour
+                            date={
+                                formData.visit_date
+                                    ? new Date(
+                                          `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
+                                      )
+                                    : undefined
+                            }
+                            setDate={(date) => {
+                                if (date) {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        visit_date: formatLocalDate(date),
+                                        hour: date
+                                            .getHours()
+                                            .toString()
+                                            .padStart(2, "0"),
+                                        minute: date
+                                            .getMinutes()
+                                            .toString()
+                                            .padStart(2, "0"),
+                                    }));
+                                }
+                            }}
+                        />
                     </div>
 
                     {/* Vital Signs Grid */}

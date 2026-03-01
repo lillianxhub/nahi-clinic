@@ -14,6 +14,9 @@ import {
     X,
     Check,
 } from "lucide-react";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { DatePickerWithRange } from "@/components/ui/date-picker-range";
 import {
     BarChart,
     Bar,
@@ -36,65 +39,10 @@ import {
     TransactionItem,
 } from "@/interface/finance";
 import usePageTitle from "@/hooks/usePageTitle";
-
-function StatCard({
-    icon: Icon,
-    title,
-    value,
-    subtitle,
-    trend,
-    trendValue,
-    color,
-}: {
-    icon: any;
-    title: string;
-    value: string;
-    subtitle: string;
-    trend?: string;
-    trendValue?: string;
-    color?: string;
-}) {
-    return (
-        <div
-            className="bg-white rounded-xl p-6 shadow-sm border transition-all hover:shadow-md"
-            style={{ borderColor: "#E5E7EB" }}
-        >
-            <div className="flex items-start justify-between mb-4">
-                <div
-                    className="rounded-xl p-3"
-                    style={{ backgroundColor: `${color}10` }}
-                >
-                    <Icon size={24} style={{ color }} />
-                </div>
-                {trend && (
-                    <div
-                        className={`flex items-center gap-1 text-sm font-medium ${trend === "up" ? "text-green-600" : "text-red-600"}`}
-                    >
-                        {trend === "up" ? (
-                            <TrendingUp size={16} />
-                        ) : (
-                            <TrendingDown size={16} />
-                        )}
-                        <span>{trendValue}</span>
-                    </div>
-                )}
-            </div>
-            <div>
-                <p className="text-sm mb-1" style={{ color: "#7E7E7E" }}>
-                    {title}
-                </p>
-                <h3 className="text-3xl font-bold mb-1" style={{ color }}>
-                    {value}
-                </h3>
-                {subtitle && (
-                    <p className="text-sm" style={{ color: "#7E7E7E" }}>
-                        {subtitle}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
-}
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StatCard from "@/components/cards/StatCard";
 
 export default function FinancePage() {
     usePageTitle("Finance");
@@ -119,6 +67,22 @@ export default function FinancePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [customStartDate, setCustomStartDate] = useState("");
     const [customEndDate, setCustomEndDate] = useState("");
+    const [customRange, setCustomRange] = useState<DateRange | undefined>(
+        undefined,
+    );
+
+    useEffect(() => {
+        if (customRange?.from) {
+            setCustomStartDate(format(customRange.from, "yyyy-MM-dd"));
+        } else {
+            setCustomStartDate("");
+        }
+        if (customRange?.to) {
+            setCustomEndDate(format(customRange.to, "yyyy-MM-dd"));
+        } else {
+            setCustomEndDate("");
+        }
+    }, [customRange]);
 
     const fetchTransactionsData = async (page: number) => {
         try {
@@ -144,8 +108,6 @@ export default function FinancePage() {
         try {
             const queryParams = {
                 range: dateRange,
-                startDate: customStartDate,
-                endDate: customEndDate,
             };
             const [summaryRes, chartRes, incomeRes, expenseRes] =
                 await Promise.all([
@@ -168,7 +130,7 @@ export default function FinancePage() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, [dateRange, customStartDate, customEndDate]);
+    }, [dateRange]);
 
     useEffect(() => {
         fetchTransactionsData(1);
@@ -226,7 +188,7 @@ export default function FinancePage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-400 mx-auto p-4 sm:p-6 lg:p-8">
             <div className="space-y-6">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -248,9 +210,6 @@ export default function FinancePage() {
                         icon={DollarSign}
                         title="กำไรสุทธิ"
                         value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
-                        // trend={
-                        //     (summary?.netProfitGrowth || 0) >= 0 ? "up" : "down"
-                        // }
                         trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
                         subtitle={currentSubtitle}
                         color="#3F7C87"
@@ -267,17 +226,11 @@ export default function FinancePage() {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Revenue Trend */}
-                    <div
-                        className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-sm"
-                        style={{ borderColor: "#E5E7EB" }}
-                    >
-                        <div className="flex items-center justify-between mb-6">
-                            <h3
-                                className="text-lg font-bold"
-                                style={{ color: "#3F7C87" }}
-                            >
+                    <Card className="lg:col-span-2 shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-6">
+                            <CardTitle className="text-lg font-bold text-primary">
                                 แนวโน้มรายรับ-รายจ่าย
-                            </h3>
+                            </CardTitle>
                             <select
                                 value={dateRange}
                                 onChange={(e) =>
@@ -294,229 +247,198 @@ export default function FinancePage() {
                                 <option value="month">เดือน</option>
                                 <option value="year">ปี</option>
                             </select>
-                        </div>
-                        <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={chartData}>
-                                <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#F3F4F6"
-                                />
-                                <XAxis
-                                    dataKey="name"
-                                    stroke="#7E7E7E"
-                                    style={{ fontSize: "12px" }}
-                                />
-                                <YAxis
-                                    stroke="#7E7E7E"
-                                    style={{ fontSize: "12px" }}
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: "#fff",
-                                        border: "1px solid #E5E7EB",
-                                        borderRadius: "8px",
-                                    }}
-                                />
-                                <Legend />
-                                <Bar
-                                    dataKey="income"
-                                    name="รายรับ"
-                                    fill="#3F7C87"
-                                    radius={[4, 4, 0, 0]}
-                                />
-                                <Bar
-                                    dataKey="expense"
-                                    name="รายจ่าย"
-                                    fill="#91d9db"
-                                    radius={[4, 4, 0, 0]}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                        </CardHeader>
+                        <CardContent>
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={chartData}>
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                        stroke="#F3F4F6"
+                                    />
+                                    <XAxis
+                                        dataKey="name"
+                                        stroke="#7E7E7E"
+                                        style={{ fontSize: "12px" }}
+                                    />
+                                    <YAxis
+                                        stroke="#7E7E7E"
+                                        style={{ fontSize: "12px" }}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "#fff",
+                                            border: "1px solid #E5E7EB",
+                                            borderRadius: "8px",
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Bar
+                                        dataKey="income"
+                                        name="รายรับ"
+                                        fill="#3F7C87"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                    <Bar
+                                        dataKey="expense"
+                                        name="รายจ่าย"
+                                        fill="#91d9db"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
 
                     {/* Income Distribution */}
-                    <div
-                        className="bg-white border rounded-xl p-6 shadow-sm"
-                        style={{ borderColor: "#E5E7EB" }}
-                    >
-                        <h3
-                            className="text-lg font-bold mb-6"
-                            style={{ color: "#3F7C87" }}
-                        >
-                            สัดส่วนรายรับ
-                        </h3>
-                        <PieWithLegend data={formattedIncomeDistribution} />
-                    </div>
+                    <Card className="shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-bold text-primary">
+                                สัดส่วนรายรับ
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <PieWithLegend data={formattedIncomeDistribution} />
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Expense Distribution */}
-                <div
-                    className="bg-white border rounded-xl p-6 shadow-sm"
-                    style={{ borderColor: "#E5E7EB" }}
-                >
-                    <h3
-                        className="text-lg font-bold mb-6"
-                        style={{ color: "#3F7C87" }}
-                    >
-                        สัดส่วนรายจ่าย
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {formattedExpenseDistribution.map((item, index) => (
-                            <div
-                                key={index}
-                                className="p-4 border rounded-lg"
-                                style={{ borderColor: "#F3F4F6" }}
-                            >
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex-1">
-                                        <p className="text-sm pb-2">
-                                            {item.name}
-                                        </p>
-                                        <p className="font-bold text-primary">
-                                            ฿{item.amount.toLocaleString()}
-                                        </p>
+                <Card className="shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold text-primary">
+                            สัดส่วนรายจ่าย
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {formattedExpenseDistribution.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className="p-4 border rounded-lg"
+                                    style={{ borderColor: "#F3F4F6" }}
+                                >
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="flex-1">
+                                            <p className="text-sm pb-2">
+                                                {item.name}
+                                            </p>
+                                            <p className="font-bold text-primary">
+                                                ฿{item.amount.toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs mb-2">
+                                        <span className="text-muted">
+                                            {item.value}% ของรายจ่าย
+                                        </span>
+                                    </div>
+                                    <div
+                                        className="w-full rounded-full h-2"
+                                        style={{ backgroundColor: "#F3F4F6" }}
+                                    >
+                                        <div
+                                            className="h-2 rounded-full"
+                                            style={{
+                                                width: `${item.value}%`,
+                                                backgroundColor: item.color,
+                                            }}
+                                        ></div>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between text-xs mb-2">
-                                    <span className="text-muted">
-                                        {item.value}% ของรายจ่าย
-                                    </span>
-                                </div>
-                                <div
-                                    className="w-full rounded-full h-2"
-                                    style={{ backgroundColor: "#F3F4F6" }}
-                                >
-                                    <div
-                                        className="h-2 rounded-full"
-                                        style={{
-                                            width: `${item.value}%`,
-                                            backgroundColor: item.color,
-                                        }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Transactions Table Section */}
-                <div
-                    className="bg-white border rounded-xl p-6 shadow-sm"
-                    style={{ borderColor: "#E5E7EB" }}
-                >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-                        <h3 className="text-lg font-bold text-primary">
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-6">
+                        <CardTitle className="text-lg font-bold text-primary">
                             รายการธุรกรรม
-                        </h3>
+                        </CardTitle>
                         <div className="flex gap-2">
-                            <button
+                            <Button
                                 onClick={() => {
                                     setTransactionType("income");
                                     setShowAddModal(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer hover:opacity-90 transition-opacity"
-                                style={{ backgroundColor: "#3F7C87" }}
+                                className="cursor-pointer bg-[#3F7C87]"
                             >
                                 <Plus size={16} />
                                 เพิ่มรายรับ
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => {
                                     setTransactionType("expense");
                                     setShowAddModal(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm cursor-pointer hover:opacity-90 transition-opacity"
-                                style={{ backgroundColor: "#5A9AA8" }}
+                                className="cursor-pointer bg-[#5A9AA8]"
                             >
                                 <Plus size={16} />
                                 เพิ่มรายจ่าย
-                            </button>
+                            </Button>
                         </div>
-                    </div>
-
-                    {/* Filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="relative">
-                            <Search
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-                                size={18}
-                            />
-                            <input
-                                type="text"
-                                placeholder="ค้นหารายละเอียด หรือ ผู้ป่วย..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) =>
-                                    e.key === "Enter" && handleSearch()
-                                }
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                style={{ borderColor: "#E5E7EB" }}
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <Filter size={18} className="text-muted" />
-                            <select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                                className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
-                                style={{ borderColor: "#E5E7EB" }}
-                            >
-                                <option value="all">ทุกประเภท</option>
-                                <option value="income">รายรับ</option>
-                                <option value="expense">รายจ่าย</option>
-                            </select>
-                        </div>
-
-                        <div className="md:col-span-2 flex items-center gap-2">
-                            <Calendar size={18} className="text-muted" />
-                            <div className="flex items-center gap-2 flex-1">
-                                <input
-                                    type="date"
-                                    value={customStartDate}
-                                    onChange={(e) =>
-                                        setCustomStartDate(e.target.value)
-                                    }
-                                    className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
-                                    style={{ borderColor: "#E5E7EB" }}
+                    </CardHeader>
+                    <CardContent>
+                        {/* Filters */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div className="relative md:col-span-2">
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
+                                    size={18}
                                 />
-                                <span className="text-muted">-</span>
-                                <input
-                                    type="date"
-                                    value={customEndDate}
+                                <Input
+                                    placeholder="ค้นหารายละเอียด หรือ ผู้ป่วย..."
+                                    value={searchQuery}
                                     onChange={(e) =>
-                                        setCustomEndDate(e.target.value)
+                                        setSearchQuery(e.target.value)
                                     }
-                                    className="flex-1 px-3 py-2 border rounded-lg text-sm outline-none"
-                                    style={{ borderColor: "#E5E7EB" }}
+                                    onKeyDown={(e) =>
+                                        e.key === "Enter" && handleSearch()
+                                    }
+                                    className="pl-10 h-10"
                                 />
-                                {(customStartDate || customEndDate) && (
-                                    <button
-                                        onClick={() => {
-                                            setCustomStartDate("");
-                                            setCustomEndDate("");
-                                        }}
-                                        className="p-2 text-muted hover:text-red-500 transition-colors"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
                             </div>
-                        </div>
-                    </div>
 
-                    <TransactionsTable
-                        data={transactions}
-                        currentPage={transactionPage}
-                        total={totalTransactions}
-                        onPageChange={fetchTransactionsData}
-                        onRefresh={() => {
-                            fetchDashboardData();
-                            fetchTransactionsData(transactionPage);
-                        }}
-                        pageSize={TRANSACTIONS_PER_PAGE}
-                    />
-                </div>
+                            <div className="flex items-center gap-2 h-10 px-3 bg-white border border-gray-200 rounded-lg">
+                                <Filter
+                                    size={18}
+                                    className="text-muted-foreground"
+                                />
+                                <select
+                                    value={filterType}
+                                    onChange={(e) =>
+                                        setFilterType(e.target.value)
+                                    }
+                                    className="flex-1 bg-transparent border-none text-sm outline-none"
+                                >
+                                    <option value="all">ทุกประเภท</option>
+                                    <option value="income">รายรับ</option>
+                                    <option value="expense">รายจ่าย</option>
+                                </select>
+                            </div>
+
+                            <DatePickerWithRange
+                                date={customRange}
+                                setDate={setCustomRange}
+                                label="ช่วงวันที่"
+                                className="w-full h-10"
+                            />
+                        </div>
+
+                        <TransactionsTable
+                            data={transactions}
+                            currentPage={transactionPage}
+                            total={totalTransactions}
+                            onPageChange={fetchTransactionsData}
+                            onRefresh={() => {
+                                fetchDashboardData();
+                                fetchTransactionsData(transactionPage);
+                            }}
+                            pageSize={TRANSACTIONS_PER_PAGE}
+                        />
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Modals */}

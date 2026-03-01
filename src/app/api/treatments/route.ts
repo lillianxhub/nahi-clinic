@@ -29,13 +29,18 @@ export async function GET(req: Request) {
 
         // search patient name
         if (q) {
-            where.patient = {
-                OR: [
-                    { first_name: { contains: q } },
-                    { last_name: { contains: q } },
-                    { hospital_number: { contains: q } },
-                ],
-            };
+            const terms = q.split(/\s+/).filter(Boolean);
+            if (terms.length > 0) {
+                where.patient = {
+                    AND: terms.map((term) => ({
+                        OR: [
+                            { first_name: { contains: term } },
+                            { last_name: { contains: term } },
+                            { hospital_number: { contains: term } },
+                        ],
+                    })),
+                };
+            }
         }
 
         const [visits, total] = await Promise.all([
@@ -125,7 +130,11 @@ export async function POST(req: Request) {
 
                 if (d < 0) {
                     m -= 1;
-                    d += new Date(visitDate.getFullYear(), visitDate.getMonth(), 0).getDate();
+                    d += new Date(
+                        visitDate.getFullYear(),
+                        visitDate.getMonth(),
+                        0,
+                    ).getDate();
                 }
                 if (m < 0) {
                     y -= 1;
@@ -145,7 +154,9 @@ export async function POST(req: Request) {
                     diagnosis: body.diagnosis,
                     note: body.note,
                     blood_pressure: body.blood_pressure,
-                    heart_rate: body.heart_rate ? Number(body.heart_rate) : null,
+                    heart_rate: body.heart_rate
+                        ? Number(body.heart_rate)
+                        : null,
                     weight: body.weight ? Number(body.weight) : null,
                     height: body.height ? Number(body.height) : null,
                     age_years,

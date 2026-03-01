@@ -5,6 +5,8 @@ import { X, User, Phone, Calendar, Droplet, MapPin } from "lucide-react";
 import { patientService } from "@/services/patient";
 import { Patient, PatientApiResponse } from "@/interface/patient";
 import { Gender, GenderLabelTH } from "@/constants/gender";
+import { DatePickerSimple } from "@/components/ui/date-picker-simple";
+import { parseISO, format } from "date-fns";
 
 interface Props {
     open: boolean;
@@ -173,21 +175,23 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         </div>
                     </div>
 
-                    {/* Birth Date */}
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Calendar size={16} className="text-primary" />
-                            วันเกิด
-                        </label>
-                        <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={form.birth_date}
-                            onChange={(e) =>
-                                setForm({ ...form, birth_date: e.target.value })
-                            }
-                        />
-                    </div>
+                    <DatePickerSimple
+                        date={
+                            form.birth_date
+                                ? parseISO(form.birth_date)
+                                : undefined
+                        }
+                        setDate={(date) =>
+                            setForm({
+                                ...form,
+                                birth_date: date
+                                    ? format(date, "yyyy-MM-dd")
+                                    : "",
+                            })
+                        }
+                        label="วันเกิด"
+                        placeholder="เลือกวันเกิด"
+                    />
 
                     {/* Phone */}
                     <div className="space-y-1.5">

@@ -13,6 +13,8 @@ import Swal from "sweetalert2";
 import AddTreatmentModal from "@/components/treatment/AddTreatmentModal";
 import ViewTreatmentModal from "@/components/treatment/ViewTreatmentModal";
 import EditTreatmentModal from "@/components/treatment/EditTreatmentModal";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function TreatmentsPage() {
     usePageTitle("Treatments");
@@ -167,24 +169,24 @@ export default function TreatmentsPage() {
                 <div className="relative w-full md:w-80">
                     <Search
                         size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 bg-white"
                     />
-                    <input
+                    <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="ค้นหา..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                        className="pl-10 h-10 bg-white"
                     />
                 </div>
 
                 {/* Add Button */}
-                <button
+                <Button
                     onClick={() => setOpenAdd(true)}
-                    className="cursor-pointer flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+                    className="cursor-pointer"
                 >
                     <Plus size={18} />
                     บันทึกการรักษา
-                </button>
+                </Button>
             </div>
 
             {/* Table */}
