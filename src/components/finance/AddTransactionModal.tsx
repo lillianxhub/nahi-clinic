@@ -131,6 +131,7 @@ export default function AddTransactionModal({
                     amount: Number(formData.amount),
                     payment_method: "cash",
                     visit_id: selectedVisitId,
+                    income_category: formData.category,
                 });
             } else {
                 let expenseType = "general";

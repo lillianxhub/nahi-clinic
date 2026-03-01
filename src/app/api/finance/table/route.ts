@@ -112,7 +112,7 @@ export async function GET(request: Request) {
                 hour12: false,
             }),
             type: "income",
-            category: "ค่าตรวจรักษา",
+            category: item.income_category || "ค่าตรวจรักษา",
             description: item.visit?.patient
                 ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
                 : "รายรับอื่นๆ",
