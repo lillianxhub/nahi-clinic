@@ -13,6 +13,7 @@ import {
 import { medicineService } from "@/services/medicine";
 import { DrugCategory, Medicine } from "@/interface/medicine";
 import AddCategoryModal from "@/components/medicine/AddCategoryModal";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import swal from "sweetalert2";
 import { formatLocalDate } from "@/utils/dateUtils";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -279,51 +280,24 @@ export default function AddMedicineModal({
                             />
 
                             {/* Medicine Dropdown */}
-                            {showMedicineDropdown &&
-                                (formData.medicine_name.length >= 2 ||
-                                    medicines.length > 0) && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searchingMedicines ? (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                กำลังค้นหา...
-                                            </div>
-                                        ) : medicines.length > 0 ? (
-                                            <div className="py-1">
-                                                {medicines.map((m) => (
-                                                    <button
-                                                        key={m.drug_id}
-                                                        type="button"
-                                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                        onClick={() => {
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                medicine_name: m.drug_name,
-                                                                category_id: m.category?.category_id || "",
-                                                                unit: m.unit,
-                                                                sell_price: m.sell_price ? m.sell_price.toString() : "",
-                                                                buy_price: m.lots && m.lots.length > 0 ? m.lots[0].buy_price.toString() : prev.buy_price,
-                                                            }));
-                                                            setShowMedicineDropdown(false);
-                                                        }}
-                                                    >
-                                                        <div>
-                                                            <div className="font-medium text-foreground group-hover:text-primary">
-                                                                {m.drug_name}
-                                                            </div>
-                                                            <div className="text-xs text-muted">
-                                                                หมวดหมู่: {m.category?.category_name || "-"} | หน่วย: {m.unit}
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 text-center text-muted text-sm">
-                                                ไม่พบข้อมูลยา
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                            <UnifiedDrugDropdown
+                                isOpen={showMedicineDropdown}
+                                searchTerm={formData.medicine_name}
+                                items={medicines}
+                                isSearching={searchingMedicines}
+                                displayMode="category"
+                                onSelect={(m) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        medicine_name: m.drug_name,
+                                        category_id: m.category?.category_id || "",
+                                        unit: m.unit,
+                                        sell_price: m.sell_price ? m.sell_price.toString() : "",
+                                        buy_price: m.lots && m.lots.length > 0 ? m.lots[0].buy_price.toString() : prev.buy_price,
+                                    }));
+                                    setShowMedicineDropdown(false);
+                                }}
+                            />
                         </div>
                     </div>
 

@@ -1,4 +1,6 @@
 import { PaymentMethod, ExpenseType } from "@/generated/prisma/client";
+export type { PaymentMethod, ExpenseType };
+
 
 export interface Income {
     income_id: string;
@@ -12,6 +14,7 @@ export interface Income {
     created_at: string;
     updated_at: string | null;
     deleted_at: string | null;
+    visit?: any;
 }
 
 export interface IncomeApiResponse {
@@ -135,4 +138,11 @@ export interface CreateIncomePayload {
     payment_method: PaymentMethod;
     receipt_no?: string;
     income_category?: string;
+    items?: {
+        item_type: "drug" | "service";
+        drug_id?: string;
+        description?: string;
+        quantity: number;
+        unit_price: number;
+    }[];
 }
