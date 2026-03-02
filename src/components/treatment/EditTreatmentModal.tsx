@@ -594,41 +594,6 @@ export default function EditTreatmentModal({
                             />
                         </div>
                     </div>
-                    <div className="space-y-6">
-                        <div className="space-y-3 pt-4 border-t">
-                            <h3 className="font-semibold flex items-center gap-2">
-                                <Plus size={18} /> รายการยาและค่าบริการ
-                            </h3>
-
-                            {/* ส่วนค้นหาและเลือกยา/บริการ */}
-                            <div className="relative">
-                                <Search
-                                    size={18}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="ค้นหาชื่อยาหรือบริการ..."
-                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                    value={drugSearchTerm}
-                                    onChange={(e) => {
-                                        setDrugSearchTerm(e.target.value);
-                                        setShowDrugDropdown(true);
-                                    }}
-                                    onFocus={() => setShowDrugDropdown(true)}
-                                />
-
-                                {/* Drug Dropdown */}
-                                <UnifiedDrugDropdown
-                                    isOpen={showDrugDropdown}
-                                    searchTerm={drugSearchTerm}
-                                    items={medicines}
-                                    isSearching={searchingMedicines}
-                                    displayMode="inventory"
-                                    onSelect={handleSelectMedicine}
-                                />
-                            </div>
-
                     {/* Right Column: Treatment Items & Payment */}
                     <div className="space-y-6">
                         {/* Section A: Procedures */}
@@ -839,7 +804,6 @@ export default function EditTreatmentModal({
                                 </div>
                             )}
                         </div>
-
                         {/* Section B: Medications */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -982,7 +946,6 @@ export default function EditTreatmentModal({
                                 </div>
                             )}
                         </div>
-
                         {/* Payment Method Summary */}
                         <div className="space-y-4 pt-4 border-t border-gray-100">
                             <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-200/50">
