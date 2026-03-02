@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
+import { procedureService } from "@/services/procedure";
+import { Procedure } from "@/interface/procedure";
+import AddProcedureModal from "./AddProcedureModal";
 import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
-import DressingLocationModal from "./DressingLocationModal";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
@@ -72,7 +74,14 @@ export default function EditTreatmentModal({
     const [medicines, setMedicines] = useState<Medicine[]>([]);
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
-    const [isDressingModalOpen, setIsDressingModalOpen] = useState(false);
+
+    // Procedure Search States
+    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
+    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
+    const [procedures, setProcedures] = useState<Procedure[]>([]);
+    const [searchingProcedures, setSearchingProcedures] = useState(false);
+    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+    const [openAddProcedure, setOpenAddProcedure] = useState(false);
 
     const totalAmount = selectedItems.reduce(
         (sum: number, item: any) => sum + item.quantity * item.unit_price,
@@ -120,7 +129,9 @@ export default function EditTreatmentModal({
                 let instruction = "";
 
                 if (
-                    detail.item_type === "drug" &&
+                    (detail.item_type === "drug" ||
+                        detail.item_type === "service" ||
+                        detail.item_type === "procedure") &&
                     description.includes(" : ")
                 ) {
                     const parts = description.split(" : ");
@@ -131,6 +142,8 @@ export default function EditTreatmentModal({
                 return {
                     item_type: detail.item_type,
                     drug_id: detail.drug_id,
+                    procedure_id: detail.procedure_id,
+                    name: description,
                     description: description,
                     quantity: Number(detail.quantity),
                     unit_price: Number(detail.unit_price),
@@ -173,6 +186,40 @@ export default function EditTreatmentModal({
         fetchMedicines();
     }, [debouncedDrugSearch]);
 
+    useEffect(() => {
+        const fetchProcedures = async () => {
+            if (debouncedProcedureSearch.length < 2) {
+                try {
+                    setSearchingProcedures(true);
+                    const res = await procedureService.getProcedures({
+                        pageSize: 10,
+                    });
+                    setProcedures(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลหัตถการล้มเหลว", error);
+                } finally {
+                    setSearchingProcedures(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingProcedures(true);
+                const res = await procedureService.getProcedures({
+                    q: debouncedProcedureSearch,
+                    pageSize: 10,
+                });
+                setProcedures(res.data);
+            } catch (error) {
+                console.error("ค้นหาหัตถการล้มเหลว", error);
+            } finally {
+                setSearchingProcedures(false);
+            }
+        };
+
+        fetchProcedures();
+    }, [debouncedProcedureSearch]);
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
@@ -214,20 +261,46 @@ export default function EditTreatmentModal({
         setShowDrugDropdown(false);
     };
 
-    const handleAddService = (
-        name: string,
-        price: number,
-        location?: string,
-    ) => {
+    const handleSelectProcedure = (procedure: Procedure) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                description: location ? `${name} (${location})` : name,
+                procedure_id: procedure.procedure_id,
+                name: procedure.procedure_name,
+                description: procedure.procedure_name,
                 quantity: 1,
-                unit_price: price,
+                unit_price: Number(procedure.price),
+                instruction: "",
             },
         ]);
+        setProcedureSearchTerm("");
+        setShowProcedureDropdown(false);
+    };
+
+    const handleAddService = (
+        name: string,
+        price: number,
+        instruction?: string,
+        type: "service" | "procedure" = "service",
+    ) => {
+        setSelectedItems([
+            ...selectedItems,
+            {
+                item_type: type,
+                name: name,
+                description: name,
+                quantity: 1,
+                unit_price: price,
+                instruction: instruction || "",
+            },
+        ]);
+    };
+
+    const handleUpdateDescription = (index: number, description: string) => {
+        const newItems = [...selectedItems];
+        newItems[index].description = description;
+        setSelectedItems(newItems);
     };
 
     const handleUpdatePrice = (index: number, price: number) => {
@@ -536,44 +609,87 @@ export default function EditTreatmentModal({
                                 </h3>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDressingModalOpen(true)}
-                                    className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all gap-1 group"
-                                >
-                                    <Plus
-                                        size={16}
-                                        className="text-gray-400 group-hover:text-primary"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">
-                                        ล้างแผล (Dressing)
-                                    </span>
-                                    <span className="text-xs text-muted">
-                                        100 บาท
-                                    </span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        handleAddService(
-                                            "ตัดไหม (Suture Removal)",
-                                            150,
-                                        )
+                            <div className="relative">
+                                <Search
+                                    size={18}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="ค้นหาหรือเลือกหัตถการ..."
+                                    className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
+                                    value={procedureSearchTerm}
+                                    onChange={(e) => {
+                                        setProcedureSearchTerm(e.target.value);
+                                        setShowProcedureDropdown(true);
+                                    }}
+                                    onFocus={() =>
+                                        setShowProcedureDropdown(true)
                                     }
-                                    className="flex flex-col items-center justify-center p-3 border border-gray-200 rounded-xl hover:bg-primary/5 hover:border-primary/30 transition-all gap-1 group"
-                                >
-                                    <Plus
-                                        size={16}
-                                        className="text-gray-400 group-hover:text-primary"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">
-                                        ตัดไหม (Suture Removal)
-                                    </span>
-                                    <span className="text-xs text-muted">
-                                        150 บาท
-                                    </span>
-                                </button>
+                                />
+
+                                {showProcedureDropdown && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                        {searchingProcedures ? (
+                                            <div className="p-4 text-center text-muted text-sm">
+                                                กำลังค้นหา...
+                                            </div>
+                                        ) : procedures.length > 0 ? (
+                                            <div className="py-1">
+                                                {procedures.map((p) => (
+                                                    <button
+                                                        key={p.procedure_id}
+                                                        type="button"
+                                                        className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                        onClick={() =>
+                                                            handleSelectProcedure(
+                                                                p,
+                                                            )
+                                                        }
+                                                    >
+                                                        <div>
+                                                            <div className="font-medium text-foreground group-hover:text-primary">
+                                                                {
+                                                                    p.procedure_name
+                                                                }
+                                                            </div>
+                                                            <div className="text-xs text-muted">
+                                                                ฿
+                                                                {Number(
+                                                                    p.price,
+                                                                ).toLocaleString()}
+                                                            </div>
+                                                        </div>
+                                                        <Plus
+                                                            size={14}
+                                                            className="text-gray-300 group-hover:text-primary"
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 text-center text-muted text-sm">
+                                                ไม่พบข้อมูลหัตถการ
+                                            </div>
+                                        )}
+
+                                        <div className="border-t border-gray-100 p-1">
+                                            <button
+                                                type="button"
+                                                className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
+                                                onClick={() => {
+                                                    setOpenAddProcedure(true);
+                                                    setShowProcedureDropdown(
+                                                        false,
+                                                    );
+                                                }}
+                                            >
+                                                <Plus size={16} />
+                                                สร้างหัตถการใหม่
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {selectedItems.filter(
@@ -602,9 +718,39 @@ export default function EditTreatmentModal({
                                                             className="bg-white"
                                                         >
                                                             <td className="px-4 py-3 font-medium text-gray-800">
-                                                                {
-                                                                    item.description
-                                                                }
+                                                                <div className="space-y-1">
+                                                                    <div className="font-bold text-gray-800">
+                                                                        {item.name ||
+                                                                            item.description}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Edit3
+                                                                            size={
+                                                                                12
+                                                                            }
+                                                                            className="text-gray-400"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
+                                                                            value={
+                                                                                item.instruction ||
+                                                                                ""
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                handleUpdateInstruction(
+                                                                                    index,
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                )
+                                                                            }
+                                                                            className="w-full bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none text-xs text-gray-600 transition-all p-0"
+                                                                        />
+                                                                    </div>
+                                                                </div>
                                                             </td>
                                                             <td className="px-4 py-3 text-right">
                                                                 <div className="flex items-center justify-end gap-1">
@@ -885,12 +1031,12 @@ export default function EditTreatmentModal({
                     </button>
                 </div>
 
-                <DressingLocationModal
-                    isOpen={isDressingModalOpen}
-                    onClose={() => setIsDressingModalOpen(false)}
-                    onConfirm={(location, price) =>
-                        handleAddService("ล้างแผล (Dressing)", price, location)
-                    }
+                <AddProcedureModal
+                    open={openAddProcedure}
+                    onClose={() => setOpenAddProcedure(false)}
+                    onSuccess={(newProcedure) => {
+                        handleSelectProcedure(newProcedure);
+                    }}
                 />
             </div>
         </div>

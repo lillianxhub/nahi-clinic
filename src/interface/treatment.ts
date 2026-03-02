@@ -25,8 +25,9 @@ export interface Treatment {
     };
     visitDetails: {
         visit_detail_id: string;
-        item_type: "drug" | "service";
+        item_type: "drug" | "service" | "procedure";
         drug_id?: string;
+        procedure_id?: string;
         description?: string;
         quantity: number;
         unit_price: number;
@@ -48,6 +49,7 @@ export interface CreateTreatmentDTO {
     items: {
         item_type: ItemType;
         drug_id?: string;
+        procedure_id?: string;
         description?: string;
         quantity: number;
         unit_price: number;

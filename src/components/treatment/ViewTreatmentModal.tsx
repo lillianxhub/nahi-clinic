@@ -234,19 +234,21 @@ export default function ViewTreatmentModal({
                                     <div className="space-y-6">
                                         {/* Section A: Procedures */}
                                         {treatment?.visitDetails?.some(
-                                            (i) => i.item_type === "service",
+                                            (i) =>
+                                                i.item_type === "service" ||
+                                                i.item_type === "procedure",
                                         ) && (
                                             <div className="space-y-3">
                                                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                                                     <Activity size={14} />{" "}
-                                                    รายการหัตถการ
+                                                    รายการหัตถการและบริการ
                                                 </h4>
                                                 <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
                                                     <table className="w-full text-sm">
                                                         <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
                                                             <tr>
                                                                 <th className="px-4 py-2.5 text-left">
-                                                                    รายการหัตถการ
+                                                                    รายการหัตถการ/บริการ
                                                                 </th>
                                                                 <th className="px-4 py-2.5 text-right w-24">
                                                                     ราคา
@@ -256,8 +258,10 @@ export default function ViewTreatmentModal({
                                                         <tbody className="divide-y divide-gray-100 bg-white">
                                                             {treatment.visitDetails.map(
                                                                 (item, idx) =>
-                                                                    item.item_type ===
-                                                                        "service" && (
+                                                                    (item.item_type ===
+                                                                        "service" ||
+                                                                        item.item_type ===
+                                                                            "procedure") && (
                                                                         <tr
                                                                             key={
                                                                                 idx

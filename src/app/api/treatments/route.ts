@@ -173,8 +173,9 @@ export async function POST(req: Request) {
                 await tx.visit_Detail.create({
                     data: {
                         visit_id: visit.visit_id,
-                        item_type: item.item_type,
+                        item_type: item.item_type as any,
                         drug_id: item.drug_id,
+                        procedure_id: item.procedure_id,
                         description: item.description,
                         quantity: Number(item.quantity),
                         unit_price: Number(item.unit_price),
