@@ -33,10 +33,11 @@ model Patient {
   created_at      DateTime  @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
-  citizen_number  String?   @db.Char(13)
+  // citizen_number  String?   @db.Char(13)
   visits          Visit[]
 
-  @@unique([citizen_number, hospital_number])
+  // @@unique([citizen_number, hospital_number])
+  @@unique([hospital_number])
   @@map("patients")
 }
 
@@ -74,6 +75,7 @@ model Visit_Detail {
   visit_id        String    @db.Char(36)
   item_type       ItemType
   drug_id         String?   @db.Char(36)
+  procedure_id    String?   @db.Char(36)
   description     String?   @db.VarChar(255)
   quantity        Int
   unit_price      Decimal   @db.Decimal(10, 2)
@@ -82,11 +84,27 @@ model Visit_Detail {
   updated_at      DateTime?
   deleted_at      DateTime?
   drug            Drug?     @relation(fields: [drug_id], references: [drug_id])
+  procedure       Procedure? @relation(fields: [procedure_id], references: [procedure_id])
   visit           Visit     @relation(fields: [visit_id], references: [visit_id])
 
   @@index([drug_id], map: "visit_details_drug_id_fkey")
+  @@index([procedure_id], map: "visit_details_procedure_id_fkey")
   @@index([visit_id], map: "visit_details_visit_id_fkey")
   @@map("visit_details")
+}
+
+model Procedure {
+  procedure_id   String    @id @default(uuid()) @db.Char(36)
+  procedure_name String    @db.VarChar(150)
+  price          Decimal   @db.Decimal(10, 2)
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime?
+  deleted_at     DateTime?
+
+  visitDetails Visit_Detail[]
+
+  @@map("procedures")
 }
 
 model Drug_Category {
@@ -233,6 +251,7 @@ enum Gender {
 enum ItemType {
   drug
   service
+  procedure
 }
 
 enum DrugStatus {

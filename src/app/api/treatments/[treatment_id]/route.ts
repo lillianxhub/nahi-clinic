@@ -55,7 +55,10 @@ export async function PATCH(req: Request, { params }: Params) {
     try {
         const { treatment_id } = await params;
         const body: CreateTreatmentDTO = await req.json();
-        console.log("PATCH Treatment Request Body:", JSON.stringify(body, null, 2));
+        console.log(
+            "PATCH Treatment Request Body:",
+            JSON.stringify(body, null, 2),
+        );
 
         if (body.heart_rate !== undefined && Number(body.heart_rate) <= 0) {
             throw new Error("heart rate ไม่ถูกต้อง");
@@ -114,7 +117,9 @@ export async function PATCH(req: Request, { params }: Params) {
                 age_days = null;
 
             if (patient?.birth_date) {
-                const visitDate = new Date(body.visit_date ? body.visit_date : existing.visit_date);
+                const visitDate = new Date(
+                    body.visit_date ? body.visit_date : existing.visit_date,
+                );
                 const birthDate = new Date(patient.birth_date);
                 let y = visitDate.getFullYear() - birthDate.getFullYear();
                 let m = visitDate.getMonth() - birthDate.getMonth();
@@ -122,7 +127,11 @@ export async function PATCH(req: Request, { params }: Params) {
 
                 if (d < 0) {
                     m -= 1;
-                    d += new Date(visitDate.getFullYear(), visitDate.getMonth(), 0).getDate();
+                    d += new Date(
+                        visitDate.getFullYear(),
+                        visitDate.getMonth(),
+                        0,
+                    ).getDate();
                 }
                 if (m < 0) {
                     y -= 1;
@@ -137,12 +146,16 @@ export async function PATCH(req: Request, { params }: Params) {
             const visit = await tx.visit.update({
                 where: { visit_id: treatment_id },
                 data: {
-                    visit_date: body.visit_date ? new Date(body.visit_date) : undefined,
+                    visit_date: body.visit_date
+                        ? new Date(body.visit_date)
+                        : undefined,
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
                     note: body.note,
                     blood_pressure: body.blood_pressure,
-                    heart_rate: body.heart_rate ? Number(body.heart_rate) : null,
+                    heart_rate: body.heart_rate
+                        ? Number(body.heart_rate)
+                        : null,
                     weight: body.weight ? Number(body.weight) : null,
                     height: body.height ? Number(body.height) : null,
                     age_years,
@@ -168,7 +181,8 @@ export async function PATCH(req: Request, { params }: Params) {
                         },
                     });
 
-                    totalAmount += Number(item.quantity) * Number(item.unit_price);
+                    totalAmount +=
+                        Number(item.quantity) * Number(item.unit_price);
 
                     // 5.2 If it's a drug, handle FEFO stock deduction
                     if (item.item_type === "drug" && item.drug_id) {
@@ -203,7 +217,9 @@ export async function PATCH(req: Request, { params }: Params) {
                                     visit_id: treatment_id,
                                     lot_id: lot.lot_id,
                                     quantity: deduction,
-                                    used_at: body.visit_date ? new Date(body.visit_date) : existing.visit_date,
+                                    used_at: body.visit_date
+                                        ? new Date(body.visit_date)
+                                        : existing.visit_date,
                                 },
                             });
 
@@ -218,7 +234,7 @@ export async function PATCH(req: Request, { params }: Params) {
                     }
                 }
             } else {
-                // If items are not provided, we should ideally keep the previous total 
+                // If items are not provided, we should ideally keep the previous total
                 // but since we deleted all details, totalAmount would be 0 if we don't handle this.
                 // However, the frontend always sends the full items list.
             }
@@ -227,7 +243,9 @@ export async function PATCH(req: Request, { params }: Params) {
             await tx.income.updateMany({
                 where: { visit_id: treatment_id },
                 data: {
-                    income_date: body.visit_date ? new Date(body.visit_date) : undefined,
+                    income_date: body.visit_date
+                        ? new Date(body.visit_date)
+                        : undefined,
                     amount: totalAmount,
                     payment_method: body.payment_method as any,
                 },
@@ -264,11 +282,62 @@ export async function DELETE(req: Request, { params }: Params) {
             );
         }
 
-        const visit = await prisma.visit.update({
-            where: { visit_id: treatment_id },
-            data: {
-                deleted_at: new Date(),
-            },
+        const visit = await prisma.$transaction(async (tx) => {
+            // 1. Get all drug usages for this visit
+            const usages = await tx.drug_Usage.findMany({
+                where: { visit_id: treatment_id },
+            });
+
+            // 2. Revert stock for each usage
+            for (const usage of usages) {
+                await tx.drug_Lot.update({
+                    where: { lot_id: usage.lot_id },
+                    data: {
+                        qty_remaining: { increment: usage.quantity },
+                    },
+                });
+            }
+
+            // 3. Soft delete everything related
+            const now = new Date();
+
+            // Soft delete Visit
+            const updatedVisit = await tx.visit.update({
+                where: { visit_id: treatment_id },
+                data: {
+                    deleted_at: now,
+                    is_active: false,
+                },
+            });
+
+            // Soft delete Related Incomes
+            await tx.income.updateMany({
+                where: { visit_id: treatment_id },
+                data: {
+                    deleted_at: now,
+                    is_active: false,
+                },
+            });
+
+            // Soft delete Visit Details
+            await tx.visit_Detail.updateMany({
+                where: { visit_id: treatment_id },
+                data: {
+                    deleted_at: now,
+                    is_active: false,
+                },
+            });
+
+            // Soft delete Drug Usages
+            await tx.drug_Usage.updateMany({
+                where: { visit_id: treatment_id },
+                data: {
+                    deleted_at: now,
+                    is_active: false,
+                },
+            });
+
+            return updatedVisit;
         });
 
         return NextResponse.json({ data: visit });

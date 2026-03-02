@@ -1,7 +1,6 @@
 import { PaymentMethod, ExpenseType } from "@/generated/prisma/client";
 export type { PaymentMethod, ExpenseType };
 
-
 export interface Income {
     income_id: string;
     visit_id: string;
@@ -109,6 +108,7 @@ export interface TransactionItem {
         diagnosis?: string;
         note?: string;
         items?: {
+            item_type?: "drug" | "service";
             description: string;
             quantity: number;
             unit_price: number;

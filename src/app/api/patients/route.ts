@@ -16,11 +16,16 @@ export async function GET(req: Request) {
 
         const whereClause: any = { deleted_at: null };
         if (q) {
-            whereClause.OR = [
-                { first_name: { contains: q } },
-                { last_name: { contains: q } },
-                { hospital_number: { contains: q } },
-            ];
+            const terms = q.split(/\s+/).filter(Boolean);
+            if (terms.length > 0) {
+                whereClause.AND = terms.map((term) => ({
+                    OR: [
+                        { first_name: { contains: term } },
+                        { last_name: { contains: term } },
+                        { hospital_number: { contains: term } },
+                    ],
+                }));
+            }
         }
 
         const patients = await prisma.patient.findMany({

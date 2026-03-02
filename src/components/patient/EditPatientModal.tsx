@@ -5,6 +5,8 @@ import { X, User, Phone, Calendar, Droplet, MapPin, Save } from "lucide-react";
 import { patientService } from "@/services/patient";
 import { Patient, CreatePatientPayload } from "@/interface/patient";
 import { Gender } from "@/constants/gender";
+import { DatePickerSimple } from "@/components/ui/date-picker-simple";
+import { parseISO, format } from "date-fns";
 
 interface EditPatientModalProps {
     open: boolean;
@@ -33,15 +35,15 @@ export default function EditPatientModal({
     useEffect(() => {
         if (open && patient) {
             setFormData({
-                first_name: patient.first_name,
-                last_name: patient.last_name,
+                first_name: patient.first_name || "",
+                last_name: patient.last_name || "",
                 gender: patient.gender,
-                phone: patient.phone,
-                address: patient.address,
+                phone: patient.phone || "",
+                address: patient.address || "",
                 birth_date: patient.birthDate
                     ? patient.birthDate.split("T")[0]
                     : "",
-                allergy: patient.allergy,
+                allergy: patient.allergy || "",
             });
         }
     }, [open, patient]);
@@ -78,7 +80,7 @@ export default function EditPatientModal({
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div
                 className="bg-card w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
                 onClick={(e) => e.stopPropagation()}
@@ -176,19 +178,23 @@ export default function EditPatientModal({
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันเกิด
-                            </label>
-                            <input
-                                type="date"
-                                name="birth_date"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.birth_date}
-                                onChange={handleChange}
-                            />
-                        </div>
+                        <DatePickerSimple
+                            date={
+                                formData.birth_date
+                                    ? parseISO(formData.birth_date)
+                                    : undefined
+                            }
+                            setDate={(date) =>
+                                setFormData({
+                                    ...formData,
+                                    birth_date: date
+                                        ? format(date, "yyyy-MM-dd")
+                                        : "",
+                                })
+                            }
+                            label="วันเกิด"
+                            placeholder="เลือกวันเกิด"
+                        />
 
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
