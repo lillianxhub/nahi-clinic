@@ -502,7 +502,7 @@ export default function AddTreatmentModal({
                             {/* Visit Date & Time */}
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <Calendar
+                                    <FileText
                                         size={16}
                                         className="text-primary"
                                     />
@@ -676,9 +676,35 @@ export default function AddTreatmentModal({
                                     rows={2}
                                     value={formData.note}
                                     onChange={handleChange}
+                                    required
                                 />
                             </div>
                         </div>
+                        <div className="space-y-6">
+                            <div className="space-y-3 pt-4 border-t">
+                                <h3 className="font-semibold flex items-center gap-2">
+                                    <Plus size={18} /> รายการยาและค่าบริการ
+                                </h3>
+
+                                {/* ส่วนค้นหาและเลือกยา/บริการ */}
+                                <div className="relative">
+                                    <Search
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาชื่อยาหรือบริการ..."
+                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={drugSearchTerm}
+                                        onChange={(e) => {
+                                            setDrugSearchTerm(e.target.value);
+                                            setShowDrugDropdown(true);
+                                        }}
+                                        onFocus={() =>
+                                            setShowDrugDropdown(true)
+                                        }
+                                    />
 
                         {/* Right Column: Treatment Items & Payment */}
                         <div className="space-y-6">
