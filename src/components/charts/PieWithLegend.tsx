@@ -37,7 +37,9 @@ export default function PieWithLegend({
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(v?: number) => (v ? `${v}%` : "")}
+                            formatter={(v?: number) =>
+                                v ? `${v.toFixed(2)}%` : ""
+                            }
                         />
                     </PieChart>
                 </ResponsiveContainer>
@@ -53,7 +55,7 @@ export default function PieWithLegend({
                                 {item.name}
                             </span>
                             <span className="ml-auto font-medium text-primary">
-                                {item.value}%
+                                {item.value?.toFixed(2)}%
                             </span>
                         </div>
                     ))}

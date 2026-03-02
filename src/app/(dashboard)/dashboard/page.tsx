@@ -24,6 +24,8 @@ import {
     RevenueExpenseChartData,
 } from "@/interface/dashboard";
 import usePageTitle from "@/hooks/usePageTitle";
+import StatCard from "@/components/cards/StatCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /* =========================
    Table Columns
@@ -63,26 +65,6 @@ const columns: Column<LowStockItem>[] = [
 /* =========================
    Components
 ========================= */
-
-function StatCard({
-    icon: Icon,
-    title,
-    value,
-}: {
-    icon: any;
-    title: string;
-    value: string;
-}) {
-    return (
-        <div className="bg-white rounded-xl p-6 border shadow-sm">
-            <div className="flex justify-between mb-4">
-                <Icon className="text-primary" />
-            </div>
-            <p className="text-muted text-sm">{title}</p>
-            <h3 className="text-2xl font-bold text-primary">{value}</h3>
-        </div>
-    );
-}
 
 /* =========================
    Page
@@ -168,11 +150,11 @@ export default function DashboardPage() {
 
             {/* ================= Charts ================= */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white border rounded-xl p-6">
-                    <div className="flex justify-between">
-                        <h3 className="text-lg font-bold text-primary mb-4">
+                <Card className="shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between pb-6">
+                        <CardTitle className="text-lg font-bold text-primary">
                             รายรับ - รายจ่าย
-                        </h3>
+                        </CardTitle>
                         <select
                             value={chartFilter}
                             onChange={(e) => setChartFilter(e.target.value)}
@@ -182,65 +164,75 @@ export default function DashboardPage() {
                             <option value="month">เดือน</option>
                             <option value="year">ปี</option>
                         </select>
-                    </div>
-                    <RevenueExpenseChart data={revenueExpense} />
-                </div>
+                    </CardHeader>
+                    <CardContent>
+                        <RevenueExpenseChart data={revenueExpense} />
+                    </CardContent>
+                </Card>
 
                 {/* Patient Chart */}
-                <div className="bg-white border rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-primary mb-4">
-                        จำนวนผู้ป่วย 7 วันล่าสุด
-                    </h3>
-
-                    <ResponsiveContainer width="100%" height={260}>
-                        <BarChart data={patientData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip formatter={(value) => [value, "จำนวน"]} />
-                            <Bar
-                                dataKey="count"
-                                fill="#3F7C87"
-                                radius={[5, 5, 0, 0]}
-                                barSize={35}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+                <Card className="shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold text-primary">
+                            จำนวนผู้ป่วย 7 วันล่าสุด
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={260}>
+                            <BarChart data={patientData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip
+                                    formatter={(value) => [value, "จำนวน"]}
+                                />
+                                <Bar
+                                    dataKey="count"
+                                    fill="#3F7C87"
+                                    radius={[5, 5, 0, 0]}
+                                    barSize={35}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* ================= Low Stock Table ================= */}
-            <div className="bg-white border rounded-xl p-6">
-                <h3 className="text-lg font-bold text-primary mb-4">
-                    รายการยาที่ต้องสั่งเพิ่ม
-                </h3>
+            <Card className="shadow-sm">
+                <CardHeader>
+                    <CardTitle className="text-lg font-bold text-primary">
+                        รายการยาที่ต้องสั่งเพิ่ม
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {lowStock.length > 0 ? (
+                        <>
+                            <DataTable
+                                columns={columns}
+                                data={lowStock}
+                                rowKey={(row) => row.id}
+                                page={page}
+                                pageSize={5}
+                            />
 
-                {lowStock.length > 0 ? (
-                    <>
-                        <DataTable
-                            columns={columns}
-                            data={lowStock}
-                            rowKey={(row) => row.id}
-                            page={page}
-                            pageSize={5}
-                        />
-
-                        <Pagination
-                            page={page}
-                            totalPages={Math.ceil(lowStock.length / 5)}
-                            onChange={setPage}
-                        />
-                    </>
-                ) : (
-                    <div className="py-12 text-center text-muted border-2 border-dashed border-gray-100 rounded-xl">
-                        <Package
-                            className="mx-auto mb-2 opacity-20"
-                            size={48}
-                        />
-                        <p>ไม่มีรายการยาใกล้หมด</p>
-                    </div>
-                )}
-            </div>
+                            <Pagination
+                                page={page}
+                                totalPages={Math.ceil(lowStock.length / 5)}
+                                onChange={setPage}
+                            />
+                        </>
+                    ) : (
+                        <div className="py-12 text-center text-muted border-2 border-dashed border-gray-100 rounded-xl">
+                            <Package
+                                className="mx-auto mb-2 opacity-20"
+                                size={48}
+                            />
+                            <p>ไม่มีรายการยาใกล้หมด</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -9,6 +9,8 @@ import {
     ArrowDownRight,
     Tag,
     Clock,
+    Activity,
+    Pill,
 } from "lucide-react";
 import { TransactionItem } from "@/interface/finance";
 
@@ -176,31 +178,32 @@ export default function ViewTransactionModal({
                                     </div>
                                 )}
 
-                                {/* Prescribed Items */}
-                                {transaction.visit.items &&
-                                    transaction.visit.items.length > 0 && (
-                                        <div className="space-y-2 mt-2">
-                                            <label className="text-[10px] text-muted font-bold uppercase tracking-wider">
-                                                รายการยาและค่าบริการ
-                                            </label>
-                                            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white/50">
-                                                <table className="w-full text-xs">
-                                                    <thead className="bg-gray-50 text-muted font-medium">
-                                                        <tr>
-                                                            <th className="px-3 py-2 text-left">
-                                                                รายการ
-                                                            </th>
-                                                            <th className="px-3 py-2 text-center">
-                                                                จำนวน
-                                                            </th>
-                                                            <th className="px-3 py-2 text-right">
-                                                                รวม
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {transaction.visit.items.map(
-                                                            (item, idx) => (
+                                {/* Section A: Procedures */}
+                                {transaction.visit.items?.some(
+                                    (i) => i.item_type === "service",
+                                ) && (
+                                    <div className="space-y-2 mt-2">
+                                        <label className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+                                            <Activity size={10} /> Section A:
+                                            รายการหัตถการ
+                                        </label>
+                                        <div className="border border-gray-100 rounded-xl overflow-hidden bg-white/50">
+                                            <table className="w-full text-xs">
+                                                <thead className="bg-gray-50 text-muted font-medium">
+                                                    <tr>
+                                                        <th className="px-3 py-2 text-left">
+                                                            รายการ
+                                                        </th>
+                                                        <th className="px-3 py-2 text-right w-20">
+                                                            รวม
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {transaction.visit.items.map(
+                                                        (item, idx) =>
+                                                            item.item_type ===
+                                                                "service" && (
                                                                 <tr
                                                                     key={idx}
                                                                     className="hover:bg-gray-50/50 transition-colors"
@@ -208,11 +211,6 @@ export default function ViewTransactionModal({
                                                                     <td className="px-3 py-2 text-foreground font-medium">
                                                                         {
                                                                             item.description
-                                                                        }
-                                                                    </td>
-                                                                    <td className="px-3 py-2 text-center">
-                                                                        {
-                                                                            item.quantity
                                                                         }
                                                                     </td>
                                                                     <td className="px-3 py-2 text-right font-semibold">
@@ -224,12 +222,96 @@ export default function ViewTransactionModal({
                                                                     </td>
                                                                 </tr>
                                                             ),
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                    )}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    )}
+                                    </div>
+                                )}
+
+                                {/* Section B: Medications */}
+                                {transaction.visit.items?.some(
+                                    (i) => i.item_type === "drug",
+                                ) && (
+                                    <div className="space-y-2 mt-4">
+                                        <label className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+                                            <Pill size={10} /> Section B:
+                                            รายการยา
+                                        </label>
+                                        <div className="space-y-2">
+                                            {transaction.visit.items.map(
+                                                (item, idx) => {
+                                                    if (
+                                                        item.item_type !==
+                                                        "drug"
+                                                    )
+                                                        return null;
+
+                                                    let description =
+                                                        item.description || "";
+                                                    let instruction = "";
+                                                    if (
+                                                        description.includes(
+                                                            " : ",
+                                                        )
+                                                    ) {
+                                                        const parts =
+                                                            description.split(
+                                                                " : ",
+                                                            );
+                                                        description = parts[0];
+                                                        instruction = parts
+                                                            .slice(1)
+                                                            .join(" : ");
+                                                    }
+
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className="p-3 border border-gray-100 rounded-xl bg-white/80 shadow-xs flex justify-between items-center text-xs"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <p className="font-bold text-gray-800">
+                                                                    {
+                                                                        description
+                                                                    }
+                                                                </p>
+                                                                {instruction && (
+                                                                    <p className="text-[10px] text-primary font-medium flex items-center gap-1">
+                                                                        <FileText
+                                                                            size={
+                                                                                8
+                                                                            }
+                                                                        />{" "}
+                                                                        {
+                                                                            instruction
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="font-bold text-gray-900">
+                                                                    {
+                                                                        item.quantity
+                                                                    }{" "}
+                                                                    × ฿
+                                                                    {item.unit_price.toLocaleString()}
+                                                                </p>
+                                                                <p className="text-[10px] text-muted font-bold">
+                                                                    ฿
+                                                                    {(
+                                                                        item.quantity *
+                                                                        item.unit_price
+                                                                    ).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                },
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -239,14 +321,14 @@ export default function ViewTransactionModal({
                 <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-5 py-2.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition-colors"
+                        className="px-5 h-10 text-gray-600 font-semibold hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
                     >
                         ปิด
                     </button>
                     {onEdit && (
                         <button
                             onClick={() => onEdit(transaction)}
-                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
+                            className="px-6 h-10 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
                         >
                             แก้ไขข้อมูล
                         </button>

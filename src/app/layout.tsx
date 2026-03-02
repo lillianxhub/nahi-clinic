@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
+const ibmPlexSansThai = IBM_Plex_Sans_Thai({
+    weight: ["100", "200", "300", "400", "500", "600", "700"],
+    subsets: ["latin", "thai"],
+    variable: "--font-ibm-plex-sans-thai",
+    display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -27,7 +24,7 @@ export default function RootLayout({
     return (
         <html lang="th">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${ibmPlexSansThai.variable} font-sans antialiased`}
             >
                 <AuthProvider>{children}</AuthProvider>
             </body>

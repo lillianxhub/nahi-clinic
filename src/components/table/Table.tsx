@@ -1,4 +1,13 @@
 import React from "react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export interface Column<T> {
     key: keyof T | string;
@@ -24,73 +33,65 @@ export default function DataTable<T>({
 }: DataTableProps<T>) {
     return (
         <div className="overflow-hidden rounded-xl border border-[#E6EFEF] bg-white">
-            <table className="w-full border-collapse">
-                {/* Header */}
-                <thead>
-                    <tr className="bg-[#3F7C87] text-white">
+            <Table>
+                <TableHeader className="bg-[#3F7C87]">
+                    <TableRow className="hover:bg-transparent border-none">
                         {columns.map((col) => (
-                            <th
+                            <TableHead
                                 key={String(col.key)}
-                                className={`px-4 py-3 text-sm font-semibold
-                  ${
-                      col.align === "center"
-                          ? "text-center"
-                          : col.align === "right"
-                            ? "text-right"
-                            : "text-left"
-                  }
-                `}
+                                className={cn(
+                                    "text-white font-semibold py-3 px-4 h-auto",
+                                    col.align === "center" && "text-center",
+                                    col.align === "right" && "text-right",
+                                )}
                             >
                                 {col.header}
-                            </th>
+                            </TableHead>
                         ))}
-                    </tr>
-                </thead>
-
-                {/* Body */}
-                <tbody>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
                     {data.length > 0 ? (
                         data.map((row, index) => (
-                            <tr
+                            <TableRow
                                 key={rowKey(row)}
-                                className={
+                                className={cn(
+                                    "border-none hover:opacity-90 transition-opacity",
                                     index % 2 === 0
                                         ? "bg-[#E6EFEF]"
-                                        : "bg-white"
-                                }
+                                        : "bg-white",
+                                )}
                             >
                                 {columns.map((col) => (
-                                    <td
+                                    <TableCell
                                         key={String(col.key)}
-                                        className={`px-4 py-3 text-sm
-                    ${
-                        col.align === "center"
-                            ? "text-center"
-                            : col.align === "right"
-                              ? "text-right"
-                              : "text-left"
-                    }
-                  `}
+                                        className={cn(
+                                            "py-3 px-4",
+                                            col.align === "center" &&
+                                                "text-center",
+                                            col.align === "right" &&
+                                                "text-right",
+                                        )}
                                     >
                                         {col.render
                                             ? col.render(row)
                                             : (row as any)[col.key]}
-                                    </td>
+                                    </TableCell>
                                 ))}
-                            </tr>
+                            </TableRow>
                         ))
                     ) : (
-                        <tr>
-                            <td
+                        <TableRow>
+                            <TableCell
                                 colSpan={columns.length}
                                 className="px-4 py-8 text-center text-muted text-sm bg-white"
                             >
                                 {emptyMessage}
-                            </td>
-                        </tr>
+                            </TableCell>
+                        </TableRow>
                     )}
-                </tbody>
-            </table>
+                </TableBody>
+            </Table>
         </div>
     );
 }
