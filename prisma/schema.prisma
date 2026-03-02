@@ -71,21 +71,21 @@ model Visit {
 }
 
 model Visit_Detail {
-  visit_detail_id String    @id @default(uuid()) @db.Char(36)
-  visit_id        String    @db.Char(36)
+  visit_detail_id String     @id @default(uuid()) @db.Char(36)
+  visit_id        String     @db.Char(36)
   item_type       ItemType
-  drug_id         String?   @db.Char(36)
-  procedure_id    String?   @db.Char(36)
-  description     String?   @db.VarChar(255)
+  drug_id         String?    @db.Char(36)
+  procedure_id    String?    @db.Char(36)
+  description     String?    @db.VarChar(255)
   quantity        Int
-  unit_price      Decimal   @db.Decimal(10, 2)
-  is_active       Boolean   @default(true)
-  created_at      DateTime  @default(now())
+  unit_price      Decimal    @db.Decimal(10, 2)
+  is_active       Boolean    @default(true)
+  created_at      DateTime   @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
-  drug            Drug?     @relation(fields: [drug_id], references: [drug_id])
+  drug            Drug?      @relation(fields: [drug_id], references: [drug_id])
   procedure       Procedure? @relation(fields: [procedure_id], references: [procedure_id])
-  visit           Visit     @relation(fields: [visit_id], references: [visit_id])
+  visit           Visit      @relation(fields: [visit_id], references: [visit_id])
 
   @@index([drug_id], map: "visit_details_drug_id_fkey")
   @@index([procedure_id], map: "visit_details_procedure_id_fkey")
@@ -192,21 +192,35 @@ model Drug_Usage {
   @@map("drug_usages")
 }
 
+model Income_Category {
+  category_id   String    @id @default(uuid()) @db.Char(36)
+  category_name String    @unique @db.VarChar(100) // "ค่ายา", "ค่าบริการ" etc.
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+  incomes       Income[]
+
+  @@map("income_categories")
+}
+
 model Income {
-  income_id       String        @id @default(uuid()) @db.Char(36)
-  visit_id        String        @db.Char(36)
-  income_date     DateTime
-  amount          Decimal       @db.Decimal(10, 2)
-  payment_method  PaymentMethod
-  receipt_no      String?       @db.VarChar(100)
-  income_category String?       @db.VarChar(100)
-  is_active       Boolean       @default(true)
-  created_at      DateTime      @default(now())
-  updated_at      DateTime?
-  deleted_at      DateTime?
-  visit           Visit         @relation(fields: [visit_id], references: [visit_id])
+  income_id      String          @id @default(uuid()) @db.Char(36)
+  visit_id       String?         @db.Char(36)
+  category_id    String          @db.Char(36)
+  income_date    DateTime
+  amount         Decimal         @db.Decimal(10, 2)
+  payment_method PaymentMethod
+  receipt_no     String?         @db.VarChar(100)
+  is_active      Boolean         @default(true)
+  created_at     DateTime        @default(now())
+  updated_at     DateTime?
+  deleted_at     DateTime?
+  visit          Visit?          @relation(fields: [visit_id], references: [visit_id])
+  category       Income_Category @relation(fields: [category_id], references: [category_id])
 
   @@index([visit_id], map: "incomes_visit_id_fkey")
+  @@index([category_id], map: "incomes_category_id_fkey")
   @@map("incomes")
 }
 

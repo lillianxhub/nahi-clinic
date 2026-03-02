@@ -66,7 +66,11 @@ export async function GET(request: Request) {
 
         for (const item of visitDetails) {
             const amount = Number(item.unit_price) * item.quantity;
-            summary[item.item_type] += amount;
+            if (item.item_type === "procedure") {
+                summary.service += amount;
+            } else {
+                summary[item.item_type] += amount;
+            }
         }
 
         const total = summary.drug + summary.service;
@@ -136,6 +140,11 @@ export async function POST(request: Request) {
                 { message: "Payment method is required" },
                 { status: 400 },
             );
+        } else if (!body.income_category) {
+            return NextResponse.json(
+                { message: "Income category is required" },
+                { status: 400 },
+            );
         }
 
         const result = await prisma.$transaction(async (tx) => {
@@ -147,7 +156,11 @@ export async function POST(request: Request) {
                     amount: body.amount,
                     payment_method: body.payment_method,
                     receipt_no: body.receipt_no,
-                    income_category: body.income_category,
+                    category: {
+                        connect: {
+                            category_name: body.income_category,
+                        },
+                    },
                 },
             });
 

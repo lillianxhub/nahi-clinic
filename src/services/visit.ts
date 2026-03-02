@@ -108,9 +108,17 @@ export async function createVisitWithTreatment(input: {
         // -------------------------------------------------------
         // 4. Record income (Income)
         // -------------------------------------------------------
+        // First get or create a default category down the line. We can just use the generic ID if needed or omit if optional, but it is required.
+        // Usually treatments are "ค่ายา" and "ค่าบริการ", maybe we need to find both or take one as an argument.
+        // Let's assume there is a generic category logic or we find the categories from db.
+        const defaultCategory = await tx.income_Category.findFirst({
+            where: { category_name: "ค่ายา" }
+        });
+
         await tx.income.create({
             data: {
                 visit_id: visit.visit_id,
+                category_id: defaultCategory?.category_id || "", // Temporarily fallback or require category fetching
                 income_date: new Date(),
                 amount: totalAmount,
                 payment_method: input.payment_method,

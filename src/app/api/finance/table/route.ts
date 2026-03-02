@@ -84,6 +84,7 @@ export async function GET(request: Request) {
                             visitDetails: true,
                         },
                     },
+                    category: true,
                 },
                 orderBy: { income_date: "desc" },
                 take: 100, // Pull more for better combined pagination
@@ -111,7 +112,7 @@ export async function GET(request: Request) {
                 hour12: false,
             }),
             type: "income",
-            category: item.income_category || "ค่าตรวจรักษา",
+            category: item.category?.category_name || "ค่าตรวจรักษา",
             description: item.visit?.patient
                 ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
                 : "รายรับอื่นๆ",
@@ -119,16 +120,16 @@ export async function GET(request: Request) {
             status: "เสร็จสิ้น",
             visit: item.visit
                 ? {
-                      symptom: item.visit.symptom,
-                      diagnosis: item.visit.diagnosis,
-                      note: item.visit.note,
-                      items: item.visit.visitDetails.map((detail: any) => ({
-                          item_type: detail.item_type,
-                          description: detail.description,
-                          quantity: Number(detail.quantity),
-                          unit_price: Number(detail.unit_price),
-                      })),
-                  }
+                    symptom: item.visit.symptom,
+                    diagnosis: item.visit.diagnosis,
+                    note: item.visit.note,
+                    items: item.visit.visitDetails.map((detail: any) => ({
+                        item_type: detail.item_type,
+                        description: detail.description,
+                        quantity: Number(detail.quantity),
+                        unit_price: Number(detail.unit_price),
+                    })),
+                }
                 : undefined,
         }));
 

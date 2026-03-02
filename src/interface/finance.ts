@@ -8,7 +8,8 @@ export interface Income {
     amount: number;
     payment_method: PaymentMethod;
     receipt_no: string | null;
-    income_category: string | null;
+    income_category?: string | null;
+    category?: { category_name: string };
     is_active: boolean;
     created_at: string;
     updated_at: string | null;

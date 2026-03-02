@@ -16,6 +16,7 @@ export async function GET(req: Request, { params }: Params) {
                 income_id,
             },
             include: {
+                category: true,
                 visit: {
                     include: {
                         patient: true,
@@ -57,7 +58,7 @@ export async function PATCH(req: Request, { params }: Params) {
             if (body.items && Array.isArray(body.items)) {
                 const currentIncome = await tx.income.findUnique({
                     where: { income_id },
-                    include: { visit: true },
+                    include: { visit: true, category: true },
                 });
 
                 if (currentIncome?.visit_id) {
@@ -75,13 +76,25 @@ export async function PATCH(req: Request, { params }: Params) {
                         });
                     }
 
-                    // 1.2 Delete old usages and details
-                    await tx.drug_Usage.deleteMany({
-                        where: { visit_id: currentIncome.visit_id },
-                    });
-                    await tx.visit_Detail.deleteMany({
-                        where: { visit_id: currentIncome.visit_id },
-                    });
+                    // 1.2 Delete old usages and details based on category
+                    if (currentIncome.category?.category_name === "ค่ายา") {
+                        await tx.drug_Usage.deleteMany({
+                            where: { visit_id: currentIncome.visit_id },
+                        });
+                        await tx.visit_Detail.deleteMany({
+                            where: {
+                                visit_id: currentIncome.visit_id,
+                                item_type: "drug"
+                            },
+                        });
+                    } else if (currentIncome.category?.category_name === "ค่าบริการ") {
+                        await tx.visit_Detail.deleteMany({
+                            where: {
+                                visit_id: currentIncome.visit_id,
+                                item_type: "service"
+                            },
+                        });
+                    }
 
                     // 1.3 Apply new items and deductions (FEFO)
                     for (const item of body.items) {
@@ -90,6 +103,7 @@ export async function PATCH(req: Request, { params }: Params) {
                                 visit_id: currentIncome.visit_id,
                                 item_type: item.item_type,
                                 drug_id: item.drug_id,
+                                procedure_id: item.procedure_id,
                                 description: item.description,
                                 quantity: Number(item.quantity),
                                 unit_price: Number(item.unit_price),
@@ -126,7 +140,7 @@ export async function PATCH(req: Request, { params }: Params) {
                                         quantity: deduction,
                                         used_at: new Date(
                                             body.income_date ||
-                                                currentIncome.income_date,
+                                            currentIncome.income_date,
                                         ),
                                     },
                                 });
@@ -143,8 +157,18 @@ export async function PATCH(req: Request, { params }: Params) {
                 }
             }
 
-            // Remove items from body before updating Income model directly
-            const { items, ...incomeData } = body;
+            // Remove items and income_category from body before updating Income model directly
+            const { items, income_category, ...incomeData } = body;
+
+            if (income_category) {
+                const category = await tx.income_Category.findUnique({
+                    where: { category_name: income_category }
+                });
+                if (category) {
+                    // @ts-ignore
+                    incomeData.category_id = category.category_id;
+                }
+            }
 
             return await tx.income.update({
                 where: { income_id },
@@ -153,6 +177,7 @@ export async function PATCH(req: Request, { params }: Params) {
                     updated_at: new Date(),
                 },
                 include: {
+                    category: true,
                     visit: {
                         include: {
                             patient: true,
@@ -180,7 +205,7 @@ export async function DELETE(req: Request, { params }: Params) {
         const result = await prisma.$transaction(async (tx) => {
             const current = await tx.income.findUnique({
                 where: { income_id },
-                include: { visit: true },
+                include: { visit: true, category: true },
             });
 
             if (!current) throw new Error("ไม่พบข้อมูลรายได้");
@@ -189,34 +214,52 @@ export async function DELETE(req: Request, { params }: Params) {
 
             // 1. If linked to a visit, handle stock reversal and visit deletion
             if (current.visit_id) {
-                const usages = await tx.drug_Usage.findMany({
-                    where: { visit_id: current.visit_id },
-                });
+                if (current.category?.category_name === "ค่ายา") {
+                    const usages = await tx.drug_Usage.findMany({
+                        where: { visit_id: current.visit_id },
+                    });
 
-                for (const usage of usages) {
-                    await tx.drug_Lot.update({
-                        where: { lot_id: usage.lot_id },
-                        data: {
-                            qty_remaining: { increment: usage.quantity },
-                        },
+                    for (const usage of usages) {
+                        await tx.drug_Lot.update({
+                            where: { lot_id: usage.lot_id },
+                            data: {
+                                qty_remaining: { increment: usage.quantity },
+                            },
+                        });
+                    }
+
+                    await tx.visit_Detail.updateMany({
+                        where: { visit_id: current.visit_id, item_type: 'drug' },
+                        data: { deleted_at: now, is_active: false },
+                    });
+
+                    await tx.drug_Usage.updateMany({
+                        where: { visit_id: current.visit_id },
+                        data: { deleted_at: now, is_active: false },
+                    });
+                } else if (current.category?.category_name === "ค่าบริการ") {
+                    await tx.visit_Detail.updateMany({
+                        where: { visit_id: current.visit_id, item_type: 'service' },
+                        data: { deleted_at: now, is_active: false },
                     });
                 }
 
-                // Soft delete Visit and its details
-                await tx.visit.update({
-                    where: { visit_id: current.visit_id },
-                    data: { deleted_at: now, is_active: false },
+                // Soft delete Visit only if there are no other active incomes for it
+                const otherActiveIncomes = await tx.income.count({
+                    where: {
+                        visit_id: current.visit_id,
+                        income_id: { not: income_id },
+                        deleted_at: null,
+                        is_active: true
+                    }
                 });
 
-                await tx.visit_Detail.updateMany({
-                    where: { visit_id: current.visit_id },
-                    data: { deleted_at: now, is_active: false },
-                });
-
-                await tx.drug_Usage.updateMany({
-                    where: { visit_id: current.visit_id },
-                    data: { deleted_at: now, is_active: false },
-                });
+                if (otherActiveIncomes === 0) {
+                    await tx.visit.update({
+                        where: { visit_id: current.visit_id },
+                        data: { deleted_at: now, is_active: false },
+                    });
+                }
             }
 
             // 2. Soft delete the Income itself
