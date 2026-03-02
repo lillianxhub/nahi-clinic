@@ -210,14 +210,14 @@ export default function FinancePage() {
                         icon={DollarSign}
                         title="กำไรสุทธิ"
                         value={`฿${(summary?.netProfit || 0).toLocaleString()}`}
-                        trendValue={`${Math.abs(summary?.netProfitGrowth || 0)}%`}
+                        trendValue={`${Math.abs(summary?.netProfitGrowth || 0).toFixed(2)}%`}
                         subtitle={currentSubtitle}
                         color="#3F7C87"
                     />
                     <StatCard
                         icon={TrendingUp}
                         title="อัตรากำไร"
-                        value={`${summary?.profitRate || 0}%`}
+                        value={`${(summary?.profitRate || 0).toFixed(2)}%`}
                         subtitle={currentSubtitle}
                         color="#F59E0B"
                     />
@@ -329,7 +329,7 @@ export default function FinancePage() {
                                     </div>
                                     <div className="flex items-center justify-between text-xs mb-2">
                                         <span className="text-muted">
-                                            {item.value}% ของรายจ่าย
+                                            {item.value.toFixed(2)}% ของรายจ่าย
                                         </span>
                                     </div>
                                     <div

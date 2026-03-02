@@ -668,9 +668,33 @@ export default function AddTreatmentModal({
                                                                         item.description
                                                                     }
                                                                 </td>
-                                                                <td className="px-4 py-3 text-right text-gray-600 font-medium">
-                                                                    ฿
-                                                                    {item.unit_price.toLocaleString()}
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <span className="text-gray-400 text-xs">
+                                                                            ฿
+                                                                        </span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={
+                                                                                item.unit_price
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                handleUpdatePrice(
+                                                                                    index,
+                                                                                    parseInt(
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    ) ||
+                                                                                        0,
+                                                                                )
+                                                                            }
+                                                                            className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none font-medium text-gray-800 transition-all p-0"
+                                                                        />
+                                                                    </div>
                                                                 </td>
                                                                 <td className="px-2 py-3 text-center">
                                                                     <button

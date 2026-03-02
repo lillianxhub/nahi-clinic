@@ -532,7 +532,7 @@ export default function EditTreatmentModal({
                                         size={18}
                                         className="text-primary"
                                     />
-                                    Section A: รายการหัตถการ
+                                    รายการหัตถการ
                                 </h3>
                             </div>
 
@@ -664,7 +664,7 @@ export default function EditTreatmentModal({
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                                 <Pill size={18} className="text-primary" />
-                                Section B: รายการยา
+                                รายการยา
                             </h3>
 
                             <div className="relative">
