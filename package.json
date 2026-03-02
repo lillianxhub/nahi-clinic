@@ -10,13 +10,10 @@
         "test": "vitest",
         "postinstall": "prisma generate"
     },
-    "type": "module",
     "dependencies": {
         "@prisma/adapter-mariadb": "^7.4.1",
         "@prisma/client": "^7.4.1",
         "@prisma/config": "^7.4.1",
-        "@tidbcloud/prisma-adapter": "^6.17.0",
-        "@tidbcloud/serverless": "^0.2.0",
         "bcrypt": "^6.0.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
