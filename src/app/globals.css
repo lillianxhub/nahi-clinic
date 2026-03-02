@@ -20,6 +20,8 @@
     --btn-green: #5dcf76;
     --btn-green-hover: #48b868;
 
+    --btn-foreground: #ffffff;
+
     --bg-card: #ffffff;
     --bg-light: #eef1f7;
 
@@ -65,6 +67,8 @@
 
     --color-btn-green: var(--btn-green);
     --color-btn-green-hover: var(--btn-green-hover);
+
+    --color-btn-foreground: var(--btn-foreground);
 
     --color-bg-card: var(--bg-card);
     --color-bg-light: var(--bg-light);
