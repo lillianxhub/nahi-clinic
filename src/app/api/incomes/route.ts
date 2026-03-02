@@ -17,7 +17,10 @@ export async function GET(req: Request) {
             skip,
             take,
             orderBy,
-            include,
+            include: {
+                ...(typeof include === 'object' && include !== null ? include : {}),
+                category: true,
+            },
             where: { deleted_at: null },
         });
 
@@ -54,6 +57,7 @@ export async function POST(req: Request) {
         const income = await prisma.income.create({
             data: {
                 visit_id: body.visit_id,
+                category_id: body.category_id,
                 income_date: body.income_date,
                 amount: body.amount,
                 payment_method: body.payment_method,

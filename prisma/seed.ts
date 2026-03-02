@@ -92,6 +92,28 @@ async function main() {
         });
     }
 
+    console.log("Creating Income Categories...");
+    const incomeCategories = [
+        { category_name: "ค่ายา" },
+        { category_name: "ค่าบริการ" },
+        { category_name: "ค่าตรวจรักษา" } // Just in case we need a fallback later
+    ];
+
+    for (const cat of incomeCategories) {
+        await prisma.income_Category.upsert({
+            where: { category_name: cat.category_name },
+            update: {},
+            create: { category_name: cat.category_name },
+        });
+    }
+
+    const drugCategory = await prisma.income_Category.findUnique({ where: { category_name: "ค่ายา" } });
+    const serviceCategory = await prisma.income_Category.findUnique({ where: { category_name: "ค่าบริการ" } });
+
+    if (!drugCategory || !serviceCategory) {
+        throw new Error("Failed to create required Income Categories");
+    }
+
     // 2. Categories & 3. Drugs (เหมือนเดิม)
     const categoriesData = [
         { name: "ยาปฏิชีวนะ" },
@@ -354,15 +376,34 @@ async function main() {
                 totalDrugPrice += Number(drug.sell_price) * qty;
             }
 
-            await prisma.income.create({
-                data: {
-                    visit_id: visit.visit_id,
-                    income_date: date,
-                    amount: 300 + totalDrugPrice,
-                    payment_method: Math.random() > 0.4 ? "transfer" : "cash",
-                    receipt_no: `RC-${date.getTime()}-${v}`,
-                },
-            });
+            const serviceAmount = 300;
+            const pm = Math.random() > 0.4 ? "transfer" : "cash";
+
+            if (totalDrugPrice > 0) {
+                await prisma.income.create({
+                    data: {
+                        visit_id: visit.visit_id,
+                        category_id: drugCategory.category_id,
+                        income_date: date,
+                        amount: totalDrugPrice,
+                        payment_method: pm as any,
+                        receipt_no: `RC-${date.getTime()}-${v}-1`,
+                    },
+                });
+            }
+
+            if (serviceAmount > 0) {
+                await prisma.income.create({
+                    data: {
+                        visit_id: visit.visit_id,
+                        category_id: serviceCategory.category_id,
+                        income_date: date,
+                        amount: serviceAmount,
+                        payment_method: pm as any,
+                        receipt_no: `RC-${date.getTime()}-${v}-2`,
+                    },
+                });
+            }
         }
 
         if (day % 100 === 0)

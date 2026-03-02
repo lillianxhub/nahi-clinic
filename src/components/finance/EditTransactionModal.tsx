@@ -38,6 +38,7 @@ import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 interface SelectedItem {
     item_type: "drug" | "service";
     drug_id?: string;
+    procedure_id?: string;
     description?: string;
     quantity: number;
     unit_price: number;
@@ -59,6 +60,7 @@ export default function EditTransactionModal({
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [formData, setFormData] = useState<any>(null);
+    const [categories, setCategories] = useState<{ category_id: string; category_name: string }[]>([]);
 
     // Patient Search States
     const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +84,13 @@ export default function EditTransactionModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
+    // Procedure Search States
+    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
+    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
+    const [procedures, setProcedures] = useState<any[]>([]);
+    const [searchingProcedures, setSearchingProcedures] = useState(false);
+    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+
     // Selected Items for "ค่ายา"
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
 
@@ -93,15 +102,27 @@ export default function EditTransactionModal({
         );
     }, [selectedItems]);
 
-    // Update amount if category is "ค่ายา"
+    // Update amount if category is "ค่ายา" or "ค่าบริการ"
     useEffect(() => {
-        if (formData?.category === "ค่ายา") {
+        if (formData?.category === "ค่ายา" || formData?.category === "ค่าบริการ") {
             setFormData((prev: any) => ({
                 ...prev,
                 amount: totalFromItems.toFixed(2),
             }));
         }
     }, [totalFromItems, formData?.category]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await financeService.getIncomeCategories();
+                setCategories(res);
+            } catch (error) {
+                console.error("Failed to fetch income categories:", error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -127,6 +148,29 @@ export default function EditTransactionModal({
         fetchMedicines();
     }, [debouncedDrugSearch]);
 
+    useEffect(() => {
+        const fetchProcedures = async () => {
+            if (!debouncedProcedureSearch || debouncedProcedureSearch.length < 2) {
+                setProcedures([]);
+                return;
+            }
+
+            try {
+                setSearchingProcedures(true);
+                const res = await fetch(`/api/procedures?q=${debouncedProcedureSearch}&pageSize=5`);
+                if (!res.ok) throw new Error("Failed to fetch procedures");
+                const data = await res.json();
+                setProcedures(data.data);
+            } catch (error) {
+                console.error("ค้นหาหัตถการล้มเหลว", error);
+            } finally {
+                setSearchingProcedures(false);
+            }
+        };
+
+        fetchProcedures();
+    }, [debouncedProcedureSearch]);
+
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingIndex = selectedItems.findIndex(
             (item) => item.drug_id === medicine.drug_id,
@@ -149,6 +193,30 @@ export default function EditTransactionModal({
         }
         setDrugSearchTerm("");
         setShowDrugDropdown(false);
+    };
+
+    const handleSelectProcedure = (procedure: any) => {
+        const existingIndex = selectedItems.findIndex(
+            (item) => item.procedure_id === procedure.procedure_id,
+        );
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "service",
+                    procedure_id: procedure.procedure_id,
+                    description: procedure.procedure_name,
+                    quantity: 1,
+                    unit_price: Number(procedure.price),
+                },
+            ]);
+        }
+        setProcedureSearchTerm("");
+        setShowProcedureDropdown(false);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -233,6 +301,7 @@ export default function EditTransactionModal({
             setSelectedVisitId("");
             setSelectedItems([]);
             setDrugSearchTerm("");
+            setProcedureSearchTerm("");
         }
     }, [isOpen, transaction]);
 
@@ -249,7 +318,7 @@ export default function EditTransactionModal({
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
-                    category: res.income_category || "ค่าตรวจรักษา",
+                    category: res.category?.category_name,
                 });
                 setSelectedVisitId(res.visit_id);
 
@@ -260,16 +329,20 @@ export default function EditTransactionModal({
                     // @ts-ignore
                     setSearchTerm(res.visit.patient.fullName || "");
 
-                    // Set initial items from visit details
+                    // Set initial items from visit details (only show drugs or services depending on category)
                     if (res.visit.visitDetails) {
+                        const targetItemType = res.category?.category_name === "ค่ายา" ? "drug" : "service";
                         setSelectedItems(
-                            res.visit.visitDetails.map((vd: any) => ({
-                                item_type: vd.item_type,
-                                drug_id: vd.drug_id,
-                                description: vd.description,
-                                quantity: vd.quantity,
-                                unit_price: Number(vd.unit_price),
-                            })),
+                            res.visit.visitDetails
+                                .filter((vd: any) => vd.item_type === targetItemType)
+                                .map((vd: any) => ({
+                                    item_type: vd.item_type,
+                                    drug_id: vd.drug_id,
+                                    procedure_id: vd.procedure_id,
+                                    description: vd.description,
+                                    quantity: vd.quantity,
+                                    unit_price: Number(vd.unit_price),
+                                })),
                         );
                     }
                 }
@@ -317,7 +390,7 @@ export default function EditTransactionModal({
                     visit_id: selectedVisitId,
                     income_category: formData.category,
                     items:
-                        formData.category === "ค่ายา"
+                        (formData.category === "ค่ายา" || formData.category === "ค่าบริการ")
                             ? selectedItems
                             : undefined,
                 };
@@ -589,8 +662,8 @@ export default function EditTransactionModal({
                                     date={
                                         formData.date
                                             ? new Date(
-                                                  `${formData.date}T${formData.hour}:${formData.minute}:00`,
-                                              )
+                                                `${formData.date}T${formData.hour}:${formData.minute}:00`,
+                                            )
                                             : undefined
                                     }
                                     setDate={(date) => {
@@ -640,16 +713,14 @@ export default function EditTransactionModal({
                                             <option value="">
                                                 เลือกหมวดหมู่
                                             </option>
-                                            <option value="ค่าตรวจรักษา">
-                                                ค่าตรวจรักษา
-                                            </option>
-                                            <option value="ค่ายา">ค่ายา</option>
-                                            <option value="ค่าบริการ">
-                                                ค่าบริการ
-                                            </option>
-                                            <option value="วัคซีน">
-                                                วัคซีน
-                                            </option>
+                                            {categories.map((cat) => (
+                                                <option
+                                                    key={cat.category_id}
+                                                    value={cat.category_name}
+                                                >
+                                                    {cat.category_name}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
 
@@ -724,7 +795,7 @@ export default function EditTransactionModal({
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-100">
                                                         {selectedItems.length >
-                                                        0 ? (
+                                                            0 ? (
                                                             selectedItems.map(
                                                                 (
                                                                     item,
@@ -759,7 +830,7 @@ export default function EditTransactionModal({
                                                                                                 .target
                                                                                                 .value,
                                                                                         ) ||
-                                                                                            0,
+                                                                                        0,
                                                                                     )
                                                                                 }
                                                                                 className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -814,22 +885,237 @@ export default function EditTransactionModal({
                                                     </tbody>
                                                     {selectedItems.length >
                                                         0 && (
-                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                            <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                                <tr>
+                                                                    <td
+                                                                        colSpan={3}
+                                                                        className="p-3 text-right font-semibold text-gray-600"
+                                                                    >
+                                                                        ราคารวมทั้งสิ้น:
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                        ฿
+                                                                        {totalFromItems.toLocaleString()}
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        )}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData?.category === "ค่าบริการ" && (
+                                        <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="relative">
+                                                <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                                    เพิ่มรายการหัตถการ/ค่าบริการ{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Search
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={18}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="ค้นหาหัตถการ..."
+                                                        value={procedureSearchTerm}
+                                                        onChange={(e) => {
+                                                            setProcedureSearchTerm(
+                                                                e.target.value,
+                                                            );
+                                                            setShowProcedureDropdown(
+                                                                true,
+                                                            );
+                                                        }}
+                                                        onFocus={() =>
+                                                            setShowProcedureDropdown(
+                                                                true,
+                                                            )
+                                                        }
+                                                        className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
+                                                    />
+                                                </div>
+
+                                                {showProcedureDropdown &&
+                                                    procedureSearchTerm && (
+                                                        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                                                            {searchingProcedures ? (
+                                                                <div className="p-4 text-center text-gray-500 text-sm">
+                                                                    กำลังค้นหา...
+                                                                </div>
+                                                            ) : procedures.length > 0 ? (
+                                                                procedures.map(
+                                                                    (procedure) => (
+                                                                        <button
+                                                                            key={
+                                                                                procedure.procedure_id
+                                                                            }
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleSelectProcedure(
+                                                                                    procedure,
+                                                                                )
+                                                                            }
+                                                                            className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors"
+                                                                        >
+                                                                            <div>
+                                                                                <p className="font-medium text-gray-800">
+                                                                                    {
+                                                                                        procedure.procedure_name
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                            <span className="text-sm font-semibold text-primary tabular-nums shrink-0">
+                                                                                ฿
+                                                                                {Number(
+                                                                                    procedure.price,
+                                                                                ).toLocaleString()}
+                                                                            </span>
+                                                                        </button>
+                                                                    ),
+                                                                )
+                                                            ) : (
+                                                                <div className="p-4 text-center text-gray-500 text-sm">
+                                                                    ไม่พบข้อมูลหัตถการ
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                            </div>
+
+                                            {/* Service/Procedure Table */}
+                                            <div className="overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                                        <tr className="text-gray-500 font-semibold">
+                                                            <th className="p-3 text-left">
+                                                                รายการ
+                                                            </th>
+                                                            <th className="p-3 text-center">
+                                                                จำนวน
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                ราคา
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                รวม
+                                                            </th>
+                                                            <th className="p-3 w-10"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {selectedItems.length >
+                                                            0 ? (
+                                                            selectedItems.map(
+                                                                (
+                                                                    item,
+                                                                    index,
+                                                                ) => (
+                                                                    <tr
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="hover:bg-gray-50/50 transition-colors"
+                                                                    >
+                                                                        <td className="p-3">
+                                                                            <p className="font-semibold text-gray-800">
+                                                                                {
+                                                                                    item.description
+                                                                                }
+                                                                            </p>
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <input
+                                                                                type="number"
+                                                                                value={
+                                                                                    item.quantity
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleUpdateQuantity(
+                                                                                        index,
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                        0,
+                                                                                    )
+                                                                                }
+                                                                                className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-3 text-right text-gray-600 tabular-nums">
+                                                                            ฿
+                                                                            {Number(
+                                                                                item.unit_price,
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3 text-right font-bold text-primary tabular-nums">
+                                                                            ฿
+                                                                            {(
+                                                                                item.quantity *
+                                                                                Number(
+                                                                                    item.unit_price,
+                                                                                )
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleRemoveItem(
+                                                                                        index,
+                                                                                    )
+                                                                                }
+                                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                            >
+                                                                                <Trash2
+                                                                                    size={
+                                                                                        16
+                                                                                    }
+                                                                                />
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )
+                                                        ) : (
                                                             <tr>
                                                                 <td
-                                                                    colSpan={3}
-                                                                    className="p-3 text-right font-semibold text-gray-600"
+                                                                    colSpan={5}
+                                                                    className="p-8 text-center text-gray-400 bg-white italic"
                                                                 >
-                                                                    ราคารวมทั้งสิ้น:
+                                                                    ยังไม่มีรายการที่เลือก
+                                                                    กรุณาค้นหาหัตถการด้านบน
                                                                 </td>
-                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
-                                                                    ฿
-                                                                    {totalFromItems.toLocaleString()}
-                                                                </td>
-                                                                <td></td>
                                                             </tr>
-                                                        </tfoot>
-                                                    )}
+                                                        )}
+                                                    </tbody>
+                                                    {selectedItems.length >
+                                                        0 && (
+                                                            <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                                <tr>
+                                                                    <td
+                                                                        colSpan={3}
+                                                                        className="p-3 text-right font-semibold text-gray-600"
+                                                                    >
+                                                                        ราคารวมทั้งสิ้น:
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                        ฿
+                                                                        {totalFromItems.toLocaleString()}
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        )}
                                                 </table>
                                             </div>
                                         </div>
@@ -917,14 +1203,13 @@ export default function EditTransactionModal({
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                                        formData?.category === "ค่ายา"
-                                            ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
-                                            : "focus:border-primary"
-                                    }`}
+                                    className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${(formData?.category === "ค่ายา" || formData?.category === "ค่าบริการ")
+                                        ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
+                                        : "focus:border-primary"
+                                        }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
-                                    readOnly={formData?.category === "ค่ายา"}
+                                    readOnly={formData?.category === "ค่ายา" || formData?.category === "ค่าบริการ"}
                                     onChange={(e) =>
                                         setFormData({
                                             ...formData,
@@ -933,9 +1218,9 @@ export default function EditTransactionModal({
                                     }
                                     required
                                 />
-                                {formData?.category === "ค่ายา" && (
+                                {(formData?.category === "ค่ายา" || formData?.category === "ค่าบริการ") && (
                                     <p className="text-xs text-muted mt-1 px-1">
-                                        * คำนวณอัตโนมัติจากรายการยาและเวชภัณฑ์
+                                        * คำนวณอัตโนมัติจากรายการ{formData?.category === "ค่ายา" ? "ยาและเวชภัณฑ์" : "หัตถการ"}
                                     </p>
                                 )}
                             </div>

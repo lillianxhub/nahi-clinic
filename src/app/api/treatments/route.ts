@@ -165,7 +165,8 @@ export async function POST(req: Request) {
                 },
             });
 
-            let totalAmount = 0;
+            let totalDrugAmount = 0;
+            let totalServiceAmount = 0;
 
             // 2. Process Items
             for (const item of body.items) {
@@ -182,7 +183,12 @@ export async function POST(req: Request) {
                     },
                 });
 
-                totalAmount += Number(item.quantity) * Number(item.unit_price);
+                const itemAmount = Number(item.quantity) * Number(item.unit_price);
+                if (item.item_type === "drug") {
+                    totalDrugAmount += itemAmount;
+                } else {
+                    totalServiceAmount += itemAmount;
+                }
 
                 // 2.2 If it's a drug, handle FEFO stock deduction
                 if (item.item_type === "drug" && item.drug_id) {
@@ -235,15 +241,37 @@ export async function POST(req: Request) {
                 }
             }
 
-            // 3. Create Income record
-            await tx.income.create({
-                data: {
-                    visit_id: visit.visit_id,
-                    income_date: new Date(body.visit_date),
-                    amount: totalAmount,
-                    payment_method: body.payment_method as any,
-                },
-            });
+            // 3. Create Income records separately
+            const drugCategory = await tx.income_Category.findUnique({ where: { category_name: "ค่ายา" } });
+            const serviceCategory = await tx.income_Category.findUnique({ where: { category_name: "ค่าบริการ" } });
+
+            let incomeIndex = 1;
+
+            if (totalDrugAmount > 0 && drugCategory) {
+                await tx.income.create({
+                    data: {
+                        visit_id: visit.visit_id,
+                        category_id: drugCategory.category_id,
+                        income_date: new Date(body.visit_date),
+                        amount: totalDrugAmount,
+                        payment_method: body.payment_method as any,
+                        receipt_no: `RC-${Date.now()}-${incomeIndex++}`,
+                    },
+                });
+            }
+
+            if (totalServiceAmount > 0 && serviceCategory) {
+                await tx.income.create({
+                    data: {
+                        visit_id: visit.visit_id,
+                        category_id: serviceCategory.category_id,
+                        income_date: new Date(body.visit_date),
+                        amount: totalServiceAmount,
+                        payment_method: body.payment_method as any,
+                        receipt_no: `RC-${Date.now()}-${incomeIndex++}`,
+                    },
+                });
+            }
 
             return visit;
         });

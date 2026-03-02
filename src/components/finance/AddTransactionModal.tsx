@@ -44,6 +44,7 @@ export default function AddTransactionModal({
 }: AddTransactionModalProps) {
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState(initialType);
+    const [categories, setCategories] = useState<{ category_id: string; category_name: string }[]>([]);
 
     const now = new Date();
     const [formData, setFormData] = useState({
@@ -99,6 +100,18 @@ export default function AddTransactionModal({
             }));
         }
     }, [totalFromItems, formData.category]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await financeService.getIncomeCategories();
+                setCategories(res);
+            } catch (error) {
+                console.error("Failed to fetch income categories:", error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -278,7 +291,7 @@ export default function AddTransactionModal({
             console.error("Failed to save transaction:", error);
             alert(
                 "ไม่สามารถบันทึกข้อมูลได้: " +
-                    (error.message || "Unknown error"),
+                (error.message || "Unknown error"),
             );
         } finally {
             setLoading(false);
@@ -313,11 +326,10 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setTransactionType("income")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "income"
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "income"
                                         ? "border-green-500 bg-green-50 shadow-inner"
                                         : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "income" ? "bg-green-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -339,11 +351,10 @@ export default function AddTransactionModal({
                             </button>
                             <button
                                 onClick={() => setTransactionType("expense")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "expense"
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "expense"
                                         ? "border-red-500 bg-red-50 shadow-inner"
                                         : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "expense" ? "bg-red-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -572,14 +583,14 @@ export default function AddTransactionModal({
                                 <option value="">เลือกหมวดหมู่</option>
                                 {transactionType === "income" ? (
                                     <>
-                                        <option value="ค่าตรวจรักษา">
-                                            ค่าตรวจรักษา
-                                        </option>
-                                        <option value="ค่ายา">ค่ายา</option>
-                                        <option value="ค่าบริการ">
-                                            ค่าบริการ
-                                        </option>
-                                        {/* <option value="วัคซีน">วัคซีน</option> */}
+                                        {categories.map((cat) => (
+                                            <option
+                                                key={cat.category_id}
+                                                value={cat.category_name}
+                                            >
+                                                {cat.category_name}
+                                            </option>
+                                        ))}
                                     </>
                                 ) : (
                                     <>
@@ -687,7 +698,7 @@ export default function AddTransactionModal({
                                                                                     .target
                                                                                     .value,
                                                                             ) ||
-                                                                                0,
+                                                                            0,
                                                                         )
                                                                     }
                                                                     className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -780,11 +791,10 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
-                                    formData.category === "ค่ายา"
+                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${formData.category === "ค่ายา"
                                         ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
                                         : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                }`}
+                                    }`}
                             />
                         </div>
                         {formData.category === "ค่ายา" && (
@@ -866,11 +876,10 @@ export default function AddTransactionModal({
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
-                                loading
+                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${loading
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                            }`}
+                                }`}
                         >
                             {loading ? (
                                 <>
