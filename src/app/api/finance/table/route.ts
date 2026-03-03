@@ -113,9 +113,9 @@ export async function GET(request: Request) {
             }),
             type: "income",
             category: item.category?.category_name || "ค่าตรวจรักษา",
-            description: item.visit?.patient
+            description: item.description || (item.visit?.patient
                 ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
-                : "รายรับอื่นๆ",
+                : "รายรับอื่นๆ"),
             amount: Number(item.amount),
             status: "เสร็จสิ้น",
             visit: item.visit

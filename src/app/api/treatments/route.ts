@@ -148,7 +148,7 @@ export async function POST(req: Request) {
             // 1. Create Visit
             const visit = await tx.visit.create({
                 data: {
-                    patient_id: body.patient_id,
+                    patient: { connect: { patient_id: body.patient_id } },
                     visit_date: new Date(body.visit_date),
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
@@ -173,10 +173,10 @@ export async function POST(req: Request) {
                 // 2.1 Create Visit Detail
                 await tx.visit_Detail.create({
                     data: {
-                        visit_id: visit.visit_id,
+                        visit: { connect: { visit_id: visit.visit_id } },
                         item_type: item.item_type as any,
-                        drug_id: item.drug_id,
-                        procedure_id: item.procedure_id,
+                        drug: item.drug_id ? { connect: { drug_id: item.drug_id } } : undefined,
+                        procedure: item.procedure_id ? { connect: { procedure_id: item.procedure_id } } : undefined,
                         description: item.description,
                         quantity: Number(item.quantity),
                         unit_price: Number(item.unit_price),
@@ -224,8 +224,8 @@ export async function POST(req: Request) {
                         // Create Drug Usage history
                         await tx.drug_Usage.create({
                             data: {
-                                visit_id: visit.visit_id,
-                                lot_id: lot.lot_id,
+                                visit: { connect: { visit_id: visit.visit_id } },
+                                lot: { connect: { lot_id: lot.lot_id } },
                                 quantity: deduction,
                                 used_at: new Date(body.visit_date),
                             },
@@ -255,8 +255,8 @@ export async function POST(req: Request) {
             if (totalDrugAmount > 0 && drugCategory) {
                 await tx.income.create({
                     data: {
-                        visit_id: visit.visit_id,
-                        category_id: drugCategory.category_id,
+                        visit: { connect: { visit_id: visit.visit_id } },
+                        category: { connect: { category_id: drugCategory.category_id } },
                         income_date: new Date(body.visit_date),
                         amount: totalDrugAmount,
                         payment_method: body.payment_method as any,
@@ -268,8 +268,8 @@ export async function POST(req: Request) {
             if (totalServiceAmount > 0 && serviceCategory) {
                 await tx.income.create({
                     data: {
-                        visit_id: visit.visit_id,
-                        category_id: serviceCategory.category_id,
+                        visit: { connect: { visit_id: visit.visit_id } },
+                        category: { connect: { category_id: serviceCategory.category_id } },
                         income_date: new Date(body.visit_date),
                         amount: totalServiceAmount,
                         payment_method: body.payment_method as any,

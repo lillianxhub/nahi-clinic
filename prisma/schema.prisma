@@ -212,6 +212,7 @@ model Income {
   amount         Decimal         @db.Decimal(10, 2)
   payment_method PaymentMethod
   receipt_no     String?         @db.VarChar(100)
+  description    String?         @db.VarChar(255)
   is_active      Boolean         @default(true)
   created_at     DateTime        @default(now())
   updated_at     DateTime?

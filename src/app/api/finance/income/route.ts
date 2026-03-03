@@ -151,14 +151,18 @@ export async function POST(request: Request) {
             // 1. Create Income record
             const income = await tx.income.create({
                 data: {
-                    visit_id: body.visit_id,
+                    visit: body.visit_id
+                        ? { connect: { visit_id: body.visit_id } }
+                        : undefined,
                     income_date: new Date(body.income_date),
                     amount: body.amount,
                     payment_method: body.payment_method,
                     receipt_no: body.receipt_no,
+                    description: body.description,
                     category: {
-                        connect: {
-                            category_name: body.income_category,
+                        connectOrCreate: {
+                            where: { category_name: body.income_category },
+                            create: { category_name: body.income_category },
                         },
                     },
                 },
@@ -170,9 +174,9 @@ export async function POST(request: Request) {
                     // 2.1 Create Visit Detail
                     await tx.visit_Detail.create({
                         data: {
-                            visit_id: body.visit_id,
+                            visit: { connect: { visit_id: body.visit_id } },
                             item_type: item.item_type,
-                            drug_id: item.drug_id,
+                            drug: item.drug_id ? { connect: { drug_id: item.drug_id } } : undefined,
                             description: item.description,
                             quantity: Number(item.quantity),
                             unit_price: Number(item.unit_price),
@@ -209,8 +213,8 @@ export async function POST(request: Request) {
 
                             await tx.drug_Usage.create({
                                 data: {
-                                    visit_id: body.visit_id,
-                                    lot_id: lot.lot_id,
+                                    visit: { connect: { visit_id: body.visit_id } },
+                                    lot: { connect: { lot_id: lot.lot_id } },
                                     quantity: deduction,
                                     used_at: new Date(body.income_date),
                                 },

@@ -397,10 +397,10 @@ export default function EditTransactionModal({
         e.preventDefault();
         if (!transaction || !formData) return;
 
-        if (transaction.type === "income" && !selectedVisitId) {
-            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
-            return;
-        }
+        // if (transaction.type === "income" && !selectedVisitId) {
+        //     alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+        //     return;
+        // }
 
         setLoading(true);
         try {
@@ -416,9 +416,10 @@ export default function EditTransactionModal({
                     receipt_no: formData.receipt_no,
                     visit_id: selectedVisitId,
                     income_category: formData.category,
+                    description: formData.description,
                     items:
                         formData.category === "ค่ายา" ||
-                        formData.category === "ค่าบริการ"
+                            formData.category === "ค่าบริการ"
                             ? selectedItems
                             : undefined,
                 };
@@ -690,8 +691,8 @@ export default function EditTransactionModal({
                                     date={
                                         formData.date
                                             ? new Date(
-                                                  `${formData.date}T${formData.hour}:${formData.minute}:00`,
-                                              )
+                                                `${formData.date}T${formData.hour}:${formData.minute}:00`,
+                                            )
                                             : undefined
                                     }
                                     setDate={(date) => {
@@ -823,7 +824,7 @@ export default function EditTransactionModal({
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-100">
                                                         {selectedItems.length >
-                                                        0 ? (
+                                                            0 ? (
                                                             selectedItems.map(
                                                                 (
                                                                     item,
@@ -858,7 +859,7 @@ export default function EditTransactionModal({
                                                                                                 .target
                                                                                                 .value,
                                                                                         ) ||
-                                                                                            0,
+                                                                                        0,
                                                                                     )
                                                                                 }
                                                                                 className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -913,22 +914,22 @@ export default function EditTransactionModal({
                                                     </tbody>
                                                     {selectedItems.length >
                                                         0 && (
-                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={3}
-                                                                    className="p-3 text-right font-semibold text-gray-600"
-                                                                >
-                                                                    ราคารวมทั้งสิ้น:
-                                                                </td>
-                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
-                                                                    ฿
-                                                                    {totalFromItems.toLocaleString()}
-                                                                </td>
-                                                                <td></td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    )}
+                                                            <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                                <tr>
+                                                                    <td
+                                                                        colSpan={3}
+                                                                        className="p-3 text-right font-semibold text-gray-600"
+                                                                    >
+                                                                        ราคารวมทั้งสิ้น:
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                        ฿
+                                                                        {totalFromItems.toLocaleString()}
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        )}
                                                 </table>
                                             </div>
                                         </div>
@@ -979,7 +980,7 @@ export default function EditTransactionModal({
                                                                     กำลังค้นหา...
                                                                 </div>
                                                             ) : procedures.length >
-                                                              0 ? (
+                                                                0 ? (
                                                                 procedures.map(
                                                                     (
                                                                         procedure,
@@ -1043,7 +1044,7 @@ export default function EditTransactionModal({
                                                     </thead>
                                                     <tbody className="divide-y divide-gray-100">
                                                         {selectedItems.length >
-                                                        0 ? (
+                                                            0 ? (
                                                             selectedItems.map(
                                                                 (
                                                                     item,
@@ -1078,7 +1079,7 @@ export default function EditTransactionModal({
                                                                                                 .target
                                                                                                 .value,
                                                                                         ) ||
-                                                                                            0,
+                                                                                        0,
                                                                                     )
                                                                                 }
                                                                                 className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -1133,22 +1134,22 @@ export default function EditTransactionModal({
                                                     </tbody>
                                                     {selectedItems.length >
                                                         0 && (
-                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={3}
-                                                                    className="p-3 text-right font-semibold text-gray-600"
-                                                                >
-                                                                    ราคารวมทั้งสิ้น:
-                                                                </td>
-                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
-                                                                    ฿
-                                                                    {totalFromItems.toLocaleString()}
-                                                                </td>
-                                                                <td></td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    )}
+                                                            <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                                <tr>
+                                                                    <td
+                                                                        colSpan={3}
+                                                                        className="p-3 text-right font-semibold text-gray-600"
+                                                                    >
+                                                                        ราคารวมทั้งสิ้น:
+                                                                    </td>
+                                                                    <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                        ฿
+                                                                        {totalFromItems.toLocaleString()}
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        )}
                                                 </table>
                                             </div>
                                         </div>
@@ -1236,12 +1237,11 @@ export default function EditTransactionModal({
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                                        formData?.category === "ค่ายา" ||
+                                    className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${formData?.category === "ค่ายา" ||
                                         formData?.category === "ค่าบริการ"
-                                            ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
-                                            : "focus:border-primary"
-                                    }`}
+                                        ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
+                                        : "focus:border-primary"
+                                        }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
                                     readOnly={
@@ -1258,17 +1258,17 @@ export default function EditTransactionModal({
                                 />
                                 {(formData?.category === "ค่ายา" ||
                                     formData?.category === "ค่าบริการ") && (
-                                    <p className="text-xs text-muted mt-1 px-1">
-                                        * คำนวณอัตโนมัติจากรายการ
-                                        {formData?.category === "ค่ายา"
-                                            ? "ยาและเวชภัณฑ์"
-                                            : "หัตถการ"}
-                                    </p>
-                                )}
+                                        <p className="text-xs text-muted mt-1 px-1">
+                                            * คำนวณอัตโนมัติจากรายการ
+                                            {formData?.category === "ค่ายา"
+                                                ? "ยาและเวชภัณฑ์"
+                                                : "หัตถการ"}
+                                        </p>
+                                    )}
                             </div>
 
-                            {/* Description (Only for Expense) */}
-                            {!isIncome && (
+                            {/* Description */}
+                            {(!isIncome || formData?.category === "รายได้อื่นๆ") && (
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                         <FileText
@@ -1280,7 +1280,11 @@ export default function EditTransactionModal({
                                     <textarea
                                         className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
                                         rows={3}
-                                        placeholder="ระบุรายละเอียดเพิ่มเติม..."
+                                        placeholder={
+                                            isIncome
+                                                ? "ระบุรายละเอียดรายรับอื่นๆ..."
+                                                : "ระบุรายละเอียดเพิ่มเติม..."
+                                        }
                                         value={formData?.description || ""}
                                         onChange={(e) =>
                                             setFormData({
