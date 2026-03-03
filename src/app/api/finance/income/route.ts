@@ -151,7 +151,9 @@ export async function POST(request: Request) {
             // 1. Create Income record
             const income = await tx.income.create({
                 data: {
-                    visit_id: body.visit_id,
+                    visit: body.visit_id
+                        ? { connect: { visit_id: body.visit_id } }
+                        : undefined,
                     income_date: new Date(body.income_date),
                     amount: body.amount,
                     payment_method: body.payment_method,
@@ -173,6 +175,7 @@ export async function POST(request: Request) {
                             visit_id: body.visit_id,
                             item_type: item.item_type,
                             drug_id: item.drug_id,
+                            procedure_id: item.procedure_id,
                             description: item.description,
                             quantity: Number(item.quantity),
                             unit_price: Number(item.unit_price),
@@ -233,7 +236,14 @@ export async function POST(request: Request) {
 
         return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
-        console.error("Create income error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        console.error("Create income API Error:", {
+            message: error.message,
+            stack: error.stack,
+            body: request.body,
+        });
+        return NextResponse.json(
+            { message: error.message || "Internal Server Error" },
+            { status: 500 },
+        );
     }
 }

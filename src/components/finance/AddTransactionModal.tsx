@@ -319,13 +319,24 @@ export default function AddTransactionModal({
     };
 
     const handleSave = async () => {
-        if (!formData.amount || !formData.category) {
-            alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+        if (!formData.category) {
+            alert("กรุณาเลือกหมวดหมู่");
             return;
         }
 
-        if (transactionType === "income" && !selectedVisitId) {
-            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+        if (
+            transactionType === "income" &&
+            (formData.category === "ค่ายา" ||
+                formData.category === "ค่าบริการ") &&
+            !selectedVisitId
+        ) {
+            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับหมวดนี้");
+            return;
+        }
+
+        const amount = Number(formData.amount);
+        if (isNaN(amount) || amount <= 0) {
+            alert("กรุณากรอกจำนวนเงินให้ถูกต้อง (มากกว่า 0)");
             return;
         }
 
@@ -344,7 +355,7 @@ export default function AddTransactionModal({
                     income_category: formData.category,
                     items:
                         formData.category === "ค่ายา" ||
-                        formData.category === "ค่าบริการ"
+                            formData.category === "ค่าบริการ"
                             ? selectedItems
                             : undefined,
                 });
@@ -385,7 +396,7 @@ export default function AddTransactionModal({
             console.error("Failed to save transaction:", error);
             alert(
                 "ไม่สามารถบันทึกข้อมูลได้: " +
-                    (error.message || "Unknown error"),
+                (error.message || "Unknown error"),
             );
         } finally {
             setLoading(false);
@@ -420,11 +431,10 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setTransactionType("income")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "income"
-                                        ? "border-green-500 bg-green-50 shadow-inner"
-                                        : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "income"
+                                    ? "border-green-500 bg-green-50 shadow-inner"
+                                    : "border-gray-100 hover:border-gray-200"
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "income" ? "bg-green-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -446,11 +456,10 @@ export default function AddTransactionModal({
                             </button>
                             <button
                                 onClick={() => setTransactionType("expense")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
-                                    transactionType === "expense"
-                                        ? "border-red-500 bg-red-50 shadow-inner"
-                                        : "border-gray-100 hover:border-gray-200"
-                                }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "expense"
+                                    ? "border-red-500 bg-red-50 shadow-inner"
+                                    : "border-gray-100 hover:border-gray-200"
+                                    }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "expense" ? "bg-red-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -907,7 +916,7 @@ export default function AddTransactionModal({
                                                                                     .target
                                                                                     .value,
                                                                             ) ||
-                                                                                0,
+                                                                            0,
                                                                         )
                                                                     }
                                                                     className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -1002,20 +1011,19 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
-                                    formData.category === "ค่ายา" ||
+                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${formData.category === "ค่ายา" ||
                                     formData.category === "ค่าบริการ"
-                                        ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
-                                        : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                }`}
+                                    ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
+                                    : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                    }`}
                             />
                         </div>
                         {(formData.category === "ค่ายา" ||
                             formData.category === "ค่าบริการ") && (
-                            <p className="text-xs text-muted mt-1 px-1">
-                                * คำนวณอัตโนมัติจากรายการที่เลือก
-                            </p>
-                        )}
+                                <p className="text-xs text-muted mt-1 px-1">
+                                    * คำนวณอัตโนมัติจากรายการที่เลือก
+                                </p>
+                            )}
                     </div>
 
                     {transactionType === "expense" && (
@@ -1090,11 +1098,10 @@ export default function AddTransactionModal({
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
-                                loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                            }`}
+                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${loading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-primary hover:bg-primary-dark shadow-primary/20"
+                                }`}
                         >
                             {loading ? (
                                 <>

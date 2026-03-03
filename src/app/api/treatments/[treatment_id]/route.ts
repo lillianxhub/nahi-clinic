@@ -164,7 +164,8 @@ export async function PATCH(req: Request, { params }: Params) {
                 },
             });
 
-            let totalAmount = 0;
+            let totalDrugAmount = 0;
+            let totalServiceAmount = 0;
 
             // 5. Process new Items (Similar to POST logic)
             if (body.items && body.items.length > 0) {
@@ -175,14 +176,20 @@ export async function PATCH(req: Request, { params }: Params) {
                             visit_id: treatment_id,
                             item_type: item.item_type,
                             drug_id: item.drug_id,
+                            procedure_id: item.procedure_id,
                             description: item.description,
                             quantity: Number(item.quantity),
                             unit_price: Number(item.unit_price),
                         },
                     });
 
-                    totalAmount +=
+                    const itemAmount =
                         Number(item.quantity) * Number(item.unit_price);
+                    if (item.item_type === "drug") {
+                        totalDrugAmount += itemAmount;
+                    } else {
+                        totalServiceAmount += itemAmount;
+                    }
 
                     // 5.2 If it's a drug, handle FEFO stock deduction
                     if (item.item_type === "drug" && item.drug_id) {
@@ -239,17 +246,50 @@ export async function PATCH(req: Request, { params }: Params) {
                 // However, the frontend always sends the full items list.
             }
 
-            // 6. Update Income record
-            await tx.income.updateMany({
+            // 6. Update Income records (Split by category)
+            // Delete existing income for this visit first
+            await tx.income.deleteMany({
                 where: { visit_id: treatment_id },
-                data: {
-                    income_date: body.visit_date
-                        ? new Date(body.visit_date)
-                        : undefined,
-                    amount: totalAmount,
-                    payment_method: body.payment_method as any,
-                },
             });
+
+            const drugCategory = await tx.income_Category.findUnique({
+                where: { category_name: "ค่ายา" },
+            });
+            const serviceCategory = await tx.income_Category.findUnique({
+                where: { category_name: "ค่าบริการ" },
+            });
+
+            let incomeIndex = 1;
+
+            if (totalDrugAmount > 0 && drugCategory) {
+                await tx.income.create({
+                    data: {
+                        visit_id: treatment_id,
+                        category_id: drugCategory.category_id,
+                        income_date: body.visit_date
+                            ? new Date(body.visit_date)
+                            : existing.visit_date,
+                        amount: totalDrugAmount,
+                        payment_method: (body.payment_method || "cash") as any,
+                        receipt_no: `RC-DRG-EDT-${Date.now()}-${incomeIndex++}`,
+                    },
+                });
+            }
+
+            if (totalServiceAmount > 0 && serviceCategory) {
+                await tx.income.create({
+                    data: {
+                        visit_id: treatment_id,
+                        category_id: serviceCategory.category_id,
+                        income_date: body.visit_date
+                            ? new Date(body.visit_date)
+                            : existing.visit_date,
+                        amount: totalServiceAmount,
+                        payment_method: (body.payment_method || "cash") as any,
+                        receipt_no: `RC-SRV-EDT-${Date.now()}-${incomeIndex++}`,
+                    },
+                });
+            }
 
             return visit;
         });
