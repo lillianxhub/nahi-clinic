@@ -67,7 +67,18 @@ export default function AddMedicineModal({
     useEffect(() => {
         const fetchMedicines = async () => {
             if (debouncedMedicineSearch.length < 2) {
-                setMedicines([]);
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
                 return;
             }
 
@@ -93,13 +104,17 @@ export default function AddMedicineModal({
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
                 setShowMedicineDropdown(false);
             }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -290,10 +305,16 @@ export default function AddMedicineModal({
                                     setFormData((prev) => ({
                                         ...prev,
                                         medicine_name: m.drug_name,
-                                        category_id: m.category?.category_id || "",
+                                        category_id:
+                                            m.category?.category_id || "",
                                         unit: m.unit,
-                                        sell_price: m.sell_price ? m.sell_price.toString() : "",
-                                        buy_price: m.lots && m.lots.length > 0 ? m.lots[0].buy_price.toString() : prev.buy_price,
+                                        sell_price: m.sell_price
+                                            ? m.sell_price.toString()
+                                            : "",
+                                        buy_price:
+                                            m.lots && m.lots.length > 0
+                                                ? m.lots[0].buy_price.toString()
+                                                : prev.buy_price,
                                     }));
                                     setShowMedicineDropdown(false);
                                 }}

@@ -183,7 +183,8 @@ export async function POST(req: Request) {
                     },
                 });
 
-                const itemAmount = Number(item.quantity) * Number(item.unit_price);
+                const itemAmount =
+                    Number(item.quantity) * Number(item.unit_price);
                 if (item.item_type === "drug") {
                     totalDrugAmount += itemAmount;
                 } else {
@@ -242,8 +243,12 @@ export async function POST(req: Request) {
             }
 
             // 3. Create Income records separately
-            const drugCategory = await tx.income_Category.findUnique({ where: { category_name: "ค่ายา" } });
-            const serviceCategory = await tx.income_Category.findUnique({ where: { category_name: "ค่าบริการ" } });
+            const drugCategory = await tx.income_Category.findUnique({
+                where: { category_name: "ค่ายา" },
+            });
+            const serviceCategory = await tx.income_Category.findUnique({
+                where: { category_name: "ค่าบริการ" },
+            });
 
             let incomeIndex = 1;
 
@@ -255,7 +260,7 @@ export async function POST(req: Request) {
                         income_date: new Date(body.visit_date),
                         amount: totalDrugAmount,
                         payment_method: body.payment_method as any,
-                        receipt_no: `RC-${Date.now()}-${incomeIndex++}`,
+                        receipt_no: `RC-DRG-${Date.now()}-${incomeIndex++}`,
                     },
                 });
             }
@@ -268,7 +273,7 @@ export async function POST(req: Request) {
                         income_date: new Date(body.visit_date),
                         amount: totalServiceAmount,
                         payment_method: body.payment_method as any,
-                        receipt_no: `RC-${Date.now()}-${incomeIndex++}`,
+                        receipt_no: `RC-SRV-${Date.now()}-${incomeIndex++}`,
                     },
                 });
             }

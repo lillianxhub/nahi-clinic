@@ -16,14 +16,18 @@ import { Medicine } from "@/interface/medicine";
 import { Patient } from "@/interface/patient";
 import { PaymentMethod } from "@/interface/finance";
 import { medicineService } from "@/services/medicine";
+import { procedureService } from "@/services/procedure";
+import { Procedure } from "@/interface/procedure";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+import AddProcedureModal from "../treatment/AddProcedureModal";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface SelectedItem {
     item_type: "drug" | "service";
     drug_id?: string;
+    procedure_id?: string;
     description?: string;
     quantity: number;
     unit_price: number;
@@ -44,7 +48,9 @@ export default function AddTransactionModal({
 }: AddTransactionModalProps) {
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState(initialType);
-    const [categories, setCategories] = useState<{ category_id: string; category_name: string }[]>([]);
+    const [categories, setCategories] = useState<
+        { category_id: string; category_name: string }[]
+    >([]);
 
     const now = new Date();
     const [formData, setFormData] = useState({
@@ -80,8 +86,20 @@ export default function AddTransactionModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
-    // Selected Items for "ค่ายา"
+    // Procedure Search States
+    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
+    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
+    const [procedures, setProcedures] = useState<Procedure[]>([]);
+    const [searchingProcedures, setSearchingProcedures] = useState(false);
+    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+    const [openAddProcedure, setOpenAddProcedure] = useState(false);
+
+    // Selected Items
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+
+    const clearSelectedItems = () => {
+        setSelectedItems([]);
+    };
 
     // Calculate total amount from items
     const totalFromItems = useMemo(() => {
@@ -91,9 +109,12 @@ export default function AddTransactionModal({
         );
     }, [selectedItems]);
 
-    // Update amount if category is "ค่ายา"
+    // Update amount if category is "ค่ายา" or "ค่าบริการ"
     useEffect(() => {
-        if (formData.category === "ค่ายา") {
+        if (
+            formData.category === "ค่ายา" ||
+            formData.category === "ค่าบริการ"
+        ) {
             setFormData((prev) => ({
                 ...prev,
                 amount: totalFromItems.toString(),
@@ -169,7 +190,18 @@ export default function AddTransactionModal({
     useEffect(() => {
         const fetchMedicines = async () => {
             if (!debouncedDrugSearch || debouncedDrugSearch.length < 2) {
-                setMedicines([]);
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
                 return;
             }
 
@@ -189,6 +221,67 @@ export default function AddTransactionModal({
 
         fetchMedicines();
     }, [debouncedDrugSearch]);
+
+    useEffect(() => {
+        const fetchProcedures = async () => {
+            if (
+                !debouncedProcedureSearch ||
+                debouncedProcedureSearch.length < 2
+            ) {
+                try {
+                    setSearchingProcedures(true);
+                    const res = await procedureService.getProcedures({
+                        pageSize: 10,
+                    });
+                    setProcedures(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลหัตถการล้มเหลว", error);
+                } finally {
+                    setSearchingProcedures(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingProcedures(true);
+                const res = await procedureService.getProcedures({
+                    q: debouncedProcedureSearch,
+                    pageSize: 10,
+                });
+                setProcedures(res.data);
+            } catch (error) {
+                console.error("ค้นหาหัตถการล้มเหลว", error);
+            } finally {
+                setSearchingProcedures(false);
+            }
+        };
+
+        fetchProcedures();
+    }, [debouncedProcedureSearch]);
+
+    const handleSelectProcedure = (procedure: Procedure) => {
+        const existingIndex = selectedItems.findIndex(
+            (item) => item.procedure_id === procedure.procedure_id,
+        );
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "service",
+                    procedure_id: procedure.procedure_id,
+                    description: procedure.procedure_name,
+                    quantity: 1,
+                    unit_price: Number(procedure.price),
+                },
+            ]);
+        }
+        setProcedureSearchTerm("");
+        setShowProcedureDropdown(false);
+    };
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingIndex = selectedItems.findIndex(
@@ -250,7 +343,8 @@ export default function AddTransactionModal({
                     visit_id: selectedVisitId,
                     income_category: formData.category,
                     items:
-                        formData.category === "ค่ายา"
+                        formData.category === "ค่ายา" ||
+                        formData.category === "ค่าบริการ"
                             ? selectedItems
                             : undefined,
                 });
@@ -291,7 +385,7 @@ export default function AddTransactionModal({
             console.error("Failed to save transaction:", error);
             alert(
                 "ไม่สามารถบันทึกข้อมูลได้: " +
-                (error.message || "Unknown error"),
+                    (error.message || "Unknown error"),
             );
         } finally {
             setLoading(false);
@@ -326,10 +420,11 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setTransactionType("income")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "income"
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
+                                    transactionType === "income"
                                         ? "border-green-500 bg-green-50 shadow-inner"
                                         : "border-gray-100 hover:border-gray-200"
-                                    }`}
+                                }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "income" ? "bg-green-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -351,10 +446,11 @@ export default function AddTransactionModal({
                             </button>
                             <button
                                 onClick={() => setTransactionType("expense")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "expense"
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
+                                    transactionType === "expense"
                                         ? "border-red-500 bg-red-50 shadow-inner"
                                         : "border-gray-100 hover:border-gray-200"
-                                    }`}
+                                }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "expense" ? "bg-red-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -572,12 +668,13 @@ export default function AddTransactionModal({
                             </label>
                             <select
                                 value={formData.category}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                     setFormData({
                                         ...formData,
                                         category: e.target.value,
-                                    })
-                                }
+                                    });
+                                    clearSelectedItems();
+                                }}
                                 className="w-full h-10 px-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                             >
                                 <option value="">เลือกหมวดหมู่</option>
@@ -609,6 +706,112 @@ export default function AddTransactionModal({
                             </select>
                         </div>
                     </div>
+
+                    {transactionType === "income" &&
+                        formData.category === "ค่าบริการ" && (
+                            <div className="space-y-4 pt-4 border-t animate-in fade-in duration-300">
+                                <div className="space-y-1.5 relative">
+                                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                        <Plus size={16} />{" "}
+                                        ค้นหาบริการหรือหัตถการ
+                                    </label>
+                                    <div className="relative">
+                                        <Search
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                            size={18}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="ค้นหาหรือเลือกหัตถการ..."
+                                            value={procedureSearchTerm}
+                                            onChange={(e) => {
+                                                setProcedureSearchTerm(
+                                                    e.target.value,
+                                                );
+                                                setShowProcedureDropdown(true);
+                                            }}
+                                            onFocus={() =>
+                                                setShowProcedureDropdown(true)
+                                            }
+                                            onBlur={() =>
+                                                setTimeout(() => {
+                                                    setShowProcedureDropdown(
+                                                        false,
+                                                    );
+                                                }, 200)
+                                            }
+                                            className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
+                                        />
+                                        {showProcedureDropdown && (
+                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                                {searchingProcedures ? (
+                                                    <div className="p-4 text-center text-muted text-sm">
+                                                        กำลังค้นหา...
+                                                    </div>
+                                                ) : procedures.length > 0 ? (
+                                                    <div className="py-1">
+                                                        {procedures.map((p) => (
+                                                            <button
+                                                                key={
+                                                                    p.procedure_id
+                                                                }
+                                                                type="button"
+                                                                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                                onClick={() =>
+                                                                    handleSelectProcedure(
+                                                                        p,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <div>
+                                                                    <div className="font-medium text-foreground group-hover:text-primary">
+                                                                        {
+                                                                            p.procedure_name
+                                                                        }
+                                                                    </div>
+                                                                    <div className="text-xs text-muted">
+                                                                        ฿
+                                                                        {Number(
+                                                                            p.price,
+                                                                        ).toLocaleString()}
+                                                                    </div>
+                                                                </div>
+                                                                <Plus
+                                                                    size={14}
+                                                                    className="text-gray-300 group-hover:text-primary"
+                                                                />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-4 text-center text-muted text-sm">
+                                                        ไม่พบข้อมูลหัตถการ
+                                                    </div>
+                                                )}
+
+                                                <div className="border-t border-gray-100 p-1">
+                                                    <button
+                                                        type="button"
+                                                        className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
+                                                        onClick={() => {
+                                                            setOpenAddProcedure(
+                                                                true,
+                                                            );
+                                                            setShowProcedureDropdown(
+                                                                false,
+                                                            );
+                                                        }}
+                                                    >
+                                                        <Plus size={16} />
+                                                        สร้างหัตถการใหม่
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                     {transactionType === "income" &&
                         formData.category === "ค่ายา" && (
@@ -648,7 +851,13 @@ export default function AddTransactionModal({
                                         onSelect={handleSelectMedicine}
                                     />
                                 </div>
+                            </div>
+                        )}
 
+                    {transactionType === "income" &&
+                        (formData.category === "ค่ายา" ||
+                            formData.category === "ค่าบริการ") && (
+                            <div className="space-y-4 pt-4 animate-in fade-in duration-300">
                                 {/* สรุปรายการ Table */}
                                 <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                                     <table className="w-full text-sm">
@@ -698,7 +907,7 @@ export default function AddTransactionModal({
                                                                                     .target
                                                                                     .value,
                                                                             ) ||
-                                                                            0,
+                                                                                0,
                                                                         )
                                                                     }
                                                                     className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -745,7 +954,6 @@ export default function AddTransactionModal({
                                                         className="p-8 text-center text-gray-400 bg-white italic"
                                                     >
                                                         ยังไม่มีรายการที่เลือก
-                                                        กรุณาค้นหายาด้านบน
                                                     </td>
                                                 </tr>
                                             )}
@@ -783,7 +991,10 @@ export default function AddTransactionModal({
                             <input
                                 type="number"
                                 value={formData.amount}
-                                readOnly={formData.category === "ค่ายา"}
+                                readOnly={
+                                    formData.category === "ค่ายา" ||
+                                    formData.category === "ค่าบริการ"
+                                }
                                 onChange={(e) =>
                                     setFormData({
                                         ...formData,
@@ -791,15 +1002,18 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${formData.category === "ค่ายา"
+                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
+                                    formData.category === "ค่ายา" ||
+                                    formData.category === "ค่าบริการ"
                                         ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
                                         : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    }`}
+                                }`}
                             />
                         </div>
-                        {formData.category === "ค่ายา" && (
+                        {(formData.category === "ค่ายา" ||
+                            formData.category === "ค่าบริการ") && (
                             <p className="text-xs text-muted mt-1 px-1">
-                                * คำนวณอัตโนมัติจากรายการยาและเวชภัณฑ์
+                                * คำนวณอัตโนมัติจากรายการที่เลือก
                             </p>
                         )}
                     </div>
@@ -876,10 +1090,11 @@ export default function AddTransactionModal({
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${loading
+                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
+                                loading
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                                }`}
+                            }`}
                         >
                             {loading ? (
                                 <>
@@ -912,6 +1127,13 @@ export default function AddTransactionModal({
                     </div>
                 </div>
             </div>
+            <AddProcedureModal
+                open={openAddProcedure}
+                onClose={() => setOpenAddProcedure(false)}
+                onSuccess={(newProcedure: Procedure) => {
+                    handleSelectProcedure(newProcedure);
+                }}
+            />
         </div>
     );
 }

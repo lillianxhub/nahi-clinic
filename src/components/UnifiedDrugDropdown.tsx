@@ -1,5 +1,6 @@
 import React from "react";
 import { Medicine } from "@/interface/medicine";
+import { Plus } from "lucide-react";
 
 interface UnifiedDrugDropdownProps {
     isOpen: boolean;
@@ -18,7 +19,7 @@ export default function UnifiedDrugDropdown({
     displayMode,
     onSelect,
 }: UnifiedDrugDropdownProps) {
-    if (!isOpen || (searchTerm.length < 2 && items.length === 0)) return null;
+    if (!isOpen) return null;
 
     return (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
@@ -42,20 +43,30 @@ export default function UnifiedDrugDropdown({
                                 <div className="text-xs text-muted">
                                     {displayMode === "inventory" ? (
                                         <>
-                                            ราคา: {m.sell_price.toLocaleString()} บาท | คงเหลือ:{" "}
+                                            ราคา:{" "}
+                                            {m.sell_price.toLocaleString()} บาท
+                                            | คงเหลือ:{" "}
                                             {m.lots?.reduce(
-                                                (sum, lot) => sum + (lot.qty_remaining || 0),
+                                                (sum, lot) =>
+                                                    sum +
+                                                    (lot.qty_remaining || 0),
                                                 0,
                                             ) ?? 0}{" "}
                                             {m.unit}
                                         </>
                                     ) : (
                                         <>
-                                            หมวดหมู่: {m.category?.category_name || "-"} | หน่วย: {m.unit}
+                                            หมวดหมู่:{" "}
+                                            {m.category?.category_name || "-"} |
+                                            หน่วย: {m.unit}
                                         </>
                                     )}
                                 </div>
                             </div>
+                            <Plus
+                                size={14}
+                                className="text-gray-300 group-hover:text-primary"
+                            />
                         </button>
                     ))}
                 </div>

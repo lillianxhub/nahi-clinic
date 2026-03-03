@@ -184,7 +184,7 @@ export default function ViewTransactionModal({
                                 ) && (
                                     <div className="space-y-2 mt-2">
                                         <label className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
-                                            <Activity size={10} /> Section A:
+                                            <Activity size={10} />
                                             รายการหัตถการ
                                         </label>
                                         <div className="border border-gray-100 rounded-xl overflow-hidden bg-white/50">
@@ -235,7 +235,7 @@ export default function ViewTransactionModal({
                                 ) && (
                                     <div className="space-y-2 mt-4">
                                         <label className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
-                                            <Pill size={10} /> Section B:
+                                            <Pill size={10} />
                                             รายการยา
                                         </label>
                                         <div className="space-y-2">

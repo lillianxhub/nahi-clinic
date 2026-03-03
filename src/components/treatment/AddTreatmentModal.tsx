@@ -117,7 +117,18 @@ export default function AddTreatmentModal({
     useEffect(() => {
         const fetchMedicines = async () => {
             if (debouncedDrugSearch.length < 2) {
-                setMedicines([]);
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
                 return;
             }
 
@@ -432,6 +443,11 @@ export default function AddTreatmentModal({
                                             }
                                         }}
                                         onFocus={() => setShowDropdown(true)}
+                                        onBlur={() =>
+                                            setTimeout(() => {
+                                                setShowDropdown(false);
+                                            }, 200)
+                                        }
                                         required
                                     />
                                 </div>
@@ -713,6 +729,11 @@ export default function AddTreatmentModal({
                                         onFocus={() =>
                                             setShowProcedureDropdown(true)
                                         }
+                                        onBlur={() =>
+                                            setTimeout(() => {
+                                                setShowProcedureDropdown(false);
+                                            }, 200)
+                                        }
                                     />
                                     {showProcedureDropdown && (
                                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
@@ -917,6 +938,11 @@ export default function AddTreatmentModal({
                                         }}
                                         onFocus={() =>
                                             setShowDrugDropdown(true)
+                                        }
+                                        onBlur={() =>
+                                            setTimeout(() => {
+                                                setShowDrugDropdown(false);
+                                            }, 200)
                                         }
                                     />
 

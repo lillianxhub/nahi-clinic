@@ -164,7 +164,18 @@ export default function EditTreatmentModal({
     useEffect(() => {
         const fetchMedicines = async () => {
             if (debouncedDrugSearch.length < 2) {
-                setMedicines([]);
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
                 return;
             }
 
@@ -625,6 +636,11 @@ export default function EditTreatmentModal({
                                     onFocus={() =>
                                         setShowProcedureDropdown(true)
                                     }
+                                    onBlur={() =>
+                                        setTimeout(() => {
+                                            setShowProcedureDropdown(false);
+                                        }, 200)
+                                    }
                                 />
 
                                 {showProcedureDropdown && (
@@ -826,6 +842,11 @@ export default function EditTreatmentModal({
                                         setShowDrugDropdown(true);
                                     }}
                                     onFocus={() => setShowDrugDropdown(true)}
+                                    onBlur={() =>
+                                        setTimeout(() => {
+                                            setShowDrugDropdown(false);
+                                        }, 200)
+                                    }
                                 />
 
                                 <UnifiedDrugDropdown
