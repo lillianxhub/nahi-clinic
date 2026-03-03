@@ -511,8 +511,8 @@ export default function EditTransactionModal({
                                     <div className="relative">
                                         <label className="block text-sm font-semibold mb-1.5 text-gray-700">
                                             ค้นหาผู้ป่วย{" "}
-                                            <span className="text-gray-400 font-normal text-xs">
-                                                (ถ้ามี)
+                                            <span className="text-red-500">
+                                                *
                                             </span>
                                         </label>
                                         <div className="relative">
