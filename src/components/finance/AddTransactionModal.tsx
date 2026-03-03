@@ -323,10 +323,15 @@ export default function AddTransactionModal({
             return;
         }
 
-        // if (transactionType === "income" && !selectedVisitId) {
-        //     alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
-        //     return;
-        // }
+        if (
+            transactionType === "income" &&
+            (formData.category === "ค่าบริการ" ||
+                formData.category === "ค่ายา") &&
+            !selectedPatient?.patient_id
+        ) {
+            alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
+            return;
+        }
 
         try {
             setLoading(true);
@@ -482,9 +487,7 @@ export default function AddTransactionModal({
                             <div className="relative">
                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
                                     ค้นหาผู้ป่วย{" "}
-                                    <span className="text-gray-400 font-normal text-xs">
-                                        (ถ้ามี)
-                                    </span>
+                                    <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                     <Search

@@ -343,10 +343,13 @@ export default function EditTransactionModal({
 
                 // @ts-ignore - visit and patient are included now
                 if (res.visit?.patient) {
-                    // @ts-ignore
-                    setSelectedPatient(res.visit.patient);
-                    // @ts-ignore
-                    setSearchTerm(res.visit.patient.fullName || "");
+                    const p = res.visit.patient as any;
+                    setSelectedPatient(p);
+                    // fullName อาจไม่ถูก return จาก API — ประกอบจาก first_name + last_name
+                    setSearchTerm(
+                        p.fullName ||
+                            `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(),
+                    );
 
                     // Set initial items from visit details (only show drugs or services depending on category)
                     if (res.visit.visitDetails) {
@@ -395,10 +398,15 @@ export default function EditTransactionModal({
         e.preventDefault();
         if (!transaction || !formData) return;
 
-        // if (transaction.type === "income" && !selectedVisitId) {
-        //     alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
-        //     return;
-        // }
+        if (
+            transaction.type === "income" &&
+            (formData.category === "ค่าบริการ" ||
+                formData.category === "ค่ายา") &&
+            !selectedPatient?.patient_id
+        ) {
+            alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
+            return;
+        }
 
         setLoading(true);
         try {
