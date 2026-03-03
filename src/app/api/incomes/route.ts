@@ -18,7 +18,9 @@ export async function GET(req: Request) {
             take,
             orderBy,
             include: {
-                ...(typeof include === 'object' && include !== null ? include : {}),
+                ...(typeof include === "object" && include !== null
+                    ? include
+                    : {}),
                 category: true,
             },
             where: { deleted_at: null },
@@ -47,26 +49,5 @@ export async function GET(req: Request) {
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
             { status: 500 },
         );
-    }
-}
-
-export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-
-        const income = await prisma.income.create({
-            data: {
-                visit_id: body.visit_id,
-                category_id: body.category_id,
-                income_date: body.income_date,
-                amount: body.amount,
-                payment_method: body.payment_method,
-                receipt_no: body.receipt_no,
-            },
-        });
-
-        return NextResponse.json(income, { status: 201 });
-    } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

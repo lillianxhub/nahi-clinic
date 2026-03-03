@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { generateReceiptNo } from "@/lib/utils";
 
 export async function GET(request: Request) {
     try {
@@ -201,7 +202,9 @@ export async function POST(request: Request) {
                     income_date: new Date(body.income_date),
                     amount: body.amount,
                     payment_method: body.payment_method,
-                    receipt_no: body.receipt_no,
+                    receipt_no:
+                        body.receipt_no ||
+                        generateReceiptNo(body.income_category),
                     description: autoDescription,
                     category: {
                         connectOrCreate: {

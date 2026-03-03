@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CreateTreatmentDTO } from "@/interface/treatment";
+import { generateReceiptNo } from "@/lib/utils";
 
 export async function GET(req: Request) {
     try {
@@ -175,8 +176,12 @@ export async function POST(req: Request) {
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
                         item_type: item.item_type as any,
-                        drug: item.drug_id ? { connect: { drug_id: item.drug_id } } : undefined,
-                        procedure: item.procedure_id ? { connect: { procedure_id: item.procedure_id } } : undefined,
+                        drug: item.drug_id
+                            ? { connect: { drug_id: item.drug_id } }
+                            : undefined,
+                        procedure: item.procedure_id
+                            ? { connect: { procedure_id: item.procedure_id } }
+                            : undefined,
                         description: item.description,
                         quantity: Number(item.quantity),
                         unit_price: Number(item.unit_price),
@@ -224,7 +229,9 @@ export async function POST(req: Request) {
                         // Create Drug Usage history
                         await tx.drug_Usage.create({
                             data: {
-                                visit: { connect: { visit_id: visit.visit_id } },
+                                visit: {
+                                    connect: { visit_id: visit.visit_id },
+                                },
                                 lot: { connect: { lot_id: lot.lot_id } },
                                 quantity: deduction,
                                 used_at: new Date(body.visit_date),
@@ -256,11 +263,13 @@ export async function POST(req: Request) {
                 await tx.income.create({
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
-                        category: { connect: { category_id: drugCategory.category_id } },
+                        category: {
+                            connect: { category_id: drugCategory.category_id },
+                        },
                         income_date: new Date(body.visit_date),
                         amount: totalDrugAmount,
                         payment_method: body.payment_method as any,
-                        receipt_no: `RC-DRG-${Date.now()}-${incomeIndex++}`,
+                        receipt_no: generateReceiptNo("ค่ายา", incomeIndex++),
                     },
                 });
             }
@@ -269,11 +278,18 @@ export async function POST(req: Request) {
                 await tx.income.create({
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
-                        category: { connect: { category_id: serviceCategory.category_id } },
+                        category: {
+                            connect: {
+                                category_id: serviceCategory.category_id,
+                            },
+                        },
                         income_date: new Date(body.visit_date),
                         amount: totalServiceAmount,
                         payment_method: body.payment_method as any,
-                        receipt_no: `RC-SRV-${Date.now()}-${incomeIndex++}`,
+                        receipt_no: generateReceiptNo(
+                            "ค่าบริการ",
+                            incomeIndex++,
+                        ),
                     },
                 });
             }
