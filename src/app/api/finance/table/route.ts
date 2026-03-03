@@ -102,6 +102,7 @@ export async function GET(request: Request) {
         // 4. Format data consistently for table display
         const formattedIncomes = incomes.map((item) => ({
             id: item.income_id,
+            receipt_no: item.receipt_no,
             timestamp: item.income_date.getTime(),
             date: item.income_date.toLocaleString("th-TH", {
                 year: "numeric",
@@ -113,23 +114,25 @@ export async function GET(request: Request) {
             }),
             type: "income",
             category: item.category?.category_name || "ค่าตรวจรักษา",
-            description: item.description || (item.visit?.patient
-                ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
-                : "รายรับอื่นๆ"),
+            description:
+                item.description ||
+                (item.visit?.patient
+                    ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
+                    : "รายรับอื่นๆ"),
             amount: Number(item.amount),
             status: "เสร็จสิ้น",
             visit: item.visit
                 ? {
-                    symptom: item.visit.symptom,
-                    diagnosis: item.visit.diagnosis,
-                    note: item.visit.note,
-                    items: item.visit.visitDetails.map((detail: any) => ({
-                        item_type: detail.item_type,
-                        description: detail.description,
-                        quantity: Number(detail.quantity),
-                        unit_price: Number(detail.unit_price),
-                    })),
-                }
+                      symptom: item.visit.symptom,
+                      diagnosis: item.visit.diagnosis,
+                      note: item.visit.note,
+                      items: item.visit.visitDetails.map((detail: any) => ({
+                          item_type: detail.item_type,
+                          description: detail.description,
+                          quantity: Number(detail.quantity),
+                          unit_price: Number(detail.unit_price),
+                      })),
+                  }
                 : undefined,
         }));
 
@@ -141,6 +144,7 @@ export async function GET(request: Request) {
 
             return {
                 id: item.expense_id,
+                receipt_no: item.receipt_no,
                 timestamp: item.expense_date.getTime(),
                 date: item.expense_date.toLocaleString("th-TH", {
                     year: "numeric",

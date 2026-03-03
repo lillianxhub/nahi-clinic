@@ -486,7 +486,7 @@ export default function EditTransactionModal({
                             </h2>
                             <p className="text-white/80 text-sm">
                                 {isIncome ? "รายรับ" : "รายจ่าย"} •{" "}
-                                {transaction.id}
+                                {transaction.receipt_no}
                             </p>
                         </div>
                     </div>

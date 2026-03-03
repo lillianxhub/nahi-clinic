@@ -99,6 +99,7 @@ export interface FinanceSummaryStatsApiResponse {
 
 export interface TransactionItem {
     id: string;
+    receipt_no: string;
     date: string;
     type: "income" | "expense";
     category: string;
