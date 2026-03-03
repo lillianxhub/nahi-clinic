@@ -174,9 +174,8 @@ export default function AddTransactionModal({
                 // @ts-ignore - visits is included in the res from getPatientById
                 const patientVisits = res.visits || [];
                 setVisits(patientVisits);
-                if (patientVisits.length > 0) {
-                    setSelectedVisitId(patientVisits[0].visit_id);
-                }
+                // ไม่ auto-select visit — ให้ผู้ใช้เลือกเอง หรือไม่เลือก (walk-in)
+                setSelectedVisitId("");
             } catch (error) {
                 console.error("ดึงข้อมูลการเข้าตรวจล้มเหลว", error);
             } finally {
@@ -340,12 +339,16 @@ export default function AddTransactionModal({
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
                     payment_method: formData.payment_method,
-                    visit_id: selectedVisitId,
+                    visit_id: selectedVisitId || undefined,
+                    patient_id:
+                        !selectedVisitId && selectedPatient
+                            ? selectedPatient.patient_id
+                            : undefined,
                     income_category: formData.category,
-                    description: formData.description,
+                    description: formData.description || undefined,
                     items:
                         formData.category === "ค่ายา" ||
-                            formData.category === "ค่าบริการ"
+                        formData.category === "ค่าบริการ"
                             ? selectedItems
                             : undefined,
                 });
@@ -386,7 +389,7 @@ export default function AddTransactionModal({
             console.error("Failed to save transaction:", error);
             alert(
                 "ไม่สามารถบันทึกข้อมูลได้: " +
-                (error.message || "Unknown error"),
+                    (error.message || "Unknown error"),
             );
         } finally {
             setLoading(false);
@@ -421,10 +424,11 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => setTransactionType("income")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "income"
-                                    ? "border-green-500 bg-green-50 shadow-inner"
-                                    : "border-gray-100 hover:border-gray-200"
-                                    }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
+                                    transactionType === "income"
+                                        ? "border-green-500 bg-green-50 shadow-inner"
+                                        : "border-gray-100 hover:border-gray-200"
+                                }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "income" ? "bg-green-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -446,10 +450,11 @@ export default function AddTransactionModal({
                             </button>
                             <button
                                 onClick={() => setTransactionType("expense")}
-                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${transactionType === "expense"
-                                    ? "border-red-500 bg-red-50 shadow-inner"
-                                    : "border-gray-100 hover:border-gray-200"
-                                    }`}
+                                className={`p-4 border-2 rounded-xl transition-all flex flex-col items-center gap-2 group ${
+                                    transactionType === "expense"
+                                        ? "border-red-500 bg-red-50 shadow-inner"
+                                        : "border-gray-100 hover:border-gray-200"
+                                }`}
                             >
                                 <div
                                     className={`p-2 rounded-lg ${transactionType === "expense" ? "bg-red-100" : "bg-gray-50 group-hover:bg-gray-100"}`}
@@ -477,7 +482,9 @@ export default function AddTransactionModal({
                             <div className="relative">
                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
                                     ค้นหาผู้ป่วย{" "}
-                                    <span className="text-red-500">*</span>
+                                    <span className="text-gray-400 font-normal text-xs">
+                                        (ถ้ามี)
+                                    </span>
                                 </label>
                                 <div className="relative">
                                     <Search
@@ -563,7 +570,7 @@ export default function AddTransactionModal({
                                             <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                                             กำลังโหลดข้อมูลการเข้าตรวจ...
                                         </div>
-                                    ) : visits.length > 0 ? (
+                                    ) : (
                                         <div className="relative">
                                             <Calendar
                                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -578,6 +585,10 @@ export default function AddTransactionModal({
                                                 }
                                                 className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none text-sm"
                                             >
+                                                <option value="">
+                                                    — ไม่เลือก Visit (จะสร้าง
+                                                    walk-in อัตโนมัติ)
+                                                </option>
                                                 {visits.map((visit) => (
                                                     <option
                                                         key={visit.visit_id}
@@ -619,11 +630,13 @@ export default function AddTransactionModal({
                                                 </svg>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
-                                            <X size={16} />
-                                            ไม่พบประวัติการเข้าตรวจสำหรับผู้ป่วยรายนี้
-                                        </div>
+                                    )}
+                                    {!selectedVisitId && !loadingVisits && (
+                                        <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                                            <span>⚠️</span>
+                                            จะสร้าง Visit walk-in อัตโนมัติ
+                                            เพื่อผูกรายการยาและตัดสต็อก
+                                        </p>
                                     )}
                                 </div>
                             )}
@@ -671,6 +684,7 @@ export default function AddTransactionModal({
                                     setFormData({
                                         ...formData,
                                         category: e.target.value,
+                                        description: "",
                                     });
                                     clearSelectedItems();
                                 }}
@@ -906,7 +920,7 @@ export default function AddTransactionModal({
                                                                                     .target
                                                                                     .value,
                                                                             ) ||
-                                                                            0,
+                                                                                0,
                                                                         )
                                                                     }
                                                                     className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
@@ -1001,45 +1015,51 @@ export default function AddTransactionModal({
                                     })
                                 }
                                 placeholder="0.00"
-                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${formData.category === "ค่ายา" ||
+                                className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
+                                    formData.category === "ค่ายา" ||
                                     formData.category === "ค่าบริการ"
-                                    ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
-                                    : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    }`}
+                                        ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
+                                        : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                }`}
                             />
                         </div>
                         {(formData.category === "ค่ายา" ||
                             formData.category === "ค่าบริการ") && (
-                                <p className="text-xs text-muted mt-1 px-1">
-                                    * คำนวณอัตโนมัติจากรายการที่เลือก
-                                </p>
-                            )}
+                            <p className="text-xs text-muted mt-1 px-1">
+                                * คำนวณอัตโนมัติจากรายการที่เลือก
+                            </p>
+                        )}
                     </div>
 
                     {(transactionType === "expense" ||
-                        (transactionType === "income" && formData.category === "รายได้อื่นๆ")) && (
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-semibold text-gray-700">
-                                    รายละเอียด
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={formData.description}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            description: e.target.value,
-                                        })
-                                    }
-                                    placeholder={
-                                        transactionType === "expense"
-                                            ? "ระบุรายละเอียดการใช้จ่าย..."
-                                            : "ระบุรายละเอียดรายรับอื่นๆ..."
-                                    }
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
-                                />
-                            </div>
-                        )}
+                        transactionType === "income") && (
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-semibold text-gray-700">
+                                รายละเอียด
+                                <span className="text-gray-400 font-normal text-xs ml-1">
+                                    (ถ้าไม่กรอกระบบจะสร้างอัตโนมัติ)
+                                </span>
+                            </label>
+                            <textarea
+                                rows={2}
+                                value={formData.description}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        description: e.target.value,
+                                    })
+                                }
+                                placeholder={
+                                    transactionType === "expense"
+                                        ? "ระบุรายละเอียดการใช้จ่าย..."
+                                        : selectedPatient
+                                          ? `ค่าเริ่มต้น: "${formData.category || "หมวดหมู่"}: ผู้ป่วย ${selectedPatient.fullName}"`
+                                          : `ค่าเริ่มต้น: "${formData.category || "หมวดหมู่"}"`
+                                }
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700">
@@ -1093,10 +1113,11 @@ export default function AddTransactionModal({
                         <button
                             onClick={handleSave}
                             disabled={loading}
-                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-primary hover:bg-primary-dark shadow-primary/20"
-                                }`}
+                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
+                                loading
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-primary hover:bg-primary-dark shadow-primary/20"
+                            }`}
                         >
                             {loading ? (
                                 <>

@@ -135,6 +135,7 @@ export interface CreateExpensePayload {
 
 export interface CreateIncomePayload {
     visit_id?: string;
+    patient_id?: string; // ถ้าไม่มี visit_id แต่มี patient_id → จะสร้าง walk-in visit อัตโนมัติ
     income_date: string;
     amount: number;
     payment_method: PaymentMethod;
@@ -144,6 +145,7 @@ export interface CreateIncomePayload {
     items?: {
         item_type: "drug" | "service";
         drug_id?: string;
+        procedure_id?: string;
         description?: string;
         quantity: number;
         unit_price: number;
