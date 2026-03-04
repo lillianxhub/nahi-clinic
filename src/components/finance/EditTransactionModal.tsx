@@ -292,16 +292,14 @@ export default function EditTransactionModal({
                 // @ts-ignore
                 const patientVisits = res.visits || [];
                 setVisits(patientVisits);
-                // If it's a new patient selection, select the first visit
+                // ไม่ auto-select visit — ให้ผู้ใช้เลือกเองหรือไม่เลือก (walk-in)
                 if (
                     formData &&
                     !patientVisits.some(
                         (v: any) => v.visit_id === selectedVisitId,
                     )
                 ) {
-                    if (patientVisits.length > 0) {
-                        setSelectedVisitId(patientVisits[0].visit_id);
-                    }
+                    setSelectedVisitId("");
                 }
             } catch (error) {
                 console.error("ดึงข้อมูลการเข้าตรวจล้มเหลว", error);
@@ -345,10 +343,13 @@ export default function EditTransactionModal({
 
                 // @ts-ignore - visit and patient are included now
                 if (res.visit?.patient) {
-                    // @ts-ignore
-                    setSelectedPatient(res.visit.patient);
-                    // @ts-ignore
-                    setSearchTerm(res.visit.patient.fullName || "");
+                    const p = res.visit.patient as any;
+                    setSelectedPatient(p);
+                    // fullName อาจไม่ถูก return จาก API — ประกอบจาก first_name + last_name
+                    setSearchTerm(
+                        p.fullName ||
+                            `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(),
+                    );
 
                     // Set initial items from visit details (only show drugs or services depending on category)
                     if (res.visit.visitDetails) {
@@ -397,8 +398,13 @@ export default function EditTransactionModal({
         e.preventDefault();
         if (!transaction || !formData) return;
 
-        if (transaction.type === "income" && !selectedVisitId) {
-            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+        if (
+            transaction.type === "income" &&
+            (formData.category === "ค่าบริการ" ||
+                formData.category === "ค่ายา") &&
+            !selectedPatient?.patient_id
+        ) {
+            alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
             return;
         }
 
@@ -414,8 +420,13 @@ export default function EditTransactionModal({
                     amount: Number(formData.amount),
                     payment_method: formData.payment_method as PaymentMethod,
                     receipt_no: formData.receipt_no,
-                    visit_id: selectedVisitId,
+                    visit_id: selectedVisitId || undefined,
+                    patient_id:
+                        !selectedVisitId && selectedPatient
+                            ? selectedPatient.patient_id
+                            : undefined,
                     income_category: formData.category,
+                    description: formData.description || undefined,
                     items:
                         formData.category === "ค่ายา" ||
                         formData.category === "ค่าบริการ"
@@ -475,7 +486,7 @@ export default function EditTransactionModal({
                             </h2>
                             <p className="text-white/80 text-sm">
                                 {isIncome ? "รายรับ" : "รายจ่าย"} •{" "}
-                                {transaction.id}
+                                {transaction.receipt_no}
                             </p>
                         </div>
                     </div>
@@ -606,7 +617,7 @@ export default function EditTransactionModal({
                                                     <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                                                     กำลังโหลดข้อมูลการเข้าตรวจ...
                                                 </div>
-                                            ) : visits.length > 0 ? (
+                                            ) : (
                                                 <div className="relative">
                                                     <Calendar
                                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -621,6 +632,11 @@ export default function EditTransactionModal({
                                                         }
                                                         className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none text-sm"
                                                     >
+                                                        <option value="">
+                                                            — ไม่เลือก Visit
+                                                            (จะสร้าง walk-in
+                                                            อัตโนมัติ)
+                                                        </option>
                                                         {visits.map((visit) => (
                                                             <option
                                                                 key={
@@ -666,12 +682,16 @@ export default function EditTransactionModal({
                                                         </svg>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
-                                                    <X size={16} />
-                                                    ไม่พบประวัติการเข้าตรวจสำหรับผู้ป่วยรายนี้
-                                                </div>
                                             )}
+                                            {!selectedVisitId &&
+                                                !loadingVisits && (
+                                                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                                                        <span>⚠️</span>
+                                                        จะสร้าง Visit walk-in
+                                                        อัตโนมัติ
+                                                        เพื่อผูกรายการยาและตัดสต็อก
+                                                    </p>
+                                                )}
                                         </div>
                                     )}
                                 </div>
@@ -734,6 +754,7 @@ export default function EditTransactionModal({
                                                 setFormData({
                                                     ...formData,
                                                     category: e.target.value,
+                                                    description: "",
                                                 })
                                             }
                                             required
@@ -1267,30 +1288,39 @@ export default function EditTransactionModal({
                                 )}
                             </div>
 
-                            {/* Description (Only for Expense) */}
-                            {!isIncome && (
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <FileText
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        รายละเอียด
-                                    </label>
-                                    <textarea
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
-                                        rows={3}
-                                        placeholder="ระบุรายละเอียดเพิ่มเติม..."
-                                        value={formData?.description || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                description: e.target.value,
-                                            })
-                                        }
+                            {/* Description */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText
+                                        size={16}
+                                        className="text-primary"
                                     />
-                                </div>
-                            )}
+                                    รายละเอียด
+                                    {isIncome && (
+                                        <span className="text-gray-400 font-normal text-xs">
+                                            (ถ้าไม่กรอกระบบจะสร้างอัตโนมัติ)
+                                        </span>
+                                    )}
+                                </label>
+                                <textarea
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
+                                    rows={2}
+                                    placeholder={
+                                        isIncome
+                                            ? selectedPatient
+                                                ? `ค่าเริ่มต้น: "${formData?.category || "หมวดหมู่"}: ผู้ป่วย ${selectedPatient.fullName}"`
+                                                : `ค่าเริ่มต้น: "${formData?.category || "หมวดหมู่"}"`
+                                            : "ระบุรายละเอียดเพิ่มเติม..."
+                                    }
+                                    value={formData?.description || ""}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            description: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
 
                             {/* Receipt No */}
                             <div className="space-y-1.5">
