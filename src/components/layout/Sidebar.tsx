@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import {
     Home,
     User,
@@ -15,7 +16,6 @@ import {
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 const menuItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },
@@ -30,7 +30,11 @@ const menuItems = [
 export default function Sidebar() {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
-    const { user, logout } = useAuth();
+    const { data: session } = useSession();
+
+    const handleLogout = () => {
+        signOut({ callbackUrl: "/login" });
+    };
 
     return (
         <aside
@@ -93,7 +97,7 @@ export default function Sidebar() {
                     {!collapsed && (
                         <div className="text-sm leading-tight">
                             <p className="font-semibold">
-                                {user?.username || "Guest"}
+                                {session?.user?.username || session?.user?.name || "Guest"}
                             </p>
                             <p className="text-xs opacity-70">ผู้ดูแลระบบ</p>
                         </div>
@@ -101,7 +105,7 @@ export default function Sidebar() {
                 </div> */}
 
                 <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className={`flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/10 w-full cursor-pointer
                         ${collapsed ? "justify-center" : ""}
                     `}

@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model User {
@@ -21,7 +21,7 @@ model User {
 
 model Patient {
   patient_id      String    @id @default(uuid()) @db.Char(36)
-  hospital_number String?   @db.VarChar(50)
+  hospital_number String?   @unique @db.VarChar(50)
   first_name      String    @db.VarChar(100)
   last_name       String    @db.VarChar(100)
   gender          Gender?
@@ -33,40 +33,35 @@ model Patient {
   created_at      DateTime  @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
-  // citizen_number  String?   @db.Char(13)
   visits          Visit[]
 
-  // @@unique([citizen_number, hospital_number])
-  @@unique([hospital_number])
   @@map("patients")
 }
 
 model Visit {
-  visit_id     String         @id @default(uuid()) @db.Char(36)
-  patient_id   String         @db.Char(36)
-  visit_date   DateTime
-  symptom      String?        @db.Text
-  diagnosis    String?        @db.Text
-  note         String?        @db.Text
-  is_active    Boolean        @default(true)
-  created_at   DateTime       @default(now())
-  updated_at   DateTime?
-  deleted_at   DateTime?
-  drugUsages   Drug_Usage[]
-  incomes      Income[]
-  visitDetails Visit_Detail[]
-  patient      Patient        @relation(fields: [patient_id], references: [patient_id])
-
-  //เพิ่มข้อมูลผู้ป่วยเพิ่มเติม
-  blood_pressure String?  @db.VarChar(20) // e.g. "120/80"
-  heart_rate     Int? // bpm
-  weight         Decimal? @db.Decimal(5, 2) // kg
-  height         Decimal? @db.Decimal(5, 2) // cm
+  visit_id       String         @id @default(uuid()) @db.Char(36)
+  patient_id     String         @db.Char(36)
+  visit_date     DateTime
+  symptom        String?
+  diagnosis      String?
+  note           String?
+  is_active      Boolean        @default(true)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime?
+  deleted_at     DateTime?
+  blood_pressure String?        @db.VarChar(20)
+  heart_rate     Int?
+  weight         Decimal?       @db.Decimal(5, 2)
+  height         Decimal?       @db.Decimal(5, 2)
   age_years      Int?
   age_months     Int?
   age_days       Int?
+  drugUsages     Drug_Usage[]
+  incomes        Income[]
+  visitDetails   Visit_Detail[]
+  patient        Patient        @relation(fields: [patient_id], references: [patient_id])
 
-  @@index([patient_id], map: "visits_patient_id_fkey")
+  @@index([patient_id])
   @@map("visits")
 }
 
@@ -87,22 +82,21 @@ model Visit_Detail {
   procedure       Procedure? @relation(fields: [procedure_id], references: [procedure_id])
   visit           Visit      @relation(fields: [visit_id], references: [visit_id])
 
-  @@index([drug_id], map: "visit_details_drug_id_fkey")
-  @@index([procedure_id], map: "visit_details_procedure_id_fkey")
-  @@index([visit_id], map: "visit_details_visit_id_fkey")
+  @@index([drug_id])
+  @@index([procedure_id])
+  @@index([visit_id])
   @@map("visit_details")
 }
 
 model Procedure {
-  procedure_id   String    @id @default(uuid()) @db.Char(36)
-  procedure_name String    @db.VarChar(150)
-  price          Decimal   @db.Decimal(10, 2)
-  is_active      Boolean   @default(true)
-  created_at     DateTime  @default(now())
+  procedure_id   String         @id @default(uuid()) @db.Char(36)
+  procedure_name String         @db.VarChar(150)
+  price          Decimal        @db.Decimal(10, 2)
+  is_active      Boolean        @default(true)
+  created_at     DateTime       @default(now())
   updated_at     DateTime?
   deleted_at     DateTime?
-
-  visitDetails Visit_Detail[]
+  visitDetails   Visit_Detail[]
 
   @@map("procedures")
 }
@@ -135,7 +129,7 @@ model Drug {
   category    Drug_Category  @relation(fields: [category_id], references: [category_id])
   visitItems  Visit_Detail[]
 
-  @@index([category_id], map: "drugs_category_id_fkey")
+  @@index([category_id])
   @@map("drugs")
 }
 
@@ -152,12 +146,12 @@ model Drug_Lot {
   created_at    DateTime           @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
+  adjustments   Drug_Adjustment[]
   drug          Drug               @relation(fields: [drug_id], references: [drug_id])
   usages        Drug_Usage[]
   expenseLots   Expense_Drug_Lot[]
-  adjustments   Drug_Adjustment[]
 
-  @@index([drug_id], map: "drug_lots_drug_id_fkey")
+  @@index([drug_id])
   @@map("drug_lots")
 }
 
@@ -167,10 +161,9 @@ model Drug_Adjustment {
   quantity_lost Int
   reason        String?  @db.VarChar(255)
   created_at    DateTime @default(now())
+  lot           Drug_Lot @relation(fields: [lot_id], references: [lot_id])
 
-  lot Drug_Lot @relation(fields: [lot_id], references: [lot_id])
-
-  @@index([lot_id], map: "drug_adjustments_lot_id_fkey")
+  @@index([lot_id])
   @@map("drug_adjustments")
 }
 
@@ -187,14 +180,14 @@ model Drug_Usage {
   lot        Drug_Lot  @relation(fields: [lot_id], references: [lot_id])
   visit      Visit     @relation(fields: [visit_id], references: [visit_id])
 
-  @@index([lot_id], map: "drug_usages_lot_id_fkey")
-  @@index([visit_id], map: "drug_usages_visit_id_fkey")
+  @@index([lot_id])
+  @@index([visit_id])
   @@map("drug_usages")
 }
 
 model Income_Category {
   category_id   String    @id @default(uuid()) @db.Char(36)
-  category_name String    @unique @db.VarChar(100) // "ค่ายา", "ค่าบริการ" etc.
+  category_name String    @unique @db.VarChar(100)
   is_active     Boolean   @default(true)
   created_at    DateTime  @default(now())
   updated_at    DateTime?
@@ -217,11 +210,11 @@ model Income {
   created_at     DateTime        @default(now())
   updated_at     DateTime?
   deleted_at     DateTime?
-  visit          Visit?          @relation(fields: [visit_id], references: [visit_id])
   category       Income_Category @relation(fields: [category_id], references: [category_id])
+  visit          Visit?          @relation(fields: [visit_id], references: [visit_id])
 
-  @@index([visit_id], map: "incomes_visit_id_fkey")
-  @@index([category_id], map: "incomes_category_id_fkey")
+  @@index([visit_id])
+  @@index([category_id])
   @@map("incomes")
 }
 
@@ -253,7 +246,7 @@ model Expense_Drug_Lot {
   lot        Drug_Lot  @relation(fields: [lot_id], references: [lot_id])
 
   @@unique([expense_id, lot_id])
-  @@index([lot_id], map: "expense_drug_lots_lot_id_fkey")
+  @@index([lot_id])
   @@map("expense_drug_lots")
 }
 
