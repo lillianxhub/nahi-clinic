@@ -1,0 +1,29 @@
+services:
+    db:
+        image: postgres:15-alpine
+        restart: always
+        environment:
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+            POSTGRES_DB: ${DB_NAME:-nahi_clinic}
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-nahi_clinic}?schema=public
+            JWT_SECRET: ${JWT_SECRET:-nahi-clinic-secret-key-2026}
+            NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+        ports:
+            - "3000:3000"
+        depends_on:
+            - db
+
+volumes:
+    postgres_data:

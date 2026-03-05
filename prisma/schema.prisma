@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model User {
@@ -66,7 +66,7 @@ model Visit {
   age_months     Int?
   age_days       Int?
 
-  @@index([patient_id], map: "visits_patient_id_fkey")
+  @@index([patient_id])
   @@map("visits")
 }
 
@@ -87,9 +87,9 @@ model Visit_Detail {
   procedure       Procedure? @relation(fields: [procedure_id], references: [procedure_id])
   visit           Visit      @relation(fields: [visit_id], references: [visit_id])
 
-  @@index([drug_id], map: "visit_details_drug_id_fkey")
-  @@index([procedure_id], map: "visit_details_procedure_id_fkey")
-  @@index([visit_id], map: "visit_details_visit_id_fkey")
+  @@index([drug_id])
+  @@index([procedure_id])
+  @@index([visit_id])
   @@map("visit_details")
 }
 
@@ -135,7 +135,7 @@ model Drug {
   category    Drug_Category  @relation(fields: [category_id], references: [category_id])
   visitItems  Visit_Detail[]
 
-  @@index([category_id], map: "drugs_category_id_fkey")
+  @@index([category_id])
   @@map("drugs")
 }
 
@@ -157,7 +157,7 @@ model Drug_Lot {
   expenseLots   Expense_Drug_Lot[]
   adjustments   Drug_Adjustment[]
 
-  @@index([drug_id], map: "drug_lots_drug_id_fkey")
+  @@index([drug_id])
   @@map("drug_lots")
 }
 
@@ -170,7 +170,7 @@ model Drug_Adjustment {
 
   lot Drug_Lot @relation(fields: [lot_id], references: [lot_id])
 
-  @@index([lot_id], map: "drug_adjustments_lot_id_fkey")
+  @@index([lot_id])
   @@map("drug_adjustments")
 }
 
@@ -187,8 +187,8 @@ model Drug_Usage {
   lot        Drug_Lot  @relation(fields: [lot_id], references: [lot_id])
   visit      Visit     @relation(fields: [visit_id], references: [visit_id])
 
-  @@index([lot_id], map: "drug_usages_lot_id_fkey")
-  @@index([visit_id], map: "drug_usages_visit_id_fkey")
+  @@index([lot_id])
+  @@index([visit_id])
   @@map("drug_usages")
 }
 
@@ -220,8 +220,8 @@ model Income {
   visit          Visit?          @relation(fields: [visit_id], references: [visit_id])
   category       Income_Category @relation(fields: [category_id], references: [category_id])
 
-  @@index([visit_id], map: "incomes_visit_id_fkey")
-  @@index([category_id], map: "incomes_category_id_fkey")
+  @@index([visit_id])
+  @@index([category_id])
   @@map("incomes")
 }
 
@@ -253,7 +253,7 @@ model Expense_Drug_Lot {
   lot        Drug_Lot  @relation(fields: [lot_id], references: [lot_id])
 
   @@unique([expense_id, lot_id])
-  @@index([lot_id], map: "expense_drug_lots_lot_id_fkey")
+  @@index([lot_id])
   @@map("expense_drug_lots")
 }
 
