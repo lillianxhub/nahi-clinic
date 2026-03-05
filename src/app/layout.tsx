@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import SessionProviderWrapper from "@/components/providers/SessionProviderWrapper";
 
 const ibmPlexSansThai = IBM_Plex_Sans_Thai({
     weight: ["100", "200", "300", "400", "500", "600", "700"],
@@ -26,7 +26,7 @@ export default function RootLayout({
             <body
                 className={`${ibmPlexSansThai.variable} font-sans antialiased`}
             >
-                <AuthProvider>{children}</AuthProvider>
+                <SessionProviderWrapper>{children}</SessionProviderWrapper>
             </body>
         </html>
     );
