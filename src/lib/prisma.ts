@@ -1,19 +1,17 @@
 import "dotenv/config";
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaClient } from "@/generated/prisma/client"; // Generated Client
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
     prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient() {
-    const adapter = new PrismaMariaDb({
-        host: process.env.DB_HOST!,
-        user: process.env.DB_USER!,
-        password: process.env.DB_PASSWORD!,
-        database: process.env.DB_NAME!,
-        connectionLimit: 5,
+    const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
     });
+    const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter, log: ["error"] });
 }
 

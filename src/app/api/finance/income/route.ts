@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { generateReceiptNo } from "@/lib/utils";
 
 export async function GET(request: Request) {
     try {
@@ -110,10 +111,16 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
+        // Fetch visit with patient info (supports visit-less purchases e.g. ซื้อยาเฉยๆ)
+        let visit: {
+            visit_id: string;
+            patient: { first_name: string; last_name: string };
+        } | null = null;
         if (body.visit_id) {
-            const visit = await prisma.visit.findUnique({
-                where: {
-                    visit_id: body.visit_id,
+            visit = await prisma.visit.findUnique({
+                where: { visit_id: body.visit_id },
+                include: {
+                    patient: { select: { first_name: true, last_name: true } },
                 },
             });
 
@@ -123,6 +130,22 @@ export async function POST(request: Request) {
                     { status: 404 },
                 );
             }
+        }
+
+        // Validate patient when patient_id provided (for walk-in auto-visit)
+        if (!body.visit_id && body.patient_id) {
+            const patient = await prisma.patient.findUnique({
+                where: { patient_id: body.patient_id },
+                select: { first_name: true, last_name: true },
+            });
+            if (!patient) {
+                return NextResponse.json(
+                    { message: "Patient not found" },
+                    { status: 404 },
+                );
+            }
+            // Use patient info for description building (visit will be created inside tx)
+            visit = { visit_id: "", patient };
         }
 
         if (!body.income_date) {
@@ -147,32 +170,69 @@ export async function POST(request: Request) {
             );
         }
 
+        // Build auto-description based on category + visit/patient
+        const autoDescription =
+            body.description ||
+            (visit?.patient
+                ? `${body.income_category}: ผู้ป่วย ${visit.patient.first_name} ${visit.patient.last_name}`
+                : body.income_category);
+
         const result = await prisma.$transaction(async (tx) => {
+            // 0. Auto-create walk-in visit if patient_id given but no visit_id
+            let resolvedVisitId: string | undefined =
+                body.visit_id || undefined;
+            if (!resolvedVisitId && body.patient_id) {
+                const walkInVisit = await tx.visit.create({
+                    data: {
+                        patient: { connect: { patient_id: body.patient_id } },
+                        visit_date: new Date(body.income_date),
+                        symptom: "ซื้อยา (walk-in)",
+                        note: `สร้างอัตโนมัติจากการบันทึกรายรับ ${body.income_category}`,
+                    },
+                });
+                resolvedVisitId = walkInVisit.visit_id;
+            }
+
             // 1. Create Income record
             const income = await tx.income.create({
                 data: {
-                    visit_id: body.visit_id,
+                    visit: resolvedVisitId
+                        ? { connect: { visit_id: resolvedVisitId } }
+                        : undefined,
                     income_date: new Date(body.income_date),
                     amount: body.amount,
                     payment_method: body.payment_method,
-                    receipt_no: body.receipt_no,
+                    receipt_no:
+                        body.receipt_no ||
+                        generateReceiptNo(body.income_category),
+                    description: autoDescription,
                     category: {
-                        connect: {
-                            category_name: body.income_category,
+                        connectOrCreate: {
+                            where: { category_name: body.income_category },
+                            create: { category_name: body.income_category },
                         },
                     },
                 },
             });
 
-            // 2. Process Items if provided (especially for "ค่ายา")
-            if (body.items && Array.isArray(body.items) && body.visit_id) {
+            // 2. Process Items if provided (for ค่ายา / ค่าบริการ)
+            if (body.items && Array.isArray(body.items) && resolvedVisitId) {
                 for (const item of body.items) {
                     // 2.1 Create Visit Detail
                     await tx.visit_Detail.create({
                         data: {
-                            visit_id: body.visit_id,
+                            visit: { connect: { visit_id: resolvedVisitId } },
                             item_type: item.item_type,
-                            drug_id: item.drug_id,
+                            drug: item.drug_id
+                                ? { connect: { drug_id: item.drug_id } }
+                                : undefined,
+                            procedure: item.procedure_id
+                                ? {
+                                      connect: {
+                                          procedure_id: item.procedure_id,
+                                      },
+                                  }
+                                : undefined,
                             description: item.description,
                             quantity: Number(item.quantity),
                             unit_price: Number(item.unit_price),
@@ -209,8 +269,10 @@ export async function POST(request: Request) {
 
                             await tx.drug_Usage.create({
                                 data: {
-                                    visit_id: body.visit_id,
-                                    lot_id: lot.lot_id,
+                                    visit: {
+                                        connect: { visit_id: resolvedVisitId },
+                                    },
+                                    lot: { connect: { lot_id: lot.lot_id } },
                                     quantity: deduction,
                                     used_at: new Date(body.income_date),
                                 },
