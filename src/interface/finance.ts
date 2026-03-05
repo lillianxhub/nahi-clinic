@@ -8,6 +8,7 @@ export interface Income {
     amount: number;
     payment_method: PaymentMethod;
     receipt_no: string | null;
+    description: string | null;
     income_category?: string | null;
     category?: { category_name: string };
     is_active: boolean;
@@ -98,6 +99,7 @@ export interface FinanceSummaryStatsApiResponse {
 
 export interface TransactionItem {
     id: string;
+    receipt_no: string;
     date: string;
     type: "income" | "expense";
     category: string;
@@ -134,14 +136,17 @@ export interface CreateExpensePayload {
 
 export interface CreateIncomePayload {
     visit_id?: string;
+    patient_id?: string; // ถ้าไม่มี visit_id แต่มี patient_id → จะสร้าง walk-in visit อัตโนมัติ
     income_date: string;
     amount: number;
     payment_method: PaymentMethod;
     receipt_no?: string;
+    description?: string;
     income_category?: string;
     items?: {
         item_type: "drug" | "service";
         drug_id?: string;
+        procedure_id?: string;
         description?: string;
         quantity: number;
         unit_price: number;
