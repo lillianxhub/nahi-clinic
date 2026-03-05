@@ -285,7 +285,7 @@ async function main() {
         "สุขภาพปกติ",
     ];
 
-    for (let day = TOTAL_DAYS; day >= 0; day--) {
+    /*     for (let day = TOTAL_DAYS; day >= 0; day--) {
         const date = daysAgo(day);
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
@@ -530,7 +530,7 @@ async function main() {
 
         if (day % 30 === 0)
             console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
-    }
+     }*/
 
     console.log("✅ Seed ข้อมูล " + TOTAL_DAYS / 365 + " ปีเรียบร้อย!");
 }

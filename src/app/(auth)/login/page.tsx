@@ -3,20 +3,17 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Toast, { ToastType } from "@/components/Toast";
-import { login as loginService } from "@/services/auth";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import usePageTitle from "@/hooks/usePageTitle";
 
 export default function LoginPage() {
     usePageTitle("เข้าสู่ระบบ");
-    console.log("LoginPage rendering, calling useAuth...");
     const [username, setUsername] = useState("");
-    const [password_hash, setPassword] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { login } = useAuth();
 
     const [toast, setToast] = useState<{
         message: string;
@@ -27,21 +24,24 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const response = await loginService({ username, password_hash });
-
-            login({
-                id: response.user.id,
-                username: response.user.username,
+            const res = await signIn("credentials", {
+                username,
+                password,
+                redirect: false,
             });
-        } catch (error: unknown) {
-            let message = "เกิดข้อผิดพลาด";
 
-            if (error instanceof Error) {
-                message = error.message;
+            if (res?.error) {
+                setToast({
+                    message: "ไม่พบผู้ใช้งาน หรือ password ไม่ถูกต้อง",
+                    type: "error",
+                });
+            } else if (res?.ok) {
+                router.push("/dashboard");
+                router.refresh();
             }
-
+        } catch (error: unknown) {
             setToast({
-                message,
+                message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
                 type: "error",
             });
         } finally {
@@ -71,7 +71,7 @@ export default function LoginPage() {
                     <input
                         type={showPassword ? "text" : "password"}
                         placeholder="รหัสผ่าน"
-                        value={password_hash}
+                        value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
                         className="w-full rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
@@ -93,7 +93,7 @@ export default function LoginPage() {
 
                 <button
                     onClick={handleLogin}
-                    disabled={loading || !username || !password_hash}
+                    disabled={loading || !username || !password}
                     className="cursor-pointer w-full rounded-lg py-3 bg-secondary text-black font-semibold hover:opacity-90 transition"
                 >
                     {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
