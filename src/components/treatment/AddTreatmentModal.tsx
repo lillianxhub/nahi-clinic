@@ -13,6 +13,7 @@ import {
     Pill,
     Trash2,
     Edit3,
+    AlertCircle,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
@@ -514,6 +515,26 @@ export default function AddTreatmentModal({
                                         </div>
                                     )}
                             </div>
+
+                            {/* Allergy Alert */}
+                            {selectedPatient?.allergy?.trim() &&
+                                selectedPatient.allergy.trim() !== "ไม่มี" &&
+                                selectedPatient.allergy.trim() !== "-" && (
+                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <AlertCircle
+                                            className="text-red-500 shrink-0 mt-0.5"
+                                            size={18}
+                                        />
+                                        <div>
+                                            <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                                ประวัติการแพ้ยา/แพ้อื่นๆ
+                                            </p>
+                                            <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                                {selectedPatient.allergy}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
 
                             {/* Visit Date & Time */}
                             <div className="space-y-1.5">

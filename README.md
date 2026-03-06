@@ -53,6 +53,8 @@
     npx prisma generate
     # หากเป็นการติดตั้งครั้งแรกและต้องการทำ migration
     # npx prisma migrate dev
+    # หากต้องการ seed ข้อมูล
+    npx prisma db seed
     ```
 
 4. **รันระบบสำหรับ development**:
