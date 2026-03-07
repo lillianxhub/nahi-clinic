@@ -526,7 +526,7 @@ export default function AddTransactionModal({
                                                                 patient,
                                                             );
                                                             setSearchTerm(
-                                                                `${patient.fullName} (${patient.citizen_number || patient.hospital_number})`,
+                                                                `${patient.fullName} (${patient.hospital_number})`,
                                                             );
                                                             setShowPatientDropdown(
                                                                 false,
