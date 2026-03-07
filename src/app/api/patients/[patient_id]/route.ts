@@ -67,6 +67,7 @@ export async function PATCH(req: Request, { params }: Params) {
                 gender: body.gender,
                 phone: body.phone,
                 address: body.address,
+                citizen_number: body.citizen_number,
                 birth_date: body.birth_date
                     ? new Date(body.birth_date)
                     : undefined,

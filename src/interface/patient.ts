@@ -3,6 +3,7 @@ import { Gender } from "@/constants/gender";
 export interface Patient {
     patient_id: string;
     hospital_number: string;
+    citizen_number: string;
     first_name: string;
     last_name: string;
     fullName: string;
@@ -17,6 +18,7 @@ export interface Patient {
 export interface CreatePatientPayload {
     first_name: string;
     last_name: string;
+    citizen_number?: string;
     gender: Gender;
     birth_date?: string;
     phone?: string;
@@ -27,6 +29,7 @@ export interface CreatePatientPayload {
 export interface PatientApiResponse {
     patient_id: string;
     hospital_number: string;
+    citizen_number: string;
     first_name: string;
     last_name: string;
     gender: Gender;

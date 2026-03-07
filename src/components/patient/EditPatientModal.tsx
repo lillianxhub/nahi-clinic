@@ -25,6 +25,7 @@ export default function EditPatientModal({
     const [formData, setFormData] = useState<Partial<CreatePatientPayload>>({
         first_name: "",
         last_name: "",
+        citizen_number: "",
         gender: Gender.male,
         phone: "",
         address: undefined,
@@ -37,6 +38,7 @@ export default function EditPatientModal({
             setFormData({
                 first_name: patient.first_name || "",
                 last_name: patient.last_name || "",
+                citizen_number: patient.citizen_number || "",
                 gender: patient.gender,
                 phone: patient.phone || "",
                 address: patient.address || "",
@@ -176,6 +178,21 @@ export default function EditPatientModal({
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Citizen Number */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground">
+                                เลขบัตรประชาชน
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                name="citizen_number"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.citizen_number}
+                                onChange={handleChange}
+                            />
                         </div>
 
                         <DatePickerSimple
