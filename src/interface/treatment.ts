@@ -22,6 +22,7 @@ export interface Treatment {
         patient_id: string;
         first_name: string;
         last_name: string;
+        citizen_number?: string;
         allergy?: string;
     };
     visitDetails: {

@@ -526,7 +526,7 @@ export default function AddTransactionModal({
                                                                 patient,
                                                             );
                                                             setSearchTerm(
-                                                                patient.fullName,
+                                                                `${patient.fullName} (${patient.citizen_number || patient.hospital_number})`,
                                                             );
                                                             setShowPatientDropdown(
                                                                 false,
@@ -548,6 +548,9 @@ export default function AddTransactionModal({
                                                                 {
                                                                     patient.hospital_number
                                                                 }{" "}
+                                                                | เลขบัตร:{" "}
+                                                                {patient.citizen_number ||
+                                                                    "-"}{" "}
                                                                 | โทร:{" "}
                                                                 {patient.phone}
                                                             </p>

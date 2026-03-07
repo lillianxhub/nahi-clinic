@@ -22,6 +22,7 @@ model User {
 model Patient {
   patient_id      String    @id @default(uuid()) @db.Char(36)
   hospital_number String?   @unique @db.VarChar(50)
+  citizen_number  String?   @unique @db.VarChar(50)
   first_name      String    @db.VarChar(100)
   last_name       String    @db.VarChar(100)
   gender          Gender?

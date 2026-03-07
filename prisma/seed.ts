@@ -2,6 +2,7 @@ import { prisma } from "../src/lib/prisma";
 import { Gender } from "../src/generated/prisma/client";
 import { ItemType } from "../src/generated/prisma/enums";
 import bcrypt from "bcrypt";
+import { Matangi } from "next/font/google";
 
 const TOTAL_DAYS = 365;
 
@@ -14,6 +15,34 @@ function daysAgo(days: number) {
 
 function randomInt(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Generate a guaranteed-unique citizen ID using the patient index as a seed
+function generateCitizenId(index: number): string {
+    // section 1: type of citizen ID
+    const prefix = "1";
+
+    // section 2: province and district
+    const province = Math.floor(Math.random() * 77 + 1)
+        .toString()
+        .padStart(2, "0");
+    const district = Math.floor(Math.random() * 50 + 1)
+        .toString()
+        .padStart(2, "0");
+
+    // section 3: index of people
+    const sequence = index.toString().padStart(7, "0");
+
+    const base12 = `${prefix}${province}${district}${sequence}`;
+
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        sum += parseInt(base12[i]) * (13 - i);
+    }
+
+    const checkDigit = (11 - (sum % 11)) % 10;
+
+    return `${base12}${checkDigit}`;
 }
 
 // Shuffle array in-place (Fisher-Yates)
@@ -265,7 +294,7 @@ async function main() {
                 first_name: patientsData[i].f,
                 last_name: patientsData[i].l,
                 gender: patientsData[i].g,
-                // citizen_number: generateCitizenId(i + 1),
+                citizen_number: generateCitizenId(i + 1),
                 hospital_number: `HN67${(i + 1).toString().padStart(4, "0")}`,
                 phone: `0${randomInt(6, 9)}${randomInt(10000000, 99999999)}`,
                 address: `${randomInt(1, 99)}/${randomInt(1, 99)} หมู่ ${randomInt(1, 12)} ต.ในเมือง อ.เมือง จ.ขอนแก่น`,

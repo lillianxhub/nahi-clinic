@@ -17,6 +17,7 @@ import { treatmentService } from "@/services/treatment";
 import { Treatment } from "@/interface/treatment";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { GenderLabelTH } from "@/constants/gender";
 
 interface ViewTreatmentModalProps {
     open: boolean;
@@ -103,23 +104,24 @@ export default function ViewTreatmentModal({
                                             />
                                             ผู้ป่วย
                                         </label>
-                                        <p className="text-foreground font-semibold text-xl">
+                                        <p className="text-foreground font-semibold text-xl flex items-center gap-2">
                                             {treatment?.patient
                                                 ? `${treatment.patient.first_name} ${treatment.patient.last_name}`
                                                 : "-"}
-                                        </p>
-                                        <p className="text-m text-muted">
-                                            HN:{" "}
-                                            {treatment?.patient
-                                                ?.hospital_number || "-"}
+                                            <span className="text-sm text-muted">
+                                                (
+                                                {treatment?.patient
+                                                    ?.hospital_number || "-"}
+                                                )
+                                            </span>
                                         </p>
                                         <div className="space-y-1">
                                             <label className="text-m text-muted font-medium uppercase">
-                                                อายุ
+                                                เลขบัตรประชาชน
                                             </label>
                                             <p className="text-foreground font-medium text-m">
-                                                {treatment?.age_formatted ||
-                                                    "-"}
+                                                {treatment?.patient
+                                                    ?.citizen_number || "-"}
                                             </p>
                                         </div>
                                     </div>
@@ -143,6 +145,14 @@ export default function ViewTreatmentModal({
                                                       { locale: th },
                                                   )
                                                 : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-m text-muted font-medium uppercase">
+                                            อายุ
+                                        </label>
+                                        <p className="text-foreground font-medium text-m">
+                                            {treatment?.age_formatted || "-"}
                                         </p>
                                     </div>
                                 </div>

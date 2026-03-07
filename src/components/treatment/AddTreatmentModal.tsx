@@ -201,7 +201,9 @@ export default function AddTreatmentModal({
     const handleSelectPatient = (patient: Patient) => {
         setSelectedPatient(patient);
         setFormData((prev) => ({ ...prev, patient_id: patient.patient_id }));
-        setSearchTerm(`${patient.fullName} (${patient.hospital_number})`);
+        setSearchTerm(
+            `${patient.fullName} (${patient.citizen_number || patient.hospital_number})`,
+        );
         setShowDropdown(false);
     };
 
@@ -484,6 +486,9 @@ export default function AddTreatmentModal({
                                                                     {
                                                                         p.hospital_number
                                                                     }{" "}
+                                                                    | เลขบัตร:{" "}
+                                                                    {p.citizen_number ||
+                                                                        "-"}{" "}
                                                                     |{" "}
                                                                     {p.phone ||
                                                                         "ไม่มีเบอร์โทร"}
