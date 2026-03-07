@@ -186,7 +186,7 @@ export async function POST(request: Request) {
                     data: {
                         patient: { connect: { patient_id: body.patient_id } },
                         visit_date: new Date(body.income_date),
-                        symptom: "ซื้อยา (walk-in)",
+                        symptom: `${body.income_category} (walk-in)`,
                         note: `สร้างอัตโนมัติจากการบันทึกรายรับ ${body.income_category}`,
                     },
                 });
@@ -196,7 +196,9 @@ export async function POST(request: Request) {
             // 1. Create Income record
             const income = await tx.income.create({
                 data: {
-                    visit_id: body.visit_id,
+                    visit: resolvedVisitId
+                        ? { connect: { visit_id: resolvedVisitId } }
+                        : undefined,
                     income_date: new Date(body.income_date),
                     amount: body.amount,
                     payment_method: body.payment_method,
@@ -221,7 +223,16 @@ export async function POST(request: Request) {
                         data: {
                             visit: { connect: { visit_id: resolvedVisitId } },
                             item_type: item.item_type,
-                            drug_id: item.drug_id,
+                            drug: item.drug_id
+                                ? { connect: { drug_id: item.drug_id } }
+                                : undefined,
+                            procedure: item.procedure_id
+                                ? {
+                                    connect: {
+                                        procedure_id: item.procedure_id,
+                                    },
+                                }
+                                : undefined,
                             description: item.description,
                             quantity: Number(item.quantity),
                             unit_price: Number(item.unit_price),

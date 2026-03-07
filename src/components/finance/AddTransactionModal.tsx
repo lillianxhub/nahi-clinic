@@ -324,8 +324,16 @@ export default function AddTransactionModal({
             return;
         }
 
-        if (transactionType === "income" && !selectedVisitId) {
-            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+        // Allow saving without selectedVisitId if it's a walk-in (has selectedPatient) or other income categories
+        if (
+            transactionType === "income" &&
+            !selectedVisitId &&
+            !selectedPatient &&
+            (formData.category === "ค่ายา" ||
+                formData.category === "ค่าบริการ" ||
+                formData.category === "รายได้อื่นๆ")
+        ) {
+            alert("กรุณาเลือกผู้ป่วยหรือการเข้าตรวจสำหรับรายรับประเภทนี้");
             return;
         }
 
@@ -569,9 +577,9 @@ export default function AddTransactionModal({
                                     {/* Allergy Alert */}
                                     {selectedPatient?.allergy?.trim() &&
                                         selectedPatient.allergy.trim() !==
-                                            "ไม่มี" &&
+                                        "ไม่มี" &&
                                         selectedPatient.allergy.trim() !==
-                                            "-" && (
+                                        "-" && (
                                             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <AlertCircle
                                                     className="text-red-500 shrink-0 mt-0.5"
