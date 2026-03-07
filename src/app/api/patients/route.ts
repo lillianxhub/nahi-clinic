@@ -23,6 +23,7 @@ export async function GET(req: Request) {
                         { first_name: { contains: term } },
                         { last_name: { contains: term } },
                         { hospital_number: { contains: term } },
+                        { citizen_number: { contains: term } },
                     ],
                 }));
             }
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
                 gender: body.gender,
                 phone: body.phone,
                 address: body.address,
+                citizen_number: body.citizen_number,
                 birth_date: body.birth_date ? new Date(body.birth_date) : null,
                 allergy: body.allergy,
             },

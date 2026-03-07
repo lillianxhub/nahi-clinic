@@ -20,6 +20,7 @@ export async function GET(_: Request, { params }: Params) {
                     select: {
                         patient_id: true,
                         hospital_number: true,
+                        citizen_number: true,
                         first_name: true,
                         last_name: true,
                         allergy: true,

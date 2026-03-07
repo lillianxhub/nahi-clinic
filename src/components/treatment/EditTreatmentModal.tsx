@@ -13,6 +13,7 @@ import {
     Pill,
     Trash2,
     Edit3,
+    AlertCircle,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
@@ -65,6 +66,8 @@ export default function EditTreatmentModal({
         height: "",
     });
 
+    const [fullTreatment, setFullTreatment] = useState<Treatment | null>(null);
+
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<string>("cash");
 
@@ -104,6 +107,7 @@ export default function EditTreatmentModal({
             const data = await treatmentService.getTreatmentById(
                 treatment!.visit_id,
             );
+            setFullTreatment(data);
             console.log("Latest Treatment Data received from API:", data);
 
             const dateObj = new Date(data.visit_date);
@@ -437,6 +441,36 @@ export default function EditTreatmentModal({
                                 {treatment?.patient.hospital_number})
                             </div>
                         </div>
+
+                        {/* Allergy Alert */}
+                        {(
+                            fullTreatment?.patient.allergy ||
+                            treatment?.patient.allergy
+                        )?.trim() &&
+                            (
+                                fullTreatment?.patient.allergy ||
+                                treatment?.patient.allergy
+                            )?.trim() !== "ไม่มี" &&
+                            (
+                                fullTreatment?.patient.allergy ||
+                                treatment?.patient.allergy
+                            )?.trim() !== "-" && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <AlertCircle
+                                        className="text-red-500 shrink-0 mt-0.5"
+                                        size={18}
+                                    />
+                                    <div>
+                                        <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                            ประวัติการแพ้ยา/แพ้อื่นๆ
+                                        </p>
+                                        <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                            {fullTreatment?.patient.allergy ||
+                                                treatment?.patient.allergy}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                         {/* Visit Date & Time */}
                         <div className="space-y-1.5">
