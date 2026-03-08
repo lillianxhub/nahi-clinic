@@ -153,6 +153,7 @@ export default function EditTransactionModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedDrugSearch,
                     pageSize: 5,
+                    status: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
