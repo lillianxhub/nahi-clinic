@@ -74,9 +74,17 @@ export default function ViewPatientModal({
                         <h2 className="text-2xl font-bold mb-1">
                             {patient?.fullName || "กำลังโหลด..."}
                         </h2>
-                        <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-md">
-                            <span className="opacity-80">HN:</span>
-                            <span>{patient?.hospital_number || "-"}</span>
+                        <div className="flex gap-2">
+                            <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-md">
+                                <span className="opacity-80">HN:</span>
+                                <span>{patient?.hospital_number || "-"}</span>
+                            </div>
+                            {/* <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-md">
+                                <span className="opacity-80">
+                                    เลขบัตรประชาชน:
+                                </span>
+                                <span>{patient?.citizen_number || "-"}</span>
+                            </div> */}
                         </div>
                     </div>
                 </div>
@@ -95,6 +103,14 @@ export default function ViewPatientModal({
                                     ข้อมูลทั่วไป
                                 </h3>
                                 <div className="space-y-4">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-muted font-medium uppercase tracking-wider">
+                                            เลขบัตรประชาชน
+                                        </label>
+                                        <p className="text-foreground font-medium">
+                                            {patient?.citizen_number || "-"}
+                                        </p>
+                                    </div>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-muted font-medium uppercase tracking-wider">
                                             เพศ

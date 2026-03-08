@@ -38,6 +38,7 @@ export async function GET(req: Request) {
                             { first_name: { contains: term } },
                             { last_name: { contains: term } },
                             { hospital_number: { contains: term } },
+                            { citizen_number: { contains: term } },
                         ],
                     })),
                 };
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
                             first_name: true,
                             last_name: true,
                             hospital_number: true,
+                            citizen_number: true,
                         },
                     },
                     visitDetails: true,

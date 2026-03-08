@@ -71,6 +71,12 @@ export default function TreatmentsPage() {
             render: (row) => `${row.patient.hospital_number}`,
         },
         {
+            key: "citizen_number",
+            header: "เลขบัตรประชาชน",
+            align: "center",
+            render: (row) => `${row.patient.citizen_number}`,
+        },
+        {
             key: "patient_name",
             header: "ชื่อ-นามสกุล",
             render: (row) =>
@@ -174,7 +180,7 @@ export default function TreatmentsPage() {
                     <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="ค้นหา..."
+                        placeholder="ค้นหา (ชื่อ-สกุล, HN, เลขบัตร...)"
                         className="pl-10 h-10 bg-white"
                     />
                 </div>

@@ -3,6 +3,7 @@ import {
     X,
     ArrowUpRight,
     ArrowDownRight,
+    AlertCircle,
     Search,
     User,
     Calendar,
@@ -209,6 +210,7 @@ export default function AddTransactionModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedDrugSearch,
                     pageSize: 5,
+                    status: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
@@ -318,18 +320,21 @@ export default function AddTransactionModal({
     };
 
     const handleSave = async () => {
-        if (!formData.amount || !formData.category) {
-            alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+        if (!formData.category) {
+            alert("กรุณาเลือกหมวดหมู่");
             return;
         }
 
+        // Allow saving without selectedVisitId if it's a walk-in (has selectedPatient) or other income categories
         if (
             transactionType === "income" &&
-            (formData.category === "ค่าบริการ" ||
-                formData.category === "ค่ายา") &&
-            !selectedPatient?.patient_id
+            !selectedVisitId &&
+            !selectedPatient &&
+            (formData.category === "ค่ายา" ||
+                formData.category === "ค่าบริการ" ||
+                formData.category === "รายได้อื่นๆ")
         ) {
-            alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
+            alert("กรุณาเลือกผู้ป่วยหรือการเข้าตรวจสำหรับรายรับประเภทนี้");
             return;
         }
 
@@ -525,7 +530,7 @@ export default function AddTransactionModal({
                                                                 patient,
                                                             );
                                                             setSearchTerm(
-                                                                patient.fullName,
+                                                                `${patient.fullName} (${patient.hospital_number})`,
                                                             );
                                                             setShowPatientDropdown(
                                                                 false,
@@ -547,6 +552,9 @@ export default function AddTransactionModal({
                                                                 {
                                                                     patient.hospital_number
                                                                 }{" "}
+                                                                | เลขบัตร:{" "}
+                                                                {patient.citizen_number ||
+                                                                    "-"}{" "}
                                                                 | โทร:{" "}
                                                                 {patient.phone}
                                                             </p>
@@ -568,6 +576,31 @@ export default function AddTransactionModal({
                                         เลือกการเข้าตรวจ (Visit){" "}
                                         <span className="text-red-500">*</span>
                                     </label>
+
+                                    {/* Allergy Alert */}
+                                    {selectedPatient?.allergy?.trim() &&
+                                        selectedPatient.allergy.trim() !==
+                                            "ไม่มี" &&
+                                        selectedPatient.allergy.trim() !==
+                                            "-" && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <AlertCircle
+                                                    className="text-red-500 shrink-0 mt-0.5"
+                                                    size={18}
+                                                />
+                                                <div>
+                                                    <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                                        ประวัติการแพ้ยา/แพ้อื่นๆ
+                                                    </p>
+                                                    <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                                        {
+                                                            selectedPatient.allergy
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+
                                     {loadingVisits ? (
                                         <div className="text-sm text-gray-500 animate-pulse flex items-center gap-2 py-2">
                                             <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>

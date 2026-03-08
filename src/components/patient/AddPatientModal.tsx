@@ -18,6 +18,7 @@ export function mapPatientFromApi(api: PatientApiResponse): Patient {
     return {
         patient_id: api.patient_id,
         hospital_number: api.hospital_number,
+        citizen_number: api.citizen_number,
         first_name: api.first_name,
         last_name: api.last_name,
         fullName: `${api.first_name} ${api.last_name}`,
@@ -35,6 +36,7 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
     const [form, setForm] = useState({
         first_name: "",
         last_name: "",
+        citizen_number: "",
         gender: Gender.male,
         birth_date: "",
         phone: "",
@@ -133,6 +135,25 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                                 }
                             />
                         </div>
+                    </div>
+
+                    {/* Citizen Number Row */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground">
+                            เลขบัตรประชาชน
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="ระบุเลขบัตรประชาชน 13 หลัก"
+                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                            value={form.citizen_number}
+                            onChange={(e) =>
+                                setForm({
+                                    ...form,
+                                    citizen_number: e.target.value,
+                                })
+                            }
+                        />
                     </div>
 
                     {/* Gender */}

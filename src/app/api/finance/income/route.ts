@@ -186,7 +186,7 @@ export async function POST(request: Request) {
                     data: {
                         patient: { connect: { patient_id: body.patient_id } },
                         visit_date: new Date(body.income_date),
-                        symptom: "ซื้อยา (walk-in)",
+                        symptom: `${body.income_category} (walk-in)`,
                         note: `สร้างอัตโนมัติจากการบันทึกรายรับ ${body.income_category}`,
                     },
                 });
@@ -228,10 +228,10 @@ export async function POST(request: Request) {
                                 : undefined,
                             procedure: item.procedure_id
                                 ? {
-                                      connect: {
-                                          procedure_id: item.procedure_id,
-                                      },
-                                  }
+                                    connect: {
+                                        procedure_id: item.procedure_id,
+                                    },
+                                }
                                 : undefined,
                             description: item.description,
                             quantity: Number(item.quantity),
@@ -295,7 +295,14 @@ export async function POST(request: Request) {
 
         return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
-        console.error("Create income error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        console.error("Create income API Error:", {
+            message: error.message,
+            stack: error.stack,
+            body: request.body,
+        });
+        return NextResponse.json(
+            { message: error.message || "Internal Server Error" },
+            { status: 500 },
+        );
     }
 }

@@ -1,46 +1,37 @@
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(
-    process.env.JWT_SECRET || "default-secret-key-change-me",
-);
+export default withAuth(
+    function middleware(req) {
+        const token = req.nextauth.token;
+        const { pathname } = req.nextUrl;
 
-export async function middleware(request: NextRequest) {
-    const token = request.cookies.get("auth_token")?.value;
-    const { pathname } = request.nextUrl;
-
-    // Public routes
-    if (
-        pathname === "/login" ||
-        pathname === "/" ||
-        pathname.startsWith("/api/auth")
-    ) {
+        // Redirect from login or root if already authenticated
         if (token && (pathname === "/login" || pathname === "/")) {
-            try {
-                await jwtVerify(token, secret);
-                return NextResponse.redirect(
-                    new URL("/dashboard", request.url),
-                );
-            } catch (e) {
-                // Token invalid, let them stay on login
-            }
+            return NextResponse.redirect(new URL("/dashboard", req.url));
         }
-        return NextResponse.next();
-    }
 
-    // Protected routes
-    if (!token) {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    try {
-        await jwtVerify(token, secret);
         return NextResponse.next();
-    } catch (error) {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
-}
+    },
+    {
+        callbacks: {
+            authorized: ({ token, req }) => {
+                const { pathname } = req.nextUrl;
+                // Public routes that don't need authentication for access
+                // Note: / (root) and /login are handled in the middleware function above if authenticated
+                if (
+                    pathname === "/login" ||
+                    pathname === "/" ||
+                    pathname.startsWith("/api/auth")
+                ) {
+                    return true;
+                }
+                // Return true if authenticated
+                return !!token;
+            },
+        },
+    },
+);
 
 export const config = {
     matcher: [

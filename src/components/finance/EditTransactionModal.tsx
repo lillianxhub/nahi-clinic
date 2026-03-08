@@ -15,6 +15,7 @@ import {
     Trash2,
     Plus,
     Minus,
+    AlertCircle,
 } from "lucide-react";
 import {
     TransactionItem,
@@ -152,6 +153,7 @@ export default function EditTransactionModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedDrugSearch,
                     pageSize: 5,
+                    status: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
@@ -612,6 +614,31 @@ export default function EditTransactionModal({
                                                     *
                                                 </span>
                                             </label>
+
+                                            {/* Allergy Alert */}
+                                            {selectedPatient?.allergy?.trim() &&
+                                                selectedPatient.allergy.trim() !==
+                                                    "ไม่มี" &&
+                                                selectedPatient.allergy.trim() !==
+                                                    "-" && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <AlertCircle
+                                                            className="text-red-500 shrink-0 mt-0.5"
+                                                            size={18}
+                                                        />
+                                                        <div>
+                                                            <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                                                ประวัติการแพ้ยา/แพ้อื่นๆ
+                                                            </p>
+                                                            <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                                                {
+                                                                    selectedPatient.allergy
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                             {loadingVisits ? (
                                                 <div className="text-sm text-gray-500 animate-pulse flex items-center gap-2 py-2">
                                                     <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
