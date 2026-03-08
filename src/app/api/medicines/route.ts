@@ -37,8 +37,10 @@ export async function GET(req: NextRequest) {
             where.is_active = false;
         }
 
-        // Handle low stock / normal status filtering
-        if (status === "low" || status === "normal") {
+        // Handle Drug status filtering (active/inactive) or Stock level filtering (low/normal)
+        if (status === "active" || status === "inactive") {
+            where.status = status;
+        } else if (status === "low" || status === "normal") {
             const allDrugs = await prisma.drug.findMany({
                 select: {
                     drug_id: true,
@@ -85,7 +87,7 @@ export async function GET(req: NextRequest) {
                         min_stock: true,
                         lots: {
                             select: { qty_remaining: true, expire_date: true },
-                            where: { is_active: true, deleted_at: null }
+                            where: { is_active: true, deleted_at: null },
                         },
                     },
                     where: { is_active: true, deleted_at: null },
@@ -106,14 +108,20 @@ export async function GET(req: NextRequest) {
                         lowCount++;
                     }
 
-                    drug.lots.forEach(lot => {
-                        if (lot.qty_remaining > 0 && lot.expire_date <= targetDate) {
+                    drug.lots.forEach((lot) => {
+                        if (
+                            lot.qty_remaining > 0 &&
+                            lot.expire_date <= targetDate
+                        ) {
                             expiringCount++;
                         }
                     });
                 });
 
-                return { lowStockCount: lowCount, expiringLotsCount: expiringCount };
+                return {
+                    lowStockCount: lowCount,
+                    expiringLotsCount: expiringCount,
+                };
             })(),
         ]);
 
