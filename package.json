@@ -8,11 +8,11 @@
         "start": "next start",
         "lint": "eslint",
         "test": "vitest",
-        "db:migrate:dev": "npx dotenv-cli -e .env.development -- prisma migrate dev",
-        "db:push:dev": "npx dotenv-cli -e .env.development -- prisma db push",
-        "db:push:prod": "npx dotenv-cli -e .env.production -- prisma db push",
-        "db:seed:dev": "npx dotenv-cli -e .env.development -- prisma db seed",
-        "db:seed:prod": "npx dotenv-cli -e .env.production -- prisma db seed"
+        "db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
+        "db:push:dev": "dotenv -e .env.development -- prisma db push",
+        "db:push:prod": "dotenv -e .env.production -- prisma db push",
+        "db:seed:dev": "dotenv -e .env.development -- prisma db seed",
+        "db:seed:prod": "dotenv -e .env.production -- prisma db seed"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.4.2",
