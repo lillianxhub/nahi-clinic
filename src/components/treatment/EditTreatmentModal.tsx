@@ -47,15 +47,15 @@ export default function EditTreatmentModal({
             : formatLocalDate(new Date()),
         hour: treatment?.visit_date
             ? new Date(treatment.visit_date)
-                .getHours()
-                .toString()
-                .padStart(2, "0")
+                  .getHours()
+                  .toString()
+                  .padStart(2, "0")
             : new Date().getHours().toString().padStart(2, "0"),
         minute: treatment?.visit_date
             ? new Date(treatment.visit_date)
-                .getMinutes()
-                .toString()
-                .padStart(2, "0")
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")
             : new Date().getMinutes().toString().padStart(2, "0"),
         symptom: "",
         diagnosis: "",
@@ -365,7 +365,7 @@ export default function EditTreatmentModal({
                     description:
                         (item.item_type === "drug" ||
                             item.item_type === "service") &&
-                            item.instruction
+                        item.instruction
                             ? `${item.description} : ${item.instruction}`
                             : item.description,
                 })),
@@ -389,10 +389,13 @@ export default function EditTreatmentModal({
 
     if (!open) return null;
 
+    const isBpValid = (bp: string) => !bp || /^\d+\/\d+$/.test(bp);
+
     const isFormValid =
         formData.visit_date &&
         formData.symptom.trim() &&
-        formData.diagnosis.trim();
+        formData.diagnosis.trim() &&
+        isBpValid(formData.blood_pressure);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -483,8 +486,8 @@ export default function EditTreatmentModal({
                                 date={
                                     formData.visit_date
                                         ? new Date(
-                                            `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
-                                        )
+                                              `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
+                                          )
                                         : undefined
                                 }
                                 setDate={(date) => {
@@ -521,10 +524,21 @@ export default function EditTreatmentModal({
                                     type="text"
                                     name="blood_pressure"
                                     placeholder="เช่น 120/80"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                        formData.blood_pressure &&
+                                        !isBpValid(formData.blood_pressure)
+                                            ? "border-danger focus:ring-danger/20"
+                                            : "border-gray-300 focus:ring-primary focus:border-transparent"
+                                    }`}
                                     value={formData.blood_pressure}
                                     onChange={handleChange}
                                 />
+                                {formData.blood_pressure &&
+                                    !isBpValid(formData.blood_pressure) && (
+                                        <p className="text-[10px] text-danger mt-1">
+                                            รูปแบบไม่ถูกต้อง (เช่น 120/80)
+                                        </p>
+                                    )}
                             </div>
 
                             {/* Heart Rate */}
@@ -746,115 +760,115 @@ export default function EditTreatmentModal({
                             {selectedItems.filter(
                                 (i) => i.item_type === "service",
                             ).length > 0 && (
-                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
-                                                <tr>
-                                                    <th className="text-left px-4 py-2 font-semibold">
-                                                        หัตถการ
-                                                    </th>
-                                                    <th className="text-right px-4 py-2 font-semibold w-24">
-                                                        ราคา
-                                                    </th>
-                                                    <th className="w-10"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {selectedItems.map(
-                                                    (item, index) =>
-                                                        item.item_type ===
+                                <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                            <tr>
+                                                <th className="text-left px-4 py-2 font-semibold">
+                                                    หัตถการ
+                                                </th>
+                                                <th className="text-right px-4 py-2 font-semibold w-24">
+                                                    ราคา
+                                                </th>
+                                                <th className="w-10"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {selectedItems.map(
+                                                (item, index) =>
+                                                    item.item_type ===
                                                         "service" && (
-                                                            <tr
-                                                                key={index}
-                                                                className="bg-white"
-                                                            >
-                                                                <td className="px-4 py-3 font-medium text-gray-800">
-                                                                    <div className="space-y-1">
-                                                                        <div className="font-bold text-gray-800">
-                                                                            {item.name ||
-                                                                                item.description}
-                                                                        </div>
-                                                                        <div className="flex items-center gap-1">
-                                                                            <Edit3
-                                                                                size={
-                                                                                    12
-                                                                                }
-                                                                                className="text-gray-400"
-                                                                            />
-                                                                            <input
-                                                                                type="text"
-                                                                                placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
-                                                                                value={
-                                                                                    item.instruction ||
-                                                                                    ""
-                                                                                }
-                                                                                onChange={(
-                                                                                    e,
-                                                                                ) =>
-                                                                                    handleUpdateInstruction(
-                                                                                        index,
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    )
-                                                                                }
-                                                                                className="w-full bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none text-xs text-gray-600 transition-all p-0"
-                                                                            />
-                                                                        </div>
+                                                        <tr
+                                                            key={index}
+                                                            className="bg-white"
+                                                        >
+                                                            <td className="px-4 py-3 font-medium text-gray-800">
+                                                                <div className="space-y-1">
+                                                                    <div className="font-bold text-gray-800">
+                                                                        {item.name ||
+                                                                            item.description}
                                                                     </div>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right">
-                                                                    <div className="flex items-center justify-end gap-1">
-                                                                        <span className="text-gray-400 text-xs">
-                                                                            ฿
-                                                                        </span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Edit3
+                                                                            size={
+                                                                                12
+                                                                            }
+                                                                            className="text-gray-400"
+                                                                        />
                                                                         <input
-                                                                            type="number"
-                                                                            min="0"
+                                                                            type="text"
+                                                                            placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
                                                                             value={
-                                                                                item.unit_price
+                                                                                item.instruction ||
+                                                                                ""
                                                                             }
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
-                                                                                handleUpdatePrice(
+                                                                                handleUpdateInstruction(
                                                                                     index,
-                                                                                    parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
-                                                                                    0,
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
                                                                                 )
                                                                             }
-                                                                            className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none font-medium text-gray-800 transition-all p-0"
+                                                                            className="w-full bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none text-xs text-gray-600 transition-all p-0"
                                                                         />
                                                                     </div>
-                                                                </td>
-                                                                <td className="px-2 py-3 text-center">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleRemoveItem(
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    <span className="text-gray-400 text-xs">
+                                                                        ฿
+                                                                    </span>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={
+                                                                            item.unit_price
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleUpdatePrice(
                                                                                 index,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    0,
                                                                             )
                                                                         }
-                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                                    >
-                                                                        <Trash2
-                                                                            size={
-                                                                                14
-                                                                            }
-                                                                        />
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ),
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+                                                                        className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none font-medium text-gray-800 transition-all p-0"
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-2 py-3 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleRemoveItem(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                >
+                                                                    <Trash2
+                                                                        size={
+                                                                            14
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                         {/* Section B: Medications */}
                         <div className="space-y-4">
@@ -897,111 +911,111 @@ export default function EditTreatmentModal({
 
                             {selectedItems.filter((i) => i.item_type === "drug")
                                 .length > 0 && (
-                                    <div className="space-y-3">
-                                        {selectedItems.map(
-                                            (item, index) =>
-                                                item.item_type === "drug" && (
-                                                    <div
-                                                        key={index}
-                                                        className="p-4 border border-gray-200 rounded-xl bg-white space-y-3 shadow-sm hover:shadow-md transition-shadow"
-                                                    >
-                                                        <div className="flex items-start justify-between">
-                                                            <div>
-                                                                <p className="font-bold text-gray-800">
-                                                                    {
-                                                                        item.description
-                                                                    }
-                                                                </p>
-                                                                <p className="text-xs text-muted">
-                                                                    ราคาต่อหน่วย: ฿
-                                                                    {Number(
-                                                                        item.unit_price,
-                                                                    ).toLocaleString()}
-                                                                </p>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleRemoveItem(
-                                                                        index,
-                                                                    )
+                                <div className="space-y-3">
+                                    {selectedItems.map(
+                                        (item, index) =>
+                                            item.item_type === "drug" && (
+                                                <div
+                                                    key={index}
+                                                    className="p-4 border border-gray-200 rounded-xl bg-white space-y-3 shadow-sm hover:shadow-md transition-shadow"
+                                                >
+                                                    <div className="flex items-start justify-between">
+                                                        <div>
+                                                            <p className="font-bold text-gray-800">
+                                                                {
+                                                                    item.description
                                                                 }
-                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-12 gap-4 items-end">
-                                                            <div className="col-span-4 space-y-1">
-                                                                <label className="text-[10px] font-bold text-gray-500 uppercase">
-                                                                    จำนวน
-                                                                </label>
-                                                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
-                                                                    <input
-                                                                        type="number"
-                                                                        value={
-                                                                            item.quantity ||
-                                                                            1
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            handleUpdateQuantity(
-                                                                                index,
-                                                                                parseInt(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                ) ||
-                                                                                1,
-                                                                            )
-                                                                        }
-                                                                        className="w-full text-center text-sm font-semibold focus:outline-none bg-transparent"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <div className="col-span-8 space-y-1">
-                                                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                                                                    <Edit3
-                                                                        size={10}
-                                                                    />{" "}
-                                                                    วิธีใช้ /
-                                                                    หมายเหตุ
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
-                                                                    value={
-                                                                        item.instruction ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(e) =>
-                                                                        handleUpdateInstruction(
-                                                                            index,
-                                                                            e.target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                    className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all font-medium"
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex justify-end pt-1">
-                                                            <p className="text-sm font-bold text-primary">
-                                                                รวม: ฿
-                                                                {(
-                                                                    item.quantity *
-                                                                    item.unit_price
+                                                            </p>
+                                                            <p className="text-xs text-muted">
+                                                                ราคาต่อหน่วย: ฿
+                                                                {Number(
+                                                                    item.unit_price,
                                                                 ).toLocaleString()}
                                                             </p>
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleRemoveItem(
+                                                                    index,
+                                                                )
+                                                            }
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
-                                                ),
-                                        )}
-                                    </div>
-                                )}
+
+                                                    <div className="grid grid-cols-12 gap-4 items-end">
+                                                        <div className="col-span-4 space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-500 uppercase">
+                                                                จำนวน
+                                                            </label>
+                                                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
+                                                                <input
+                                                                    type="number"
+                                                                    value={
+                                                                        item.quantity ||
+                                                                        1
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleUpdateQuantity(
+                                                                            index,
+                                                                            parseInt(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            ) ||
+                                                                                1,
+                                                                        )
+                                                                    }
+                                                                    className="w-full text-center text-sm font-semibold focus:outline-none bg-transparent"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-span-8 space-y-1">
+                                                            <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                                                                <Edit3
+                                                                    size={10}
+                                                                />{" "}
+                                                                วิธีใช้ /
+                                                                หมายเหตุ
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
+                                                                value={
+                                                                    item.instruction ||
+                                                                    ""
+                                                                }
+                                                                onChange={(e) =>
+                                                                    handleUpdateInstruction(
+                                                                        index,
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all font-medium"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex justify-end pt-1">
+                                                        <p className="text-sm font-bold text-primary">
+                                                            รวม: ฿
+                                                            {(
+                                                                item.quantity *
+                                                                item.unit_price
+                                                            ).toLocaleString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ),
+                                    )}
+                                </div>
+                            )}
                         </div>
                         {/* Payment Method Summary */}
                         <div className="space-y-4 pt-4 border-t border-gray-100">

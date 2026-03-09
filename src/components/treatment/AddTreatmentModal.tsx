@@ -368,11 +368,14 @@ export default function AddTreatmentModal({
 
     if (!open) return null;
 
+    const isBpValid = (bp: string) => !bp || /^\d+\/\d+$/.test(bp);
+
     const isFormValid =
         formData.patient_id.trim() &&
         formData.visit_date &&
         formData.symptom.trim() &&
-        formData.diagnosis.trim();
+        formData.diagnosis.trim() &&
+        isBpValid(formData.blood_pressure);
 
     return (
         <>
@@ -610,10 +613,21 @@ export default function AddTreatmentModal({
                                         type="text"
                                         name="blood_pressure"
                                         placeholder="เช่น 120/80"
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                            formData.blood_pressure &&
+                                            !isBpValid(formData.blood_pressure)
+                                                ? "border-danger focus:ring-danger/20"
+                                                : "border-gray-300 focus:ring-primary focus:border-transparent"
+                                        }`}
                                         value={formData.blood_pressure}
                                         onChange={handleChange}
                                     />
+                                    {formData.blood_pressure &&
+                                        !isBpValid(formData.blood_pressure) && (
+                                            <p className="text-[10px] text-danger mt-1">
+                                                รูปแบบไม่ถูกต้อง (เช่น 120/80)
+                                            </p>
+                                        )}
                                 </div>
 
                                 {/* Heart Rate */}

@@ -123,6 +123,26 @@ export default function AddTransactionModal({
         }
     }, [totalFromItems, formData.category]);
 
+    const isFormValid = useMemo(() => {
+        if (!formData.category) return false;
+        if (Number(formData.amount) <= 0) return false;
+
+        if (transactionType === "income") {
+            const needsPatient = ["ค่ายา", "ค่าบริการ", "รายได้อื่นๆ"].includes(
+                formData.category,
+            );
+            if (needsPatient && !selectedPatient) return false;
+
+            if (
+                ["ค่ายา", "ค่าบริการ"].includes(formData.category) &&
+                selectedItems.length === 0
+            )
+                return false;
+        }
+
+        return true;
+    }, [formData, transactionType, selectedPatient, selectedItems]);
+
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -635,6 +655,8 @@ export default function AddTransactionModal({
                                                         ).toLocaleDateString(
                                                             "th-TH",
                                                             {
+                                                                timeZone:
+                                                                    "Asia/Bangkok",
                                                                 year: "numeric",
                                                                 month: "short",
                                                                 day: "numeric",
@@ -1138,49 +1160,29 @@ export default function AddTransactionModal({
                             </select>
                         </div>
                     )}
-
-                    <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
+                    <div className="mt-8 flex gap-3">
                         <button
                             onClick={onClose}
-                            className="px-6 h-10 rounded-lg border border-gray-200 font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                            className="flex-1 h-12 border-2 border-gray-100 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-all font-inter"
                         >
                             ยกเลิก
                         </button>
                         <button
                             onClick={handleSave}
-                            disabled={loading}
-                            className={`px-10 h-10 rounded-lg text-white font-semibold transition-all shadow-lg flex items-center gap-2 ${
-                                loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-primary hover:bg-primary-dark shadow-primary/20"
+                            disabled={loading || !isFormValid}
+                            className={`flex-1 h-12 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 font-inter ${
+                                transactionType === "income"
+                                    ? "bg-green-600 shadow-green-200 hover:bg-green-700 disabled:bg-green-300"
+                                    : "bg-red-600 shadow-red-200 hover:bg-red-700 disabled:bg-red-300"
                             }`}
                         >
                             {loading ? (
-                                <>
-                                    <svg
-                                        className="animate-spin h-5 w-5 text-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
-                                    กำลังบันทึก...
-                                </>
+                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
-                                "บันทึกข้อมูล"
+                                <>
+                                    <Plus size={20} />
+                                    บันทึกรายการ
+                                </>
                             )}
                         </button>
                     </div>
@@ -1189,7 +1191,7 @@ export default function AddTransactionModal({
             <AddProcedureModal
                 open={openAddProcedure}
                 onClose={() => setOpenAddProcedure(false)}
-                onSuccess={(newProcedure: Procedure) => {
+                onSuccess={(newProcedure: any) => {
                     handleSelectProcedure(newProcedure);
                 }}
             />

@@ -22,6 +22,7 @@ services:
             - .env.development
         restart: always
         environment:
+            TZ: Asia/Bangkok
             DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-nahi_clinic}?schema=public
             NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
             NEXTAUTH_TRUST_HOST: "true"

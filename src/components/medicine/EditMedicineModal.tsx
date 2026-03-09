@@ -96,7 +96,7 @@ export default function EditMedicineModal({
         formData.drug_name.trim() &&
         formData.category_id &&
         formData.unit.trim() &&
-        formData.sell_price;
+        Number(formData.sell_price) > 0;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">

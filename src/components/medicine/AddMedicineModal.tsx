@@ -235,8 +235,8 @@ export default function AddMedicineModal({
         formData.category_id &&
         formData.unit.trim() &&
         formData.quantity &&
-        formData.buy_price &&
-        formData.sell_price &&
+        Number(formData.buy_price) > 0 &&
+        Number(formData.sell_price) > 0 &&
         formData.expiry_date;
 
     return (
@@ -428,7 +428,7 @@ export default function AddMedicineModal({
                                 value={formData.buy_price}
                                 onChange={handleChange}
                                 required
-                                min="0"
+                                min="0.01"
                                 step="0.01"
                             />
                         </div>
@@ -451,7 +451,7 @@ export default function AddMedicineModal({
                                 value={formData.sell_price}
                                 onChange={handleChange}
                                 required
-                                min="0"
+                                min="0.01"
                                 step="0.01"
                             />
                         </div>

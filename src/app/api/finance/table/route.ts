@@ -105,6 +105,7 @@ export async function GET(request: Request) {
             receipt_no: item.receipt_no,
             timestamp: item.income_date.getTime(),
             date: item.income_date.toLocaleString("th-TH", {
+                timeZone: "Asia/Bangkok",
                 year: "numeric",
                 month: "short",
                 day: "numeric",
@@ -147,6 +148,7 @@ export async function GET(request: Request) {
                 receipt_no: item.receipt_no,
                 timestamp: item.expense_date.getTime(),
                 date: item.expense_date.toLocaleString("th-TH", {
+                    timeZone: "Asia/Bangkok",
                     year: "numeric",
                     month: "short",
                     day: "numeric",

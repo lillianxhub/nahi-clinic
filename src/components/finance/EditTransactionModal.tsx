@@ -118,6 +118,26 @@ export default function EditTransactionModal({
         }
     }, [totalFromItems, formData?.category]);
 
+    const isFormValid = useMemo(() => {
+        if (!formData?.category) return false;
+        if (Number(formData?.amount) <= 0) return false;
+
+        if (transaction?.type === "income") {
+            const needsPatient = ["ค่ายา", "ค่าบริการ", "รายได้อื่นๆ"].includes(
+                formData.category,
+            );
+            if (needsPatient && !selectedPatient) return false;
+
+            if (
+                ["ค่ายา", "ค่าบริการ"].includes(formData.category) &&
+                selectedItems.length === 0
+            )
+                return false;
+        }
+
+        return true;
+    }, [formData, transaction, selectedPatient, selectedItems]);
+
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -330,7 +350,7 @@ export default function EditTransactionModal({
         if (!transaction) return;
         setFetching(true);
         try {
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const res = await financeService.getIncomeById(transaction.id);
                 const dateObj = new Date(res.income_date);
                 setFormData({
@@ -416,7 +436,7 @@ export default function EditTransactionModal({
                 `${formData.date}T${formData.hour}:${formData.minute}:00`,
             ).toISOString();
 
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const payload: Partial<CreateIncomePayload> = {
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
@@ -1374,31 +1394,31 @@ export default function EditTransactionModal({
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+                        <div className="p-8 bg-light flex justify-end gap-3 border-t border-gray-200">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-5 h-10 text-gray-600 font-semibold hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                                className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-foreground hover:bg-gray-50 transition-colors"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="px-6 h-10 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={loading || !isFormValid}
+                                className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/30"
                             >
                                 {loading ? (
                                     <>
                                         <Loader2
                                             className="animate-spin"
-                                            size={18}
+                                            size={20}
                                         />
-                                        กำลังบันทึก...
+                                        <span>กำลังบันทึก...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Save size={18} />
-                                        บันทึกการแก้ไข
+                                        <Save size={20} />
+                                        <span>บันทึกการแก้ไข</span>
                                     </>
                                 )}
                             </button>
