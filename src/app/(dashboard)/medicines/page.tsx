@@ -86,9 +86,9 @@ export default function MedicinesPage() {
 
     // client-side filtering removed
 
-    const openLotModal = async (drug_id: string) => {
+    const openLotModal = async (product_id: string) => {
         try {
-            const res = await medicineService.getMedicineDetail(drug_id);
+            const res = await medicineService.getMedicineDetail(product_id);
             setSelectedDrug(res.data);
             setOpenLot(true);
         } catch (error) {
@@ -162,7 +162,7 @@ export default function MedicinesPage() {
             <div className="space-y-3">
                 {medicines.map((medicine) => (
                     <MedicineCard
-                        key={medicine.drug_id}
+                        key={medicine.product_id}
                         medicine={medicine}
                         onView={async (id) => {
                             await openLotModal(id);
@@ -210,7 +210,7 @@ export default function MedicinesPage() {
                     open={openLot}
                     onClose={() => setOpenLot(false)}
                     drugName={selectedDrug.drug_name}
-                    drugId={selectedDrug.drug_id}
+                    productId={selectedDrug.product_id}
                     onRefresh={() => {
                         // We do not need to call openLotModal again since it refetches everything
                         // The modal refetches its own lots, but we should refetch medicines

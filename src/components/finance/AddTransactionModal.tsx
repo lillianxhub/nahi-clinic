@@ -27,7 +27,7 @@ import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface SelectedItem {
     item_type: "drug" | "service";
-    drug_id?: string;
+    product_id?: string;
     procedure_id?: string;
     description?: string;
     quantity: number;
@@ -306,7 +306,7 @@ export default function AddTransactionModal({
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.drug_id === medicine.drug_id,
+            (item) => item.product_id === medicine.product_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -317,7 +317,7 @@ export default function AddTransactionModal({
                 ...selectedItems,
                 {
                     item_type: "drug",
-                    drug_id: medicine.drug_id,
+                    product_id: medicine.product_id,
                     description: medicine.drug_name,
                     quantity: 1,
                     unit_price: medicine.sell_price,

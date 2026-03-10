@@ -31,7 +31,7 @@ export default function UnifiedDrugDropdown({
                 <div className="py-1">
                     {items.map((m) => (
                         <button
-                            key={m.drug_id}
+                            key={m.product_id}
                             type="button"
                             className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
                             onClick={() => onSelect(m)}

@@ -71,7 +71,7 @@ export default function EditMedicineModal({
         try {
             setLoading(true);
 
-            await medicineService.updateMedicine(medicine.drug_id, {
+            await medicineService.updateMedicine(medicine.product_id, {
                 drug_name: formData.drug_name,
                 category_id: formData.category_id,
                 unit: formData.unit,

@@ -5,13 +5,13 @@ import { getOrderBy } from "@/utils/prismaQuery";
 
 type Params = {
     params: Promise<{
-        drug_id: string;
+        product_id: string;
     }>;
 };
 
 export async function GET(req: NextRequest, { params }: Params) {
     try {
-        const { drug_id: product_id } = await params;
+        const { product_id } = await params;
 
         if (!product_id) {
             return NextResponse.json(

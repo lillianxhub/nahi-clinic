@@ -151,7 +151,7 @@ export default function EditTreatmentModal({
 
                 return {
                     item_type: detail.product?.product_type,
-                    drug_id: detail.product_id,
+                    product_id: detail.product_id,
                     procedure_id: detail.product_id,
                     name: detail.product?.product_name,
                     description: detail.product?.product_name, // keep as fallback
@@ -294,13 +294,13 @@ export default function EditTreatmentModal({
     const handleSelectMedicine = (medicine: Medicine) => {
         console.log("Selecting medicine:", medicine);
         const existingItem = selectedItems.find(
-            (item) => item.drug_id === medicine.drug_id,
+            (item) => item.product_id === medicine.product_id,
         );
 
         if (existingItem) {
             setSelectedItems(
                 selectedItems.map((item: any) =>
-                    item.drug_id === medicine.drug_id
+                    item.product_id === medicine.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item,
                 ),
@@ -310,7 +310,7 @@ export default function EditTreatmentModal({
                 ...selectedItems,
                 {
                     item_type: "drug",
-                    drug_id: medicine.drug_id,
+                    product_id: medicine.product_id,
                     name: medicine.drug_name,
                     description: medicine.drug_name,
                     quantity: 1,
@@ -325,13 +325,13 @@ export default function EditTreatmentModal({
 
     const handleSelectSupply = (supply: Medicine) => {
         const existingItem = selectedItems.find(
-            (item) => item.drug_id === supply.drug_id,
+            (item) => item.product_id === supply.product_id,
         );
 
         if (existingItem) {
             setSelectedItems(
                 selectedItems.map((item: any) =>
-                    item.drug_id === supply.drug_id
+                    item.product_id === supply.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item,
                 ),
@@ -341,7 +341,7 @@ export default function EditTreatmentModal({
                 ...selectedItems,
                 {
                     item_type: "supply",
-                    drug_id: supply.drug_id,
+                    product_id: supply.product_id,
                     name: supply.drug_name,
                     description: supply.drug_name,
                     quantity: 1,
@@ -440,7 +440,7 @@ export default function EditTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
-                    product_id: item.drug_id || item.procedure_id,
+                    product_id: item.product_id || item.procedure_id,
                     description: item.instruction || "",
                 })),
                 blood_pressure: formData.blood_pressure,

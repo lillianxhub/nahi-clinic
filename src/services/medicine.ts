@@ -30,12 +30,12 @@ export const medicineService = {
     },
 
     async getMedicineLots(
-        drug_id: string,
+        product_id: string,
         params?: QueryParams,
     ): Promise<ResponseData<DrugLot[], any>> {
         const query = buildQuery(params);
         return apiClient.get<ResponseData<DrugLot[], any>>(
-            `/api/products/${drug_id}/lots${query}`,
+            `/api/products/${product_id}/lots${query}`,
         );
     },
 
@@ -54,23 +54,23 @@ export const medicineService = {
         >("/api/products/categories", { category_name });
     },
 
-    async getMedicineDetail(drug_id: string): Promise<{ data: Medicine }> {
-        return apiClient.get<{ data: Medicine }>(`/api/products/${drug_id}`);
+    async getMedicineDetail(product_id: string): Promise<{ data: Medicine }> {
+        return apiClient.get<{ data: Medicine }>(`/api/products/${product_id}`);
     },
 
     async createMedicine(payload: any): Promise<Medicine> {
         return apiClient.post<Medicine, any>("/api/products", payload);
     },
 
-    async updateMedicine(drug_id: string, payload: any): Promise<Medicine> {
+    async updateMedicine(product_id: string, payload: any): Promise<Medicine> {
         return apiClient.patch<Medicine, any>(
-            `/api/products/${drug_id}`,
+            `/api/products/${product_id}`,
             payload,
         );
     },
 
-    async deleteMedicine(drug_id: string): Promise<void> {
-        return apiClient.delete(`/api/products/${drug_id}`);
+    async deleteMedicine(product_id: string): Promise<void> {
+        return apiClient.delete(`/api/products/${product_id}`);
     },
 
     async updateLotDetails(

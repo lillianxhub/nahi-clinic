@@ -252,13 +252,13 @@ export default function AddTreatmentModal({
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingItem = selectedItems.find(
-            (item) => item.drug_id === medicine.drug_id,
+            (item) => item.product_id === medicine.product_id,
         );
 
         if (existingItem) {
             setSelectedItems(
                 selectedItems.map((item) =>
-                    item.drug_id === medicine.drug_id
+                    item.product_id === medicine.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item,
                 ),
@@ -268,7 +268,7 @@ export default function AddTreatmentModal({
                 ...selectedItems,
                 {
                     item_type: "drug",
-                    drug_id: medicine.drug_id,
+                    product_id: medicine.product_id,
                     name: medicine.drug_name,
                     description: medicine.drug_name,
                     quantity: 1,
@@ -300,13 +300,13 @@ export default function AddTreatmentModal({
 
     const handleSelectSupply = (supply: Medicine) => {
         const existingItem = selectedItems.find(
-            (item) => item.drug_id === supply.drug_id,
+            (item) => item.product_id === supply.product_id,
         );
 
         if (existingItem) {
             setSelectedItems(
                 selectedItems.map((item) =>
-                    item.drug_id === supply.drug_id
+                    item.product_id === supply.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item,
                 ),
@@ -316,7 +316,7 @@ export default function AddTreatmentModal({
                 ...selectedItems,
                 {
                     item_type: "supply",
-                    drug_id: supply.drug_id,
+                    product_id: supply.product_id,
                     name: supply.drug_name,
                     description: supply.drug_name,
                     quantity: 1,
@@ -399,7 +399,7 @@ export default function AddTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
-                    product_id: item.drug_id || item.procedure_id,
+                    product_id: item.product_id || item.procedure_id,
                     description: item.instruction || "",
                 })),
                 heart_rate: formData.heart_rate
