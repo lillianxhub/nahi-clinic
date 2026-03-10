@@ -37,13 +37,13 @@ export async function GET(request: Request) {
             );
         }
 
-        // Expense has no expense_date — filter by created_at
+        // Filter by expense_date instead of created_at
         const expenseGroups = await prisma.expense.groupBy({
             by: ["expense_type"],
             _sum: { amount: true },
             where: {
                 deleted_at: null,
-                created_at: { gte: startDate, lte: endDate },
+                expense_date: { gte: startDate, lte: endDate },
             },
         });
 
@@ -76,9 +76,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { expense_type, amount, description, receipt_no } = body;
+        const { expense_type, amount, description, receipt_no, expense_date } =
+            body;
 
-        // expense_date removed from schema — use created_at automatically
+        // Validations
         if (!amount || !expense_type) {
             return NextResponse.json(
                 { error: "กรุณากรอกข้อมูลที่จำเป็น (ประเภท, จำนวนเงิน)" },
@@ -92,6 +93,9 @@ export async function POST(request: Request) {
                 amount: Number(amount),
                 description: description || undefined,
                 receipt_no: receipt_no || undefined,
+                expense_date: expense_date
+                    ? new Date(expense_date)
+                    : new Date(),
             },
         });
 

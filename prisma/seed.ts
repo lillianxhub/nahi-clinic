@@ -5,8 +5,10 @@ import {
     VisitStatus,
     PaymentMethod,
     ExpenseType,
+    IncomeType,
 } from "../src/generated/prisma/client";
 import bcrypt from "bcrypt";
+import { calculateAge } from "@/lib/utils";
 
 const TOTAL_DAYS = 365;
 
@@ -284,6 +286,7 @@ async function main() {
                             description: "ค่าไฟและน้ำประปา",
                             amount: randomInt(3000, 6000),
                             receipt_no: `UTX-${date.getTime()}`,
+                            expense_date: date,
                         },
                         {
                             created_at: date,
@@ -291,6 +294,7 @@ async function main() {
                             description: "ค่าเช่าสถานที่",
                             amount: 15000,
                             receipt_no: `RNT-${date.getTime()}`,
+                            expense_date: date,
                         },
                     ],
                 });
@@ -322,6 +326,7 @@ async function main() {
                             description: `เติมยา: ${drug.product_name} (สต็อกเหลือ ${currentQty})`,
                             amount: buyPrice * buyQty,
                             receipt_no: `EXP-${date.getTime()}`,
+                            expense_date: date,
                         },
                     });
 
@@ -352,6 +357,9 @@ async function main() {
             const dailyVisits = isWeekend ? randomInt(10, 15) : randomInt(4, 8);
             for (let v = 0; v < dailyVisits; v++) {
                 const patient = patients[randomInt(0, patients.length - 1)];
+                const age = patient.birth_date
+                    ? calculateAge(patient.birth_date, date)
+                    : { years: 0, months: 0, days: 0 };
                 const visit = await tx.visit.create({
                     data: {
                         patient_id: patient.patient_id,
@@ -365,6 +373,9 @@ async function main() {
                         heart_rate: randomInt(60, 100),
                         weight: randomInt(400, 1000) / 10,
                         height: randomInt(150, 185),
+                        age_years: age.years,
+                        age_months: age.months,
+                        age_days: age.days,
                     },
                 });
 
@@ -398,6 +409,7 @@ async function main() {
                                 quantity: deduct,
                                 unit_price: itemPrice,
                                 total_price: itemPrice * deduct,
+                                description: `${drug.product_name} : ${qty} ${drug.unit}`,
                             },
                         });
 
@@ -437,6 +449,7 @@ async function main() {
                                 quantity: 1,
                                 unit_price: price,
                                 total_price: price,
+                                description: `${proc.product_name} : ${proc.unit}`,
                             },
                         });
                     }
@@ -447,6 +460,7 @@ async function main() {
                     await tx.income.create({
                         data: {
                             visit_id: visit.visit_id,
+                            income_type: IncomeType.service,
                             amount: totalAmount,
                             payment_method:
                                 Math.random() > 0.4
@@ -454,6 +468,7 @@ async function main() {
                                     : PaymentMethod.cash,
                             receipt_no: `RC-${date.getTime()}-${v}`,
                             created_at: date,
+                            income_date: date,
                         },
                     });
                 }

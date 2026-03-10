@@ -13,6 +13,10 @@ export interface TreatmentItem {
         product_type: ProductType;
         unit: string;
     };
+    // Derived or manually mapped fields for UI
+    item_type?: string;
+    item_name?: string;
+    description?: string;
 }
 
 export interface Treatment {
@@ -32,6 +36,10 @@ export interface Treatment {
     waistline?: number;
     smoking_history?: string;
     drinking_history?: string;
+    age_years?: number;
+    age_months?: number;
+    age_days?: number;
+    age_formatted?: string;
 
     patient: {
         hospital_number: any;
@@ -49,6 +57,7 @@ export interface CreateTreatmentItemDTO {
     lot_id?: string;
     quantity: number;
     unit_price: number;
+    instruction?: string;
 }
 
 export interface CreateTreatmentDTO {

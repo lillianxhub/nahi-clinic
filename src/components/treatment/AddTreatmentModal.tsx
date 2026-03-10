@@ -27,6 +27,7 @@ import AddPatientModal from "../patient/AddPatientModal";
 import { procedureService } from "@/services/procedure";
 import { Procedure } from "@/interface/procedure";
 import AddProcedureModal from "./AddProcedureModal";
+import Swal from "sweetalert2";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
@@ -268,6 +269,7 @@ export default function AddTreatmentModal({
                 {
                     item_type: "drug",
                     drug_id: medicine.drug_id,
+                    name: medicine.drug_name,
                     description: medicine.drug_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
@@ -315,6 +317,7 @@ export default function AddTreatmentModal({
                 {
                     item_type: "supply",
                     drug_id: supply.drug_id,
+                    name: supply.drug_name,
                     description: supply.drug_name,
                     quantity: 1,
                     unit_price: Number(supply.sell_price),
@@ -397,13 +400,7 @@ export default function AddTreatmentModal({
                 items: selectedItems.map((item) => ({
                     ...item,
                     product_id: item.drug_id || item.procedure_id,
-                    description:
-                        (item.item_type === "drug" ||
-                            item.item_type === "service" ||
-                            item.item_type === "supply") &&
-                        item.instruction
-                            ? `${item.description} : ${item.instruction}`
-                            : item.description,
+                    description: item.instruction || "",
                 })),
                 heart_rate: formData.heart_rate
                     ? Number(formData.heart_rate)
@@ -436,7 +433,11 @@ export default function AddTreatmentModal({
             onClose();
         } catch (error) {
             console.error("สร้างการรักษาไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาด: " + String(error));
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "ไม่สามารถบันทึกการรักษาได้: " + String(error),
+                icon: "error",
+            });
         } finally {
             setLoading(false);
         }

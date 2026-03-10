@@ -26,6 +26,7 @@ import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+import Swal from "sweetalert2";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface EditTreatmentModalProps {
@@ -137,29 +138,26 @@ export default function EditTreatmentModal({
             console.log("Raw details from API:", details);
 
             const existingItems = details.map((detail: any) => {
-                let description = detail.description || "";
-                let instruction = "";
+                let instruction = detail.description || "";
 
+                // Cleanup legacy concatenated format: "Product Name : Instruction"
+                const productName = detail.product?.product_name;
                 if (
-                    (detail.item_type === "drug" ||
-                        detail.item_type === "service" ||
-                        detail.item_type === "procedure") &&
-                    description.includes(" : ")
+                    productName &&
+                    instruction.startsWith(`${productName} : `)
                 ) {
-                    const parts = description.split(" : ");
-                    description = parts[0];
-                    instruction = parts.slice(1).join(" : ");
+                    instruction = instruction.substring(productName.length + 3);
                 }
 
                 return {
-                    item_type: detail.item_type,
+                    item_type: detail.product?.product_type,
                     drug_id: detail.product_id,
                     procedure_id: detail.product_id,
-                    name: description,
-                    description: description,
+                    name: detail.product?.product_name,
+                    description: detail.product?.product_name, // keep as fallback
+                    instruction: instruction,
                     quantity: Number(detail.quantity),
                     unit_price: Number(detail.unit_price),
-                    instruction: instruction,
                 };
             });
 
@@ -167,7 +165,11 @@ export default function EditTreatmentModal({
             setSelectedItems(existingItems);
         } catch (error) {
             console.error("โหลดข้อมูลการรักษาล่าสุดล้มเหลว", error);
-            alert("ไม่สามารถดึงข้อมูลล่าสุดได้");
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "ไม่สามารถดึงข้อมูลการรักษาล่าสุดได้",
+                icon: "error",
+            });
         } finally {
             setLoading(false);
         }
@@ -309,6 +311,7 @@ export default function EditTreatmentModal({
                 {
                     item_type: "drug",
                     drug_id: medicine.drug_id,
+                    name: medicine.drug_name,
                     description: medicine.drug_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
@@ -339,6 +342,7 @@ export default function EditTreatmentModal({
                 {
                     item_type: "supply",
                     drug_id: supply.drug_id,
+                    name: supply.drug_name,
                     description: supply.drug_name,
                     quantity: 1,
                     unit_price: Number(supply.sell_price),
@@ -437,13 +441,7 @@ export default function EditTreatmentModal({
                 items: selectedItems.map((item) => ({
                     ...item,
                     product_id: item.drug_id || item.procedure_id,
-                    description:
-                        (item.item_type === "drug" ||
-                            item.item_type === "service" ||
-                            item.item_type === "supply") &&
-                        item.instruction
-                            ? `${item.description} : ${item.instruction}`
-                            : item.description,
+                    description: item.instruction || "",
                 })),
                 blood_pressure: formData.blood_pressure,
                 heart_rate: formData.heart_rate
@@ -457,7 +455,11 @@ export default function EditTreatmentModal({
             onClose();
         } catch (error) {
             console.error("แก้ไขการรักษาไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาด: " + String(error));
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "ไม่สามารถบันทึกการแก้ไขได้: " + String(error),
+                icon: "error",
+            });
         } finally {
             setLoading(false);
         }
@@ -1124,9 +1126,8 @@ export default function EditTreatmentModal({
                                                     <div className="flex items-start justify-between">
                                                         <div>
                                                             <p className="font-bold text-gray-800">
-                                                                {
-                                                                    item.description
-                                                                }
+                                                                {item.name ||
+                                                                    item.description}
                                                             </p>
                                                             <p className="text-xs text-muted">
                                                                 ราคาต่อหน่วย: ฿

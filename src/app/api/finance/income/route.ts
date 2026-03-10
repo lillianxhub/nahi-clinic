@@ -165,12 +165,16 @@ export async function POST(request: Request) {
             // Create Income (1-1 with Visit)
             const income = await tx.income.create({
                 data: {
-                    visit: resolvedVisitId
-                        ? { connect: { visit_id: resolvedVisitId } }
-                        : undefined,
+                    ...(resolvedVisitId && {
+                        visit: { connect: { visit_id: resolvedVisitId } },
+                    }),
+                    income_type: (body.income_type as any) || "other",
                     amount: Number(body.amount),
                     payment_method: body.payment_method,
                     receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                    income_date: body.income_date
+                        ? new Date(body.income_date)
+                        : new Date(),
                 },
             });
 

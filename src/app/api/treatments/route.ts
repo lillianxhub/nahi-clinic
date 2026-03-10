@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CreateTreatmentDTO } from "@/interface/treatment";
-import { generateReceiptNo } from "@/lib/utils";
+import { generateReceiptNo, calculateAge, formatAge } from "@/lib/utils";
 
 export async function GET(req: Request) {
     try {
@@ -79,8 +79,17 @@ export async function GET(req: Request) {
             prisma.visit.count({ where }),
         ]);
 
+        const mappedVisits = visits.map((visit: any) => ({
+            ...visit,
+            age_formatted: formatAge(
+                visit.age_years || 0,
+                visit.age_months || 0,
+                visit.age_days || 0,
+            ),
+        }));
+
         return NextResponse.json({
-            data: visits,
+            data: mappedVisits,
             meta: {
                 pagination: {
                     page,
@@ -116,6 +125,25 @@ export async function POST(req: Request) {
         }
 
         const result = await prisma.$transaction(async (tx) => {
+            const patient = await tx.patient.findUnique({
+                where: { patient_id: body.patient_id },
+                select: { birth_date: true },
+            });
+
+            let age_years = null,
+                age_months = null,
+                age_days = null;
+
+            if (patient?.birth_date) {
+                const age = calculateAge(
+                    new Date(patient.birth_date),
+                    new Date(body.visit_date),
+                );
+                age_years = age.years;
+                age_months = age.months;
+                age_days = age.days;
+            }
+
             // 1. Create Visit
             const visit = await tx.visit.create({
                 data: {
@@ -137,9 +165,13 @@ export async function POST(req: Request) {
                     waistline: body.waistline ? Number(body.waistline) : null,
                     smoking_history: body.smoking_history,
                     drinking_history: body.drinking_history,
+                    age_years: age_years,
+                    age_months: age_months,
+                    age_days: age_days,
                 },
             });
 
+            const isCompleted = visit.status === "completed";
             let totalAmount = 0;
 
             // 2. Process Items
@@ -157,8 +189,9 @@ export async function POST(req: Request) {
 
                 let usedLotId: string | null = null;
 
-                // 2.2 If drug or supply → FEFO stock deduction
+                // 2.2 If drug or supply AND status is completed → FEFO stock deduction
                 if (
+                    isCompleted &&
                     product &&
                     (product.product_type === "drug" ||
                         product.product_type === "supply")
@@ -228,15 +261,17 @@ export async function POST(req: Request) {
                 });
             }
 
-            // 3. Create Income (1-1 with Visit)
-            if (totalAmount > 0) {
+            // 3. Create Income (1-1 with Visit) only if completed
+            if (isCompleted && totalAmount > 0) {
                 await tx.income.create({
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
+                        income_type: "service", // Default for treatment
                         amount: totalAmount,
                         payment_method: body.payment_method as any,
                         receipt_no:
                             body.receipt_no || generateReceiptNo("รักษา"),
+                        income_date: new Date(body.visit_date),
                     },
                 });
             }

@@ -62,7 +62,11 @@ model Visit {
   height          Decimal?    @db.Decimal(5, 2)
   waistline       Decimal?    @db.Decimal(5, 2)
   smoking_history String?     @db.VarChar(100)
-  drinking_history String?     @db.VarChar(100)
+  drinking_history String?     @db.VarChar(100) 
+
+  age_years        Int?
+  age_months       Int?
+  age_days         Int?
   
   is_active       Boolean     @default(true)
 
@@ -86,6 +90,7 @@ model VisitItem {
   quantity      Int
   unit_price    Decimal      @db.Decimal(10, 2)
   total_price   Decimal      @db.Decimal(10, 2)
+  description   String?      @db.VarChar(255)
   is_active     Boolean      @default(true)
 
   created_at    DateTime     @default(now())
@@ -171,8 +176,6 @@ model StockAdjustment {
   reason        String?      @db.VarChar(255)
 
   created_at    DateTime     @default(now())
-  updated_at    DateTime?
-  deleted_at    DateTime?
   
   lot           InventoryLot @relation(fields: [lot_id], references: [lot_id])
 
@@ -199,16 +202,18 @@ model StockUsage {
 // --- Finance ---
 model Income {
   income_id      String        @id @default(uuid()) @db.Char(36)
-  visit_id       String        @unique @db.Char(36)
+  income_type    IncomeType
+  visit_id       String?        @unique @db.Char(36)
   amount         Decimal       @db.Decimal(10, 2)
   payment_method PaymentMethod
   receipt_no     String?       @db.VarChar(100)
+  income_date    DateTime
 
   created_at    DateTime     @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
 
-  visit          Visit         @relation(fields: [visit_id], references: [visit_id])
+  visit          Visit?         @relation(fields: [visit_id], references: [visit_id])
 
   @@map("incomes")
 }
@@ -219,6 +224,7 @@ model Expense {
   amount      Decimal     @db.Decimal(10, 2)
   description String?     @db.VarChar(255)
   receipt_no  String?     @db.VarChar(100)
+  expense_date DateTime
 
   created_at    DateTime     @default(now())
   updated_at    DateTime?
@@ -265,6 +271,14 @@ enum ExpenseType {
   utility
   general 
 }
+
+enum IncomeType {
+  service
+  supply
+  drug
+  other
+}
+
 enum VisitStatus { 
   draft
   completed
