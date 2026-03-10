@@ -12,7 +12,9 @@
         "db:push:dev": "dotenv -e .env.development -- prisma db push",
         "db:push:prod": "dotenv -e .env.production -- prisma db push",
         "db:seed:dev": "dotenv -e .env.development -- prisma db seed",
-        "db:seed:prod": "dotenv -e .env.production -- prisma db seed"
+        "db:seed:prod": "dotenv -e .env.production -- prisma db seed",
+        "db:studio:dev": "dotenv -e .env.development -- prisma studio",
+        "db:studio:prod": "dotenv -e .env.production -- prisma studio"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.4.2",
