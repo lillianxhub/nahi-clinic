@@ -1,27 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
 import { getPagination } from "@/utils/pagination";
-import { getOrderBy, getInclude } from "@/utils/prismaQuery";
 
 export async function GET(req: Request) {
     try {
         const searchParams = new URL(req.url).searchParams;
-
         const { page, pageSize, skip, take } = getPagination(searchParams);
+        const orderBy = { created_at: "desc" as const };
 
-        const orderBy = getOrderBy(searchParams);
-        const include = getInclude(searchParams, ["visits"]);
-
-        const druglots = await prisma.drug_Lot.findMany({
+        const druglots = await prisma.inventoryLot.findMany({
             skip,
             take,
             orderBy,
-            include,
             where: { deleted_at: null },
+            include: {
+                product: {
+                    select: {
+                        product_id: true,
+                        product_name: true,
+                        unit: true,
+                    },
+                },
+            },
         });
 
-        const total = await prisma.drug_Lot.count({
+        const total = await prisma.inventoryLot.count({
             where: { deleted_at: null },
         });
 
@@ -30,19 +33,14 @@ export async function GET(req: Request) {
         return NextResponse.json({
             data: druglots,
             meta: {
-                pagination: {
-                    page,
-                    pageSize,
-                    pageCount,
-                    total,
-                },
+                pagination: { page, pageSize, pageCount, total },
             },
         });
     } catch (error: any) {
-        console.error("Register error:", error);
+        console.error("Get drug lots error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -62,6 +62,7 @@ model Visit {
   height          Decimal?    @db.Decimal(5, 2)
   waistline       Decimal?    @db.Decimal(5, 2)
   smoking_history String?     @db.VarChar(100)
+  drinking_history String?     @db.VarChar(100)
   
   is_active       Boolean     @default(true)
 

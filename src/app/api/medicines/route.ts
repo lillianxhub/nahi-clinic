@@ -25,9 +25,13 @@ export async function GET(req: NextRequest) {
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
-        const where: Record<string, any> = { deleted_at: null };
+        const where: Record<string, any> = {
+            deleted_at: null,
+            product_type: "drug", // only drugs
+        };
+
         if (q) {
-            where.drug_name = { contains: q };
+            where.product_name = { contains: q };
         }
 
         let activeStatus = searchParams.get("activeStatus");
@@ -37,52 +41,57 @@ export async function GET(req: NextRequest) {
             where.is_active = false;
         }
 
-        // Handle Drug status filtering (active/inactive) or Stock level filtering (low/normal)
-        if (status === "active" || status === "inactive") {
-            where.status = status;
-        } else if (status === "low" || status === "normal") {
-            const allDrugs = await prisma.drug.findMany({
+        // Handle stock level filtering (low/normal)
+        if (status === "low" || status === "normal") {
+            const allProducts = await prisma.product.findMany({
                 select: {
-                    drug_id: true,
+                    product_id: true,
                     min_stock: true,
                     lots: {
                         select: { qty_remaining: true },
+                        where: { is_active: true, deleted_at: null },
                     },
                 },
-                where: { is_active: true, deleted_at: null },
+                where: {
+                    is_active: true,
+                    deleted_at: null,
+                    product_type: "drug",
+                },
             });
 
-            const filteredDrugIds = allDrugs
-                .filter((drug) => {
-                    const totalQty = drug.lots.reduce(
+            const filteredIds = allProducts
+                .filter((p) => {
+                    const totalQty = p.lots.reduce(
                         (sum, lot) => sum + lot.qty_remaining,
                         0,
                     );
                     return status === "low"
-                        ? totalQty <= drug.min_stock
-                        : totalQty > drug.min_stock;
+                        ? totalQty <= p.min_stock
+                        : totalQty > p.min_stock;
                 })
-                .map((d) => d.drug_id);
+                .map((p) => p.product_id);
 
-            where.drug_id = { in: filteredDrugIds };
+            where.product_id = { in: filteredIds };
         }
 
         const [data, total, summaryData] = await Promise.all([
-            prisma.drug.findMany({
+            prisma.product.findMany({
                 skip,
                 take,
                 orderBy,
                 where,
                 include: {
                     category: true,
-                    lots: true,
+                    lots: {
+                        where: { is_active: true, deleted_at: null },
+                    },
                 },
             }),
 
-            prisma.drug.count({ where }),
+            prisma.product.count({ where }),
 
             (async () => {
-                const drugs = await prisma.drug.findMany({
+                const products = await prisma.product.findMany({
                     select: {
                         min_stock: true,
                         lots: {
@@ -90,7 +99,11 @@ export async function GET(req: NextRequest) {
                             where: { is_active: true, deleted_at: null },
                         },
                     },
-                    where: { is_active: true, deleted_at: null },
+                    where: {
+                        is_active: true,
+                        deleted_at: null,
+                        product_type: "drug",
+                    },
                 });
 
                 let lowCount = 0;
@@ -99,16 +112,16 @@ export async function GET(req: NextRequest) {
                 const targetDate = new Date();
                 targetDate.setDate(targetDate.getDate() + 30);
 
-                drugs.forEach((drug) => {
-                    const totalQty = drug.lots.reduce(
+                products.forEach((p) => {
+                    const totalQty = p.lots.reduce(
                         (sum, lot) => sum + lot.qty_remaining,
                         0,
                     );
-                    if (totalQty <= drug.min_stock) {
+                    if (totalQty <= p.min_stock) {
                         lowCount++;
                     }
 
-                    drug.lots.forEach((lot) => {
+                    p.lots.forEach((lot) => {
                         if (
                             lot.qty_remaining > 0 &&
                             lot.expire_date <= targetDate
@@ -153,55 +166,51 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const {
-            drug_name,
+            product_name,
             category_id,
             unit,
             quantity,
             buy_price,
             sell_price,
+            buy_unit,
+            conversion_factor,
             expiry_date,
             lot_no,
             received_date,
         } = body;
 
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Find or Create Drug (Upsert logic by name)
-            let drug = await tx.drug.findFirst({
+            // 1. Find or create Product (drug type)
+            let product = await tx.product.findFirst({
                 where: {
-                    drug_name: drug_name,
+                    product_name,
+                    product_type: "drug",
                     is_active: true,
                     deleted_at: null,
                 },
             });
 
-            if (drug) {
-                // Update existing drug metadata if provided
-                drug = await tx.drug.update({
-                    where: { drug_id: drug.drug_id },
+            if (product) {
+                product = await tx.product.update({
+                    where: { product_id: product.product_id },
                     data: {
-                        category_id: category_id || drug.category_id,
-                        unit: unit || drug.unit,
-                        sell_price:
-                            sell_price !== undefined
-                                ? sell_price
-                                : drug.sell_price,
+                        category_id: category_id || product.category_id,
+                        unit: unit || product.unit,
                     },
                 });
             } else {
-                // Create new drug
-                drug = await tx.drug.create({
+                product = await tx.product.create({
                     data: {
-                        drug_name,
+                        product_name,
+                        product_type: "drug",
                         category_id,
                         unit,
-                        sell_price,
                         min_stock: 0,
-                        status: "active",
                     },
                 });
             }
 
-            // 2. Create Drug_Lot
+            // 2. Create InventoryLot
             const dateForLot = received_date
                 ? new Date(received_date)
                 : new Date();
@@ -210,15 +219,20 @@ export async function POST(req: Request) {
             const day = String(dateForLot.getDate()).padStart(2, "0");
             const autoLotNo = `LOT-${year}${month}-${day}`;
 
-            const lot = await tx.drug_Lot.create({
+            const lot = await tx.inventoryLot.create({
                 data: {
-                    drug_id: drug.drug_id,
+                    product_id: product.product_id,
                     lot_no: lot_no || autoLotNo,
+                    buy_unit: buy_unit || unit,
+                    conversion_factor: conversion_factor
+                        ? Number(conversion_factor)
+                        : 1,
+                    buy_price: Number(buy_price),
+                    sell_price: Number(sell_price),
                     received_date: dateForLot,
                     expire_date: new Date(expiry_date),
                     qty_received: Number(quantity),
                     qty_remaining: Number(quantity),
-                    buy_price: Number(buy_price),
                 },
             });
 
@@ -226,24 +240,21 @@ export async function POST(req: Request) {
             const totalAmount = Number(quantity) * Number(buy_price);
             const expense = await tx.expense.create({
                 data: {
-                    expense_date: received_date
-                        ? new Date(received_date)
-                        : new Date(),
                     expense_type: "drug",
-                    description: `ซื้อยา: ${drug_name} (${quantity} ${unit})`,
+                    description: `ซื้อยา: ${product_name} (${quantity} ${unit})`,
                     amount: totalAmount,
                 },
             });
 
             // 4. Link Lot to Expense
-            await tx.expense_Drug_Lot.create({
+            await tx.expenseInventoryLot.create({
                 data: {
                     expense_id: expense.expense_id,
                     lot_id: lot.lot_id,
                 },
             });
 
-            return { drug, lot, expense };
+            return { product, lot, expense };
         });
 
         return NextResponse.json(result, { status: 201 });

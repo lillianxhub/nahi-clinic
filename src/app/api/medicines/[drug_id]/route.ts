@@ -9,39 +9,34 @@ type Params = {
 
 export async function GET(req: Request, { params }: Params) {
     try {
-        const { drug_id } = await params;
+        const { drug_id: product_id } = await params;
 
-        if (!drug_id) {
+        if (!product_id) {
             return NextResponse.json(
-                { message: "drug_id ไม่ถูกต้อง" },
+                { message: "product_id ไม่ถูกต้อง" },
                 { status: 400 },
             );
         }
 
-        const drug = await prisma.drug.findUnique({
-            where: {
-                drug_id,
-            },
+        const product = await prisma.product.findUnique({
+            where: { product_id },
             include: {
                 category: true,
                 lots: {
-                    orderBy: {
-                        expire_date: "asc",
-                    },
+                    where: { is_active: true, deleted_at: null },
+                    orderBy: { expire_date: "asc" },
                 },
             },
         });
 
-        if (!drug) {
+        if (!product) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลยา" },
                 { status: 404 },
             );
         }
 
-        return NextResponse.json({
-            data: drug,
-        });
+        return NextResponse.json({ data: product });
     } catch (error) {
         console.error("Get medicine detail error:", error);
         return NextResponse.json(
@@ -53,26 +48,25 @@ export async function GET(req: Request, { params }: Params) {
 
 export async function PATCH(req: Request, { params }: Params) {
     try {
-        const { drug_id } = await params;
+        const { drug_id: product_id } = await params;
         const body = await req.json();
 
-        const updatedDrug = await prisma.drug.update({
-            where: { drug_id },
+        const updatedProduct = await prisma.product.update({
+            where: { product_id },
             data: {
-                drug_name: body.drug_name,
+                product_name: body.product_name ?? body.drug_name,
                 category_id: body.category_id,
                 unit: body.unit,
-                sell_price: body.sell_price,
                 min_stock: body.min_stock,
-                status: body.status,
                 is_active: body.is_active,
+                updated_at: new Date(),
             },
             include: {
                 category: true,
             },
         });
 
-        return NextResponse.json({ data: updatedDrug });
+        return NextResponse.json({ data: updatedProduct });
     } catch (error: any) {
         console.error("Update medicine error:", error);
         return NextResponse.json(
@@ -84,12 +78,13 @@ export async function PATCH(req: Request, { params }: Params) {
         );
     }
 }
+
 export async function DELETE(req: Request, { params }: Params) {
     try {
-        const { drug_id } = await params;
+        const { drug_id: product_id } = await params;
 
-        await prisma.drug.update({
-            where: { drug_id },
+        await prisma.product.update({
+            where: { product_id },
             data: {
                 is_active: false,
                 deleted_at: new Date(),

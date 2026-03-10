@@ -1,21 +1,37 @@
-import { ItemType } from "@/generated/prisma/enums";
+import { ProductType, VisitStatus } from "@/generated/prisma";
+
+export interface TreatmentItem {
+    visit_item_id: string;
+    product_id: string;
+    lot_id?: string | null;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    product?: {
+        product_id: string;
+        product_name: string;
+        product_type: ProductType;
+        unit: string;
+    };
+}
 
 export interface Treatment {
     hospital_number: string;
     treatment_id: string;
     visit_id: string;
     visit_date: string;
+    status: VisitStatus;
     symptom?: string;
     diagnosis?: string;
     note?: string;
+    temperature?: number;
     blood_pressure?: string;
     heart_rate?: number;
     weight?: number;
     height?: number;
-    age_years?: number;
-    age_months?: number;
-    age_days?: number;
-    age_formatted?: string;
+    waistline?: number;
+    smoking_history?: string;
+    drinking_history?: string;
 
     patient: {
         hospital_number: any;
@@ -25,35 +41,33 @@ export interface Treatment {
         citizen_number?: string;
         allergy?: string;
     };
-    visitDetails: {
-        visit_detail_id: string;
-        item_type: "drug" | "service" | "procedure";
-        drug_id?: string;
-        procedure_id?: string;
-        description?: string;
-        quantity: number;
-        unit_price: number;
-    }[];
+    items: TreatmentItem[];
+}
+
+export interface CreateTreatmentItemDTO {
+    product_id: string;
+    lot_id?: string;
+    quantity: number;
+    unit_price: number;
 }
 
 export interface CreateTreatmentDTO {
     patient_id: string;
     visit_date: string;
+    status?: VisitStatus;
     symptom?: string;
     diagnosis?: string;
     note?: string;
-    payment_method: string;
+    temperature?: number;
     blood_pressure?: string;
     heart_rate?: number;
     weight?: number;
     height?: number;
+    waistline?: number;
+    smoking_history?: string;
+    drinking_history?: string;
+    payment_method: string;
+    receipt_no?: string;
 
-    items: {
-        item_type: ItemType;
-        drug_id?: string;
-        procedure_id?: string;
-        description?: string;
-        quantity: number;
-        unit_price: number;
-    }[];
+    items: CreateTreatmentItemDTO[];
 }

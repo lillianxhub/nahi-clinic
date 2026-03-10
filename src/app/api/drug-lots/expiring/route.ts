@@ -11,54 +11,43 @@ export async function GET(req: Request) {
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + days);
 
-        const expiringLots = await prisma.drug_Lot.findMany({
-            skip,
-            take,
-            where: {
-                qty_remaining: { gt: 0 },
-                expire_date: { lte: targetDate },
+        const where = {
+            qty_remaining: { gt: 0 },
+            expire_date: { lte: targetDate },
+            is_active: true,
+            deleted_at: null,
+            product: {
                 is_active: true,
                 deleted_at: null,
-                drug: {
-                    is_active: true,
-                    deleted_at: null,
-                },
             },
+        };
+
+        const expiringLots = await prisma.inventoryLot.findMany({
+            skip,
+            take,
+            where,
             include: {
-                drug: {
+                product: {
                     select: {
-                        drug_name: true,
+                        product_name: true,
                         unit: true,
                     },
                 },
             },
-            orderBy: {
-                expire_date: "asc",
-            },
+            orderBy: { expire_date: "asc" },
         });
 
-        const total = await prisma.drug_Lot.count({
-            where: {
-                qty_remaining: { gt: 0 },
-                expire_date: { lte: targetDate },
-                is_active: true,
-                deleted_at: null,
-                drug: {
-                    is_active: true,
-                    deleted_at: null,
-                },
-            },
-        });
+        const total = await prisma.inventoryLot.count({ where });
 
-        return NextResponse.json({
-            data: expiringLots,
-            meta: { total },
-        });
+        return NextResponse.json({ data: expiringLots, meta: { total } });
     } catch (error: any) {
         console.error("Fetch expiring lots error:", error);
         return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
-            { status: 500 }
+            {
+                message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์",
+                error: error.message,
+            },
+            { status: 500 },
         );
     }
 }

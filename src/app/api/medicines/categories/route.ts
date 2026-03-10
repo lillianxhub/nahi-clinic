@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
     try {
-        const categories = await prisma.drug_Category.findMany({
+        const categories = await prisma.category.findMany({
             where: { is_active: true, deleted_at: null },
             orderBy: { category_name: "asc" },
         });
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const category = await prisma.drug_Category.create({
+        const category = await prisma.category.create({
             data: {
                 category_name: category_name.trim(),
             },

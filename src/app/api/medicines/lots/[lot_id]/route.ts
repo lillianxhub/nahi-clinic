@@ -12,12 +12,20 @@ export async function DELETE(req: Request, { params }: Params) {
         const { lot_id } = await params;
 
         await prisma.$transaction(async (tx) => {
-            await tx.drug_Usage.deleteMany({ where: { lot_id: lot_id } });
-            await tx.expense_Drug_Lot.deleteMany({ where: { lot_id: lot_id } });
-            await tx.drug_Adjustment.deleteMany({ where: { lot_id: lot_id } });
+            const now = new Date();
+            await tx.stockUsage.updateMany({
+                where: { lot_id },
+                data: { deleted_at: now },
+            });
+            await tx.stockAdjustment.updateMany({
+                where: { lot_id },
+                data: { deleted_at: now },
+            });
+            await tx.expenseInventoryLot.deleteMany({ where: { lot_id } });
 
-            await tx.drug_Lot.delete({
-                where: { lot_id: lot_id },
+            await tx.inventoryLot.update({
+                where: { lot_id },
+                data: { deleted_at: now, is_active: false },
             });
         });
 
@@ -40,9 +48,14 @@ export async function PATCH(req: Request, { params }: Params) {
     try {
         const { lot_id } = await params;
         const body = await req.json();
-        const { qty_remaining, expire_date } = body;
+        const { qty_remaining, expire_date, sell_price, buy_price } = body;
 
-        if (qty_remaining === undefined && !expire_date) {
+        if (
+            qty_remaining === undefined &&
+            !expire_date &&
+            sell_price === undefined &&
+            buy_price === undefined
+        ) {
             return NextResponse.json(
                 { message: "ข้อมูลไม่ครบถ้วน" },
                 { status: 400 },
@@ -56,9 +69,15 @@ export async function PATCH(req: Request, { params }: Params) {
         if (expire_date) {
             dataToUpdate.expire_date = new Date(expire_date);
         }
+        if (sell_price !== undefined) {
+            dataToUpdate.sell_price = Number(sell_price);
+        }
+        if (buy_price !== undefined) {
+            dataToUpdate.buy_price = Number(buy_price);
+        }
 
-        const updatedLot = await prisma.drug_Lot.update({
-            where: { lot_id: lot_id },
+        const updatedLot = await prisma.inventoryLot.update({
+            where: { lot_id },
             data: dataToUpdate,
         });
 

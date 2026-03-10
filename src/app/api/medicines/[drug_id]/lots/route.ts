@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPagination } from "@/utils/pagination";
 import { getOrderBy } from "@/utils/prismaQuery";
+
 type Params = {
     params: Promise<{
         drug_id: string;
@@ -10,20 +11,20 @@ type Params = {
 
 export async function GET(req: NextRequest, { params }: Params) {
     try {
-        const { drug_id } = await params;
+        const { drug_id: product_id } = await params;
 
-        if (!drug_id) {
+        if (!product_id) {
             return NextResponse.json(
-                { message: "drug_id ไม่ถูกต้อง" },
+                { message: "product_id ไม่ถูกต้อง" },
                 { status: 400 },
             );
         }
 
-        const drugExists = await prisma.drug.findUnique({
-            where: { drug_id },
+        const productExists = await prisma.product.findUnique({
+            where: { product_id },
         });
 
-        if (!drugExists) {
+        if (!productExists) {
             return NextResponse.json(
                 { message: "ไม่พบข้อมูลยา" },
                 { status: 404 },
@@ -36,15 +37,13 @@ export async function GET(req: NextRequest, { params }: Params) {
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
-        const where: any = { drug_id, deleted_at: null };
+        const where: any = { product_id, deleted_at: null };
         if (q) {
             where.lot_no = { contains: q };
         }
 
-        // Apply status filter based on dates
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
         const thirtyDaysFromNow = new Date(today);
         thirtyDaysFromNow.setDate(today.getDate() + 30);
 
@@ -52,13 +51,8 @@ export async function GET(req: NextRequest, { params }: Params) {
             where.expire_date = { lt: today };
         } else if (status === "out_of_stock") {
             where.qty_remaining = 0;
-            // Optionally, we might want to still show it in "out_of_stock" even if expired,
-            // but usually expired overrides out of stock. For now, just qty=0.
         } else if (status === "expiring") {
-            where.expire_date = {
-                gte: today,
-                lte: thirtyDaysFromNow,
-            };
+            where.expire_date = { gte: today, lte: thirtyDaysFromNow };
             where.qty_remaining = { gt: 0 };
         } else if (status === "normal") {
             where.expire_date = { gt: thirtyDaysFromNow };
@@ -68,13 +62,8 @@ export async function GET(req: NextRequest, { params }: Params) {
         const orderBy = getOrderBy(searchParams, "expire_date");
 
         const [data, total] = await Promise.all([
-            prisma.drug_Lot.findMany({
-                skip,
-                take,
-                where,
-                orderBy,
-            }),
-            prisma.drug_Lot.count({ where }),
+            prisma.inventoryLot.findMany({ skip, take, where, orderBy }),
+            prisma.inventoryLot.count({ where }),
         ]);
 
         return NextResponse.json({
@@ -91,7 +80,10 @@ export async function GET(req: NextRequest, { params }: Params) {
     } catch (error) {
         console.error("Get medicine lots error:", error);
         return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error instanceof Error ? error.message : "Unknown error" },
+            {
+                message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์",
+                error: error instanceof Error ? error.message : "Unknown error",
+            },
             { status: 500 },
         );
     }

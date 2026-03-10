@@ -6,7 +6,6 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const filter = searchParams.get("filter") || "week";
 
-        // 1. Set Date Range
         let startDate = new Date();
         let groupBy: "day" | "month" = "day";
         let count = 7;
@@ -14,30 +13,39 @@ export async function GET(req: Request) {
         if (filter === "month") {
             startDate.setMonth(startDate.getMonth() - 1);
             groupBy = "day";
-            count = 30; // โดยประมาณ
+            count = 30;
         } else if (filter === "year") {
             startDate.setFullYear(startDate.getFullYear() - 1);
             groupBy = "month";
             count = 12;
         } else {
-            // week
             startDate.setDate(startDate.getDate() - 7);
             count = 7;
         }
 
-        // 2. Fetch Data from Database
+        // Income: filter via visit.visit_date (no income_date field)
+        // Expense: filter via created_at (no expense_date field)
         const [revenue, expense] = await Promise.all([
             prisma.income.findMany({
-                where: { is_active: true, income_date: { gte: startDate } },
-                orderBy: { income_date: "asc" },
+                where: {
+                    deleted_at: null,
+                    visit: { visit_date: { gte: startDate } },
+                },
+                include: {
+                    visit: { select: { visit_date: true } },
+                },
+                orderBy: { created_at: "asc" },
             }),
             prisma.expense.findMany({
-                where: { is_active: true, expense_date: { gte: startDate } },
-                orderBy: { expense_date: "asc" },
+                where: {
+                    deleted_at: null,
+                    created_at: { gte: startDate },
+                },
+                orderBy: { created_at: "asc" },
             }),
         ]);
 
-        // 3. Create Skeleton Data (Zero Filling)
+        // Create skeleton data (zero filling)
         const groupedData: Record<
             string,
             { date: string; รายรับ: number; รายจ่าย: number; rawDate: Date }
@@ -63,13 +71,13 @@ export async function GET(req: Request) {
                 date: key,
                 รายรับ: 0,
                 รายจ่าย: 0,
-                rawDate: new Date(d), // Store for sorting
+                rawDate: new Date(d),
             };
         }
 
-        // 4. Add Data from DB to Skeleton
+        // Add revenue data — use visit.visit_date as the date key
         revenue.forEach((r) => {
-            const date = r.income_date;
+            const date = r.visit?.visit_date ?? r.created_at;
             const key =
                 groupBy === "day"
                     ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
@@ -83,8 +91,9 @@ export async function GET(req: Request) {
             }
         });
 
+        // Add expense data — use created_at as the date key
         expense.forEach((e) => {
-            const date = e.expense_date;
+            const date = e.created_at;
             const key =
                 groupBy === "day"
                     ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
@@ -98,7 +107,6 @@ export async function GET(req: Request) {
             }
         });
 
-        // 5. Convert to Array and sort by date
         const revenueExpenseChart = Object.values(groupedData)
             .sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime())
             .map(({ rawDate, ...rest }) => ({

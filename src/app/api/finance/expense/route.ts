@@ -26,7 +26,6 @@ export async function GET(request: Request) {
             startDate.setDate(now.getDate() - 6);
             startDate.setHours(0, 0, 0, 0);
         } else {
-            // Default to month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
             endDate = new Date(
                 now.getFullYear(),
@@ -38,44 +37,33 @@ export async function GET(request: Request) {
             );
         }
 
-        // 1. Fetch summary total grouped by type
+        // Expense has no expense_date — filter by created_at
         const expenseGroups = await prisma.expense.groupBy({
             by: ["expense_type"],
-            _sum: {
-                amount: true,
-            },
+            _sum: { amount: true },
             where: {
-                is_active: true,
                 deleted_at: null,
-                expense_date: {
-                    gte: startDate,
-                    lte: endDate,
-                },
+                created_at: { gte: startDate, lte: endDate },
             },
         });
 
-        // 2. Calculate total sum for percentage calculation
-        const totalAmount = expenseGroups.reduce((acc, curr) => {
-            return acc + (Number(curr._sum.amount) || 0);
-        }, 0);
+        const totalAmount = expenseGroups.reduce(
+            (acc, curr) => acc + (Number(curr._sum.amount) || 0),
+            0,
+        );
 
-        // 3. Format data to send back to Frontend
         const stats = expenseGroups.map((group) => {
             const amount = Number(group._sum.amount) || 0;
             const percentage =
                 totalAmount > 0 ? (amount / totalAmount) * 100 : 0;
-
             return {
                 type: group.expense_type,
-                amount: amount,
-                percentage: Math.round(percentage), // Round for cleaner display
+                amount,
+                percentage: Math.round(percentage),
             };
         });
 
-        return NextResponse.json({
-            total: totalAmount,
-            data: stats,
-        });
+        return NextResponse.json({ total: totalAmount, data: stats });
     } catch (error) {
         console.error("Error fetching expense stats:", error);
         return NextResponse.json(
@@ -88,28 +76,22 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { expense_date, expense_type, amount, description, receipt_no } =
-            body;
+        const { expense_type, amount, description, receipt_no } = body;
 
-        // 1. Validation: Check required fields
-        if (!expense_date || !amount || !expense_type) {
+        // expense_date removed from schema — use created_at automatically
+        if (!amount || !expense_type) {
             return NextResponse.json(
-                {
-                    error: "กรุณากรอกข้อมูลที่จำเป็น (วันที่, ประเภท, จำนวนเงิน)",
-                },
+                { error: "กรุณากรอกข้อมูลที่จำเป็น (ประเภท, จำนวนเงิน)" },
                 { status: 400 },
             );
         }
 
-        // 2. Create new Expense entry in Database
         const newExpense = await prisma.expense.create({
             data: {
-                expense_date: new Date(expense_date),
-                expense_type: expense_type,
+                expense_type,
                 amount: Number(amount),
                 description: description || undefined,
                 receipt_no: receipt_no || undefined,
-                is_active: true,
             },
         });
 
