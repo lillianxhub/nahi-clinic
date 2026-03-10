@@ -22,13 +22,20 @@ export async function GET(req: NextRequest) {
             };
         }
 
+        const type = searchParams.get("type"); // drug, supply, service
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
         const where: Record<string, any> = {
             deleted_at: null,
-            product_type: "drug", // only drugs
         };
+
+        if (type) {
+            where.product_type = type;
+        } else {
+            // Default to drugs and supplies for the main medicine list
+            where.product_type = { in: ["drug", "supply"] };
+        }
 
         if (q) {
             where.product_name = { contains: q };
@@ -55,7 +62,7 @@ export async function GET(req: NextRequest) {
                 where: {
                     is_active: true,
                     deleted_at: null,
-                    product_type: "drug",
+                    product_type: where.product_type,
                 },
             });
 
@@ -102,7 +109,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         is_active: true,
                         deleted_at: null,
-                        product_type: "drug",
+                        product_type: where.product_type,
                     },
                 });
 
@@ -138,8 +145,21 @@ export async function GET(req: NextRequest) {
             })(),
         ]);
 
+        const mappedData = data.map((p) => ({
+            ...p,
+            drug_id: p.product_id,
+            drug_name: p.product_name,
+            procedure_id: p.product_id,
+            procedure_name: p.product_name,
+            price: p.lots?.[0]?.sell_price ? Number(p.lots[0].sell_price) : 0,
+            sell_price: p.lots?.[0]?.sell_price
+                ? Number(p.lots[0].sell_price)
+                : 0,
+            status: p.is_active ? "active" : "inactive",
+        }));
+
         return NextResponse.json({
-            data,
+            data: mappedData,
             summary: {
                 lowStockCount: summaryData.lowStockCount,
                 expiringLotsCount: summaryData.expiringLotsCount,
@@ -154,9 +174,12 @@ export async function GET(req: NextRequest) {
             },
         });
     } catch (error: any) {
-        console.error("Get medicine error:", error);
+        console.error("Get products error:", error);
         return NextResponse.json(
-            { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์", error: error.message },
+            {
+                message: "เกิดข้อผิดพลาดในการดึงข้อมูลสินค้า",
+                error: error.message,
+            },
             { status: 500 },
         );
     }
@@ -177,14 +200,17 @@ export async function POST(req: Request) {
             expiry_date,
             lot_no,
             received_date,
+            product_type: bodyProductType,
         } = body;
+
+        const effectiveProductType = bodyProductType || "drug";
 
         const result = await prisma.$transaction(async (tx) => {
             // 1. Find or create Product (drug type)
             let product = await tx.product.findFirst({
                 where: {
                     product_name,
-                    product_type: "drug",
+                    product_type: effectiveProductType,
                     is_active: true,
                     deleted_at: null,
                 },
@@ -202,7 +228,7 @@ export async function POST(req: Request) {
                 product = await tx.product.create({
                     data: {
                         product_name,
-                        product_type: "drug",
+                        product_type: effectiveProductType,
                         category_id,
                         unit,
                         min_stock: 0,
@@ -240,8 +266,11 @@ export async function POST(req: Request) {
             const totalAmount = Number(quantity) * Number(buy_price);
             const expense = await tx.expense.create({
                 data: {
-                    expense_type: "drug",
-                    description: `ซื้อยา: ${product_name} (${quantity} ${unit})`,
+                    expense_type:
+                        effectiveProductType === "drug"
+                            ? "drug"
+                            : "equipment_supply",
+                    description: `ซื้อ${effectiveProductType === "drug" ? "ยา" : "เวชภัณฑ์"}: ${product_name} (${quantity} ${unit})`,
                     amount: totalAmount,
                 },
             });
@@ -257,7 +286,15 @@ export async function POST(req: Request) {
             return { product, lot, expense };
         });
 
-        return NextResponse.json(result, { status: 201 });
+        const response = {
+            ...result.product,
+            drug_id: result.product.product_id,
+            drug_name: result.product.product_name,
+            lot: result.lot,
+            expense: result.expense,
+        };
+
+        return NextResponse.json(response, { status: 201 });
     } catch (error: any) {
         console.error("Create medicine error:", error);
         return NextResponse.json(

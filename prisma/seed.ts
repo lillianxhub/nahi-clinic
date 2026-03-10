@@ -102,13 +102,11 @@ async function main() {
 
     // 3. Products (Procedures as Services)
     const proceduresData = [
-        { name: "ล้างแผล", price: 100 },
-        { name: "เย็บแผล", price: 200 },
-        { name: "ฉีดยา", price: 50 },
-        { name: "เจาะเลือด", price: 100 },
-        { name: "ตรวจร่างกาย", price: 100 },
-        { name: "ตรวจเลือด", price: 200 },
-        { name: "ตรวจปัสสาวะ", price: 150 },
+        { name: "ฉีดยา", price: 50, unit: "ครั้ง" },
+        { name: "เจาะเลือด", price: 100, unit: "ครั้ง" },
+        { name: "ตรวจร่างกาย", price: 100, unit: "ครั้ง" },
+        { name: "ตรวจเลือด", price: 200, unit: "ครั้ง" },
+        { name: "ตรวจปัสสาวะ", price: 150, unit: "ครั้ง" },
     ];
     for (const p of proceduresData) {
         await prisma.product.create({
@@ -116,12 +114,37 @@ async function main() {
                 product_name: p.name,
                 product_type: ProductType.service,
                 category_id: generalCategory.category_id,
-                unit: "ครั้ง",
+                unit: p.unit,
                 lots: {
                     create: {
-                        buy_unit: "ครั้ง",
+                        buy_unit: p.unit,
                         buy_price: 0,
                         sell_price: p.price,
+                        received_date: new Date(),
+                        expire_date: new Date("2099-12-31"),
+                        qty_received: 999999,
+                        qty_remaining: 999999,
+                    },
+                },
+            },
+        });
+    }
+    const supplyData = [
+        { name: "ชุดทำแผลเล็ก", price: 100, unit: "ชุด" },
+        { name: "ชุดทำแผลใหญ่", price: 200, unit: "ชุด" },
+    ];
+    for (const s of supplyData) {
+        await prisma.product.create({
+            data: {
+                product_name: s.name,
+                product_type: ProductType.supply,
+                category_id: generalCategory.category_id,
+                unit: s.unit,
+                lots: {
+                    create: {
+                        buy_unit: s.unit,
+                        buy_price: 0,
+                        sell_price: s.price,
                         received_date: new Date(),
                         expire_date: new Date("2099-12-31"),
                         qty_received: 999999,

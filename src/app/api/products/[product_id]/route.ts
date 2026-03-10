@@ -3,13 +3,13 @@ import { prisma } from "@/lib/prisma";
 
 type Params = {
     params: Promise<{
-        drug_id: string;
+        product_id: string;
     }>;
 };
 
 export async function GET(req: Request, { params }: Params) {
     try {
-        const { drug_id: product_id } = await params;
+        const { product_id } = await params;
 
         if (!product_id) {
             return NextResponse.json(
@@ -31,14 +31,24 @@ export async function GET(req: Request, { params }: Params) {
 
         if (!product) {
             return NextResponse.json(
-                { message: "ไม่พบข้อมูลยา" },
+                { message: "ไม่พบข้อมูลสินค้า" },
                 { status: 404 },
             );
         }
 
-        return NextResponse.json({ data: product });
+        const mappedProduct = {
+            ...product,
+            drug_id: product.product_id,
+            drug_name: product.product_name,
+            sell_price: product.lots?.[0]?.sell_price
+                ? Number(product.lots[0].sell_price)
+                : 0,
+            status: product.is_active ? "active" : "inactive",
+        };
+
+        return NextResponse.json({ data: mappedProduct });
     } catch (error) {
-        console.error("Get medicine detail error:", error);
+        console.error("Get product detail error:", error);
         return NextResponse.json(
             { message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์" },
             { status: 500 },
@@ -48,7 +58,7 @@ export async function GET(req: Request, { params }: Params) {
 
 export async function PATCH(req: Request, { params }: Params) {
     try {
-        const { drug_id: product_id } = await params;
+        const { product_id } = await params;
         const body = await req.json();
 
         const updatedProduct = await prisma.product.update({
@@ -66,12 +76,20 @@ export async function PATCH(req: Request, { params }: Params) {
             },
         });
 
-        return NextResponse.json({ data: updatedProduct });
+        const mappedProduct = {
+            ...updatedProduct,
+            drug_id: updatedProduct.product_id,
+            drug_name: updatedProduct.product_name,
+            sell_price: 0, // Will be updated by client if needed or fetched from details
+            status: updatedProduct.is_active ? "active" : "inactive",
+        };
+
+        return NextResponse.json({ data: mappedProduct });
     } catch (error: any) {
-        console.error("Update medicine error:", error);
+        console.error("Update product error:", error);
         return NextResponse.json(
             {
-                message: "เกิดข้อผิดพลาดในการแก้ไขข้อมูลยา",
+                message: "เกิดข้อผิดพลาดในการแก้ไขข้อมูลสินค้า",
                 error: error.message,
             },
             { status: 500 },
@@ -81,7 +99,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
 export async function DELETE(req: Request, { params }: Params) {
     try {
-        const { drug_id: product_id } = await params;
+        const { product_id } = await params;
 
         await prisma.product.update({
             where: { product_id },
@@ -91,7 +109,7 @@ export async function DELETE(req: Request, { params }: Params) {
             },
         });
 
-        return NextResponse.json({ message: "ลบข้อมูลยาสำเร็จ" });
+        return NextResponse.json({ message: "ลบข้อมูลสินค้าสำเร็จ" });
     } catch (error: any) {
         console.error("Delete medicine error:", error);
         return NextResponse.json(

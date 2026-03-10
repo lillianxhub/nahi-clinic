@@ -14,6 +14,7 @@ import {
     Trash2,
     Edit3,
     AlertCircle,
+    Package,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
@@ -85,6 +86,13 @@ export default function AddTreatmentModal({
     const [searchingProcedures, setSearchingProcedures] = useState(false);
     const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
     const [openAddProcedure, setOpenAddProcedure] = useState(false);
+
+    // Supply Search States
+    const [supplySearchTerm, setSupplySearchTerm] = useState("");
+    const debouncedSupplySearch = useDebounce(supplySearchTerm, 500);
+    const [supplies, setSupplies] = useState<Medicine[]>([]);
+    const [searchingSupplies, setSearchingSupplies] = useState(false);
+    const [showSupplyDropdown, setShowSupplyDropdown] = useState(false);
 
     const totalAmount = selectedItems.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
@@ -188,6 +196,42 @@ export default function AddTreatmentModal({
         fetchProcedures();
     }, [debouncedProcedureSearch]);
 
+    useEffect(() => {
+        const fetchSupplies = async () => {
+            if (debouncedSupplySearch.length < 2) {
+                try {
+                    setSearchingSupplies(true);
+                    const res = await medicineService.getSupplies({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setSupplies(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลเวชภัณฑ์ล้มเหลว", error);
+                } finally {
+                    setSearchingSupplies(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingSupplies(true);
+                const res = await medicineService.getSupplies({
+                    q: debouncedSupplySearch,
+                    pageSize: 5,
+                    status: "active",
+                });
+                setSupplies(res.data);
+            } catch (error) {
+                console.error("ค้นหาเวชภัณฑ์ล้มเหลว", error);
+            } finally {
+                setSearchingSupplies(false);
+            }
+        };
+
+        fetchSupplies();
+    }, [debouncedSupplySearch]);
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
@@ -250,6 +294,36 @@ export default function AddTreatmentModal({
         ]);
         setProcedureSearchTerm("");
         setShowProcedureDropdown(false);
+    };
+
+    const handleSelectSupply = (supply: Medicine) => {
+        const existingItem = selectedItems.find(
+            (item) => item.drug_id === supply.drug_id,
+        );
+
+        if (existingItem) {
+            setSelectedItems(
+                selectedItems.map((item) =>
+                    item.drug_id === supply.drug_id
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item,
+                ),
+            );
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "supply",
+                    drug_id: supply.drug_id,
+                    description: supply.drug_name,
+                    quantity: 1,
+                    unit_price: Number(supply.sell_price),
+                    instruction: "",
+                },
+            ]);
+        }
+        setSupplySearchTerm("");
+        setShowSupplyDropdown(false);
     };
 
     const handleAddService = (
@@ -322,9 +396,11 @@ export default function AddTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
+                    product_id: item.drug_id || item.procedure_id,
                     description:
                         (item.item_type === "drug" ||
-                            item.item_type === "service") &&
+                            item.item_type === "service" ||
+                            item.item_type === "supply") &&
                         item.instruction
                             ? `${item.description} : ${item.instruction}`
                             : item.description,
@@ -953,7 +1029,139 @@ export default function AddTreatmentModal({
                                 )}
                             </div>
 
-                            {/* Section B: Medications */}
+                            {/* Section B: Supplies */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <Package
+                                        size={18}
+                                        className="text-primary"
+                                    />
+                                    รายการเวชภัณฑ์
+                                </h3>
+
+                                <div className="relative">
+                                    <Search
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาเวชภัณฑ์..."
+                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 h-10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                                        value={supplySearchTerm}
+                                        onChange={(e) => {
+                                            setSupplySearchTerm(e.target.value);
+                                            setShowSupplyDropdown(true);
+                                        }}
+                                        onFocus={() =>
+                                            setShowSupplyDropdown(true)
+                                        }
+                                        onBlur={() =>
+                                            setTimeout(() => {
+                                                setShowSupplyDropdown(false);
+                                            }, 200)
+                                        }
+                                    />
+
+                                    <UnifiedDrugDropdown
+                                        isOpen={showSupplyDropdown}
+                                        searchTerm={supplySearchTerm}
+                                        items={supplies}
+                                        isSearching={searchingSupplies}
+                                        displayMode="inventory"
+                                        onSelect={handleSelectSupply}
+                                    />
+                                </div>
+
+                                {selectedItems.filter(
+                                    (i) => i.item_type === "supply",
+                                ).length > 0 && (
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 font-semibold">
+                                                        เวชภัณฑ์
+                                                    </th>
+                                                    <th className="text-center px-4 py-2 font-semibold w-24">
+                                                        จำนวน
+                                                    </th>
+                                                    <th className="text-right px-4 py-2 font-semibold w-24">
+                                                        ราคา
+                                                    </th>
+                                                    <th className="w-10"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedItems.map(
+                                                    (item, index) =>
+                                                        item.item_type ===
+                                                            "supply" && (
+                                                            <tr
+                                                                key={index}
+                                                                className="bg-white"
+                                                            >
+                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                    {item.name ||
+                                                                        item.description}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleUpdateQuantity(
+                                                                                index,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    1,
+                                                                            )
+                                                                        }
+                                                                        className="w-full text-center bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    ฿
+                                                                    {(
+                                                                        item.quantity *
+                                                                        item.unit_price
+                                                                    ).toLocaleString()}
+                                                                </td>
+                                                                <td className="px-2 py-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleRemoveItem(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section C: Medications */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                                     <Pill size={18} className="text-primary" />
