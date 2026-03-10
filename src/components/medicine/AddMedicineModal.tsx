@@ -180,7 +180,7 @@ export default function AddMedicineModal({
             setLoading(true);
 
             await medicineService.createMedicine({
-                drug_name: formData.medicine_name,
+                product_name: formData.medicine_name,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 quantity: Number(formData.quantity),
@@ -304,7 +304,7 @@ export default function AddMedicineModal({
                                 onSelect={(m) => {
                                     setFormData((prev) => ({
                                         ...prev,
-                                        medicine_name: m.drug_name,
+                                        medicine_name: m.product_name,
                                         category_id:
                                             m.category?.category_id || "",
                                         unit: m.unit,

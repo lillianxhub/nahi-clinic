@@ -21,7 +21,7 @@ export default function EditMedicineModal({
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
     const [formData, setFormData] = useState({
-        drug_name: "",
+        product_name: "",
         category_id: "",
         unit: "",
         sell_price: "",
@@ -34,7 +34,7 @@ export default function EditMedicineModal({
             fetchCategories();
             if (medicine) {
                 setFormData({
-                    drug_name: medicine.drug_name,
+                    product_name: medicine.product_name,
                     category_id: medicine.category?.category_id || "",
                     unit: medicine.unit,
                     sell_price: String(medicine.sell_price),
@@ -72,7 +72,7 @@ export default function EditMedicineModal({
             setLoading(true);
 
             await medicineService.updateMedicine(medicine.product_id, {
-                drug_name: formData.drug_name,
+                product_name: formData.product_name,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 sell_price: Number(formData.sell_price),
@@ -93,7 +93,7 @@ export default function EditMedicineModal({
     if (!open) return null;
 
     const isFormValid =
-        formData.drug_name.trim() &&
+        formData.product_name.trim() &&
         formData.category_id &&
         formData.unit.trim() &&
         Number(formData.sell_price) > 0;
@@ -140,10 +140,10 @@ export default function EditMedicineModal({
                         </label>
                         <input
                             type="text"
-                            name="drug_name"
+                            name="product_name"
                             placeholder="กรอกชื่อยา"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.drug_name}
+                            value={formData.product_name}
                             onChange={handleChange}
                             required
                         />

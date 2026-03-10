@@ -94,7 +94,7 @@ export default function MedicineCard({
                         </Badge>
 
                         <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {medicine.drug_name}
+                            {medicine.product_name}
                         </h3>
                     </div>
 

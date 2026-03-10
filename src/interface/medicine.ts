@@ -21,8 +21,9 @@ export interface DrugLot {
 }
 
 export interface ExpiringLot extends DrugLot {
-    drug: {
-        drug_name: string;
+    product: {
+        product_id: string;
+        product_name: string;
         unit: string;
     };
 }
@@ -37,7 +38,7 @@ export interface DrugAdjustment {
 
 export interface Medicine {
     product_id: string;
-    drug_name: string;
+    product_name: string;
     unit: string;
     sell_price: number;
     status: "active" | "inactive";

@@ -47,7 +47,7 @@ export default function MedicinesPage() {
             const res = await medicineService.getMedicines({
                 page,
                 pageSize: 6,
-                orderBy: "name",
+                orderBy: "product_name",
                 order: "asc",
                 ...(debouncedSearch && { q: debouncedSearch }),
                 ...(status !== "all" && { status }),
@@ -174,7 +174,7 @@ export default function MedicinesPage() {
                         onDelete={async (id) => {
                             const result = await Swal.fire({
                                 title: "ยืนยันการลบ?",
-                                text: `คุณต้องการลบยา "${medicine.drug_name}" ใช่หรือไม่?`,
+                                text: `คุณต้องการลบยา "${medicine.product_name || (medicine as any).drug_name}" ใช่หรือไม่?`,
                                 icon: "warning",
                                 showCancelButton: true,
                                 confirmButtonColor: "#d33",
@@ -209,7 +209,7 @@ export default function MedicinesPage() {
                 <MedicineLotModal
                     open={openLot}
                     onClose={() => setOpenLot(false)}
-                    drugName={selectedDrug.drug_name}
+                    drugName={selectedDrug.product_name}
                     productId={selectedDrug.product_id}
                     onRefresh={() => {
                         // We do not need to call openLotModal again since it refetches everything

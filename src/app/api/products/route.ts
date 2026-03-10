@@ -272,6 +272,7 @@ export async function POST(req: Request) {
                             : "equipment_supply",
                     description: `ซื้อ${effectiveProductType === "drug" ? "ยา" : "เวชภัณฑ์"}: ${product_name} (${quantity} ${unit})`,
                     amount: totalAmount,
+                    expense_date: dateForLot,
                 },
             });
 
