@@ -152,7 +152,6 @@ export default function EditTreatmentModal({
                 return {
                     item_type: detail.product?.product_type,
                     product_id: detail.product_id,
-                    procedure_id: detail.product_id,
                     name: detail.product?.product_name,
                     description: detail.product?.product_name, // keep as fallback
                     instruction: instruction,
@@ -354,14 +353,14 @@ export default function EditTreatmentModal({
         setShowSupplyDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: Procedure) => {
+    const handleSelectProcedure = (procedure: any) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                procedure_id: procedure.procedure_id,
-                name: procedure.procedure_name,
-                description: procedure.procedure_name,
+                product_id: procedure.product_id,
+                name: procedure.product_name,
+                description: procedure.product_name,
                 quantity: 1,
                 unit_price: Number(procedure.price),
                 instruction: "",
@@ -440,7 +439,7 @@ export default function EditTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
-                    product_id: item.product_id || item.procedure_id,
+                    product_id: item.product_id,
                     description: item.instruction || "",
                 })),
                 blood_pressure: formData.blood_pressure,
@@ -779,9 +778,9 @@ export default function EditTreatmentModal({
                                             </div>
                                         ) : procedures.length > 0 ? (
                                             <div className="py-1">
-                                                {procedures.map((p) => (
+                                                {procedures.map((p: any) => (
                                                     <button
-                                                        key={p.procedure_id}
+                                                        key={p.product_id}
                                                         type="button"
                                                         className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
                                                         onClick={() =>
@@ -793,7 +792,7 @@ export default function EditTreatmentModal({
                                                         <div>
                                                             <div className="font-medium text-foreground group-hover:text-primary">
                                                                 {
-                                                                    p.procedure_name
+                                                                    p.product_name
                                                                 }
                                                             </div>
                                                             <div className="text-xs text-muted">

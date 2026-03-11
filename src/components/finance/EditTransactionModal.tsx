@@ -39,7 +39,6 @@ import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 interface SelectedItem {
     item_type: "drug" | "service";
     product_id?: string;
-    procedure_id?: string;
     description?: string;
     quantity: number;
     unit_price: number;
@@ -228,7 +227,7 @@ export default function EditTransactionModal({
                 {
                     item_type: "drug",
                     product_id: medicine.product_id,
-                    description: medicine.drug_name,
+                    description: medicine.product_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
                 },
@@ -240,7 +239,7 @@ export default function EditTransactionModal({
 
     const handleSelectProcedure = (procedure: any) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.procedure_id === procedure.procedure_id,
+            (item) => item.product_id === procedure.product_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -251,8 +250,8 @@ export default function EditTransactionModal({
                 ...selectedItems,
                 {
                     item_type: "service",
-                    procedure_id: procedure.procedure_id,
-                    description: procedure.procedure_name,
+                    product_id: procedure.product_id,
+                    description: procedure.product_name,
                     quantity: 1,
                     unit_price: Number(procedure.price),
                 },
@@ -388,7 +387,6 @@ export default function EditTransactionModal({
                                 .map((vd: any) => ({
                                     item_type: vd.item_type,
                                     product_id: vd.product_id,
-                                    procedure_id: vd.procedure_id,
                                     description: vd.description,
                                     quantity: vd.quantity,
                                     unit_price: Number(vd.unit_price),
@@ -1054,7 +1052,7 @@ export default function EditTransactionModal({
                                                                     ) => (
                                                                         <button
                                                                             key={
-                                                                                procedure.procedure_id
+                                                                                procedure.product_id
                                                                             }
                                                                             type="button"
                                                                             onClick={() =>
@@ -1067,7 +1065,7 @@ export default function EditTransactionModal({
                                                                             <div>
                                                                                 <p className="font-medium text-gray-800">
                                                                                     {
-                                                                                        procedure.procedure_name
+                                                                                        procedure.product_name
                                                                                     }
                                                                                 </p>
                                                                             </div>

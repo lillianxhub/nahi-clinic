@@ -22,6 +22,7 @@ export default function EditMedicineModal({
     const [categories, setCategories] = useState<DrugCategory[]>([]);
     const [formData, setFormData] = useState({
         product_name: "",
+        product_type: "drug",
         category_id: "",
         unit: "",
         sell_price: "",
@@ -36,6 +37,7 @@ export default function EditMedicineModal({
             if (medicine) {
                 setFormData({
                     product_name: medicine.product_name,
+                    product_type: medicine.product_type || "drug",
                     category_id: medicine.category?.category_id || "",
                     unit: medicine.unit,
                     sell_price: String(medicine.sell_price),
@@ -74,6 +76,7 @@ export default function EditMedicineModal({
 
             await medicineService.updateMedicine(medicine.product_id, {
                 product_name: formData.product_name,
+                product_type: formData.product_type,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 sell_price: Number(formData.sell_price),
@@ -176,6 +179,27 @@ export default function EditMedicineModal({
                             </select>
                         </div>
 
+                        {/* Product Type */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Package size={16} className="text-primary" />
+                                ประเภทสินค้า <span className="text-danger">*</span>
+                            </label>
+                            <select
+                                name="product_type"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
+                                value={formData.product_type}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="drug">ยา</option>
+                                <option value="supply">เวชภัณฑ์</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         {/* Unit */}
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">

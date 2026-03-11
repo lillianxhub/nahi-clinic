@@ -176,6 +176,8 @@ model StockAdjustment {
   reason        String?      @db.VarChar(255)
 
   created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
   
   lot           InventoryLot @relation(fields: [lot_id], references: [lot_id])
 

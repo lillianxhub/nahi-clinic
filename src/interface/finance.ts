@@ -146,7 +146,6 @@ export interface CreateIncomePayload {
     items?: {
         item_type: "drug" | "service";
         product_id?: string;
-        procedure_id?: string;
         description?: string;
         quantity: number;
         unit_price: number;

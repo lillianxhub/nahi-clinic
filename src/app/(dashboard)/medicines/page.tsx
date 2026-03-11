@@ -11,6 +11,7 @@ import ExpiringMedicineModal from "@/components/medicine/ExpiringMedicineModal";
 import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
 import AddMedicineModal from "@/components/medicine/AddMedicineModal";
+import AddProductModal from "@/components/medicine/AddProductModal";
 import EditMedicineModal from "@/components/medicine/EditMedicineModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -238,7 +239,15 @@ export default function MedicinesPage() {
                 onChange={setPage}
             />
             {/* Add medicine Modal */}
-            <AddMedicineModal
+            {/* <AddMedicineModal
+                open={openAdd}
+                onClose={() => setOpenAdd(false)}
+                onSuccess={() => {
+                    setPage(1);
+                    fetchMedicines();
+                }}
+            /> */}
+            <AddProductModal
                 open={openAdd}
                 onClose={() => setOpenAdd(false)}
                 onSuccess={() => {

@@ -21,16 +21,16 @@ export const procedureService = {
     },
 
     async updateProcedure(
-        procedure_id: string,
+        product_id: string,
         payload: Partial<CreateProcedureDTO>,
     ): Promise<Procedure> {
         return apiClient.patch<Procedure, Partial<CreateProcedureDTO>>(
-            `/api/products/${procedure_id}`,
+            `/api/products/${product_id}`,
             payload,
         );
     },
 
-    async deleteProcedure(procedure_id: string): Promise<void> {
-        return apiClient.delete(`/api/products/${procedure_id}`);
+    async deleteProcedure(product_id: string): Promise<void> {
+        return apiClient.delete(`/api/products/${product_id}`);
     },
 };

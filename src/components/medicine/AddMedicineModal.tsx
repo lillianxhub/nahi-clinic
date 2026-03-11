@@ -52,6 +52,7 @@ export default function AddMedicineModal({
 
     const [formData, setFormData] = useState({
         medicine_name: "",
+        product_type: "drug",
         category_id: "",
         unit: "",
         quantity: "",
@@ -181,6 +182,7 @@ export default function AddMedicineModal({
 
             await medicineService.createMedicine({
                 product_name: formData.medicine_name,
+                product_type: formData.product_type,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 quantity: Number(formData.quantity),
@@ -202,6 +204,7 @@ export default function AddMedicineModal({
 
             setFormData({
                 medicine_name: "",
+                product_type: "drug",
                 category_id: "",
                 unit: "",
                 quantity: "",
@@ -323,6 +326,24 @@ export default function AddMedicineModal({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
+                        {/* Product Type */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Package size={16} className="text-primary" />
+                                ประเภทสินค้า <span className="text-danger">*</span>
+                            </label>
+                            <select
+                                name="product_type"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
+                                value={formData.product_type}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="drug">ยา</option>
+                                <option value="supply">เวชภัณฑ์</option>
+                            </select>
+                        </div>
+
                         {/* Category */}
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">

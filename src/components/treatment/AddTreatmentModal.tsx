@@ -281,14 +281,14 @@ export default function AddTreatmentModal({
         setShowDrugDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: Procedure) => {
+    const handleSelectProcedure = (procedure: any) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                procedure_id: procedure.procedure_id,
-                name: procedure.procedure_name,
-                description: procedure.procedure_name,
+                product_id: procedure.product_id,
+                name: procedure.product_name,
+                description: procedure.product_name,
                 quantity: 1,
                 unit_price: Number(procedure.price),
                 instruction: "",
@@ -399,7 +399,7 @@ export default function AddTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
-                    product_id: item.product_id || item.procedure_id,
+                    product_id: item.product_id,
                     description: item.instruction || "",
                 })),
                 heart_rate: formData.heart_rate
@@ -858,9 +858,9 @@ export default function AddTreatmentModal({
                                                 </div>
                                             ) : procedures.length > 0 ? (
                                                 <div className="py-1">
-                                                    {procedures.map((p) => (
+                                                    {procedures.map((p: any) => (
                                                         <button
-                                                            key={p.procedure_id}
+                                                            key={p.product_id}
                                                             type="button"
                                                             className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
                                                             onClick={() =>
@@ -872,7 +872,7 @@ export default function AddTreatmentModal({
                                                             <div>
                                                                 <div className="font-medium text-foreground group-hover:text-primary">
                                                                     {
-                                                                        p.procedure_name
+                                                                        p.product_name
                                                                     }
                                                                 </div>
                                                                 <div className="text-xs text-muted">

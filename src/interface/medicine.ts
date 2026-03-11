@@ -39,6 +39,7 @@ export interface DrugAdjustment {
 export interface Medicine {
     product_id: string;
     product_name: string;
+    product_type?: string;
     unit: string;
     sell_price: number;
     is_active: boolean;
