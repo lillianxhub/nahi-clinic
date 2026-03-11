@@ -5,6 +5,8 @@ import { X, User, Phone, Calendar, Droplet, MapPin } from "lucide-react";
 import { patientService } from "@/services/patient";
 import { Patient, PatientApiResponse } from "@/interface/patient";
 import { Gender, GenderLabelTH } from "@/constants/gender";
+import { DatePickerSimple } from "@/components/ui/date-picker-simple";
+import { parseISO, format } from "date-fns";
 
 interface Props {
     open: boolean;
@@ -16,6 +18,7 @@ export function mapPatientFromApi(api: PatientApiResponse): Patient {
     return {
         patient_id: api.patient_id,
         hospital_number: api.hospital_number,
+        citizen_number: api.citizen_number,
         first_name: api.first_name,
         last_name: api.last_name,
         fullName: `${api.first_name} ${api.last_name}`,
@@ -30,15 +33,25 @@ export function mapPatientFromApi(api: PatientApiResponse): Patient {
 
 export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
     const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState({
+    const [formData, setFormData] = useState({
         first_name: "",
         last_name: "",
+        citizen_number: "",
         gender: Gender.male,
         birth_date: "",
         phone: "",
         address: "",
-        allergies: "",
+        allergy: "",
     });
+
+    const handleChange = (
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >,
+    ) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
     if (!open) return null;
 
@@ -47,11 +60,11 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
             setLoading(true);
 
             const patient = await patientService.createPatient({
-                ...form,
-                birth_date: form.birth_date || undefined,
-                phone: form.phone || undefined,
-                address: form.address || undefined,
-                allergy: form.allergies || undefined,
+                ...formData,
+                birth_date: formData.birth_date || undefined,
+                phone: formData.phone || undefined,
+                address: formData.address || undefined,
+                allergy: formData.allergy || undefined,
             });
 
             onSuccess(patient);
@@ -63,7 +76,14 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
         }
     };
 
-    const isFormValid = form.first_name.trim() && form.last_name.trim();
+    const isCitizenIdValid = (id: string) => {
+        return /^\d{13}$/.test(id);
+    };
+
+    const isFormValid =
+        formData.first_name.trim() &&
+        formData.last_name.trim() &&
+        isCitizenIdValid(formData.citizen_number);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -105,13 +125,9 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                             <input
                                 placeholder="กรอกชื่อ"
                                 className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={form.first_name}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        first_name: e.target.value,
-                                    })
-                                }
+                                value={formData.first_name}
+                                name="first_name"
+                                onChange={handleChange}
                             />
                         </div>
 
@@ -122,15 +138,33 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                             <input
                                 placeholder="กรอกนามสกุล"
                                 className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={form.last_name}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        last_name: e.target.value,
-                                    })
-                                }
+                                value={formData.last_name}
+                                name="last_name"
+                                onChange={handleChange}
                             />
                         </div>
+                    </div>
+
+                    {/* Citizen Number Row */}
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-foreground">
+                            เลขบัตรประชาชน{" "}
+                            <span className="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="ระบุเลขบัตรประชาชน 13 หลัก"
+                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                            value={formData.citizen_number}
+                            name="citizen_number"
+                            onChange={handleChange}
+                            maxLength={13}
+                        />
+                        <p
+                            className={`text-[10px] mt-1 ${formData.citizen_number.length === 13 ? "text-green-600" : "text-gray-400"}`}
+                        >
+                            {formData.citizen_number.length}/13 หลัก
+                        </p>
                     </div>
 
                     {/* Gender */}
@@ -141,13 +175,9 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         <div className="relative">
                             <select
                                 className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
-                                value={form.gender}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        gender: e.target.value as Gender,
-                                    })
-                                }
+                                value={formData.gender}
+                                name="gender"
+                                onChange={handleChange}
                             >
                                 {Object.values(Gender).map((g) => (
                                     <option key={g} value={g}>
@@ -173,21 +203,23 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         </div>
                     </div>
 
-                    {/* Birth Date */}
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Calendar size={16} className="text-primary" />
-                            วันเกิด
-                        </label>
-                        <input
-                            type="date"
-                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={form.birth_date}
-                            onChange={(e) =>
-                                setForm({ ...form, birth_date: e.target.value })
-                            }
-                        />
-                    </div>
+                    <DatePickerSimple
+                        date={
+                            formData.birth_date
+                                ? parseISO(formData.birth_date)
+                                : undefined
+                        }
+                        setDate={(date) =>
+                            setFormData({
+                                ...formData,
+                                birth_date: date
+                                    ? format(date, "yyyy-MM-dd")
+                                    : "",
+                            })
+                        }
+                        label="วันเกิด"
+                        placeholder="เลือกวันเกิด"
+                    />
 
                     {/* Phone */}
                     <div className="space-y-1.5">
@@ -198,10 +230,9 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         <input
                             placeholder="0xx-xxx-xxxx"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={form.phone}
-                            onChange={(e) =>
-                                setForm({ ...form, phone: e.target.value })
-                            }
+                            value={formData.phone}
+                            name="phone"
+                            onChange={handleChange}
                         />
                     </div>
                     {/* Address */}
@@ -213,13 +244,9 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                         <textarea
                             placeholder="ระบุที่อยู่"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={form.address}
-                            onChange={(e) =>
-                                setForm({
-                                    ...form,
-                                    address: e.target.value,
-                                })
-                            }
+                            value={formData.address}
+                            name="address"
+                            onChange={handleChange}
                         />
                     </div>
 
@@ -233,12 +260,11 @@ export default function AddPatientModal({ open, onClose, onSuccess }: Props) {
                             placeholder="ระบุประวัติการแพ้ยาหรืออาหาร (ถ้ามี)"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                             rows={3}
-                            value={form.allergies}
-                            onChange={(e) =>
-                                setForm({ ...form, allergies: e.target.value })
-                            }
+                            value={formData.allergy}
+                            name="allergy"
+                            onChange={handleChange}
                         />
-                        {form.allergies && (
+                        {formData.allergy && (
                             <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex items-start gap-2">
                                 <svg
                                     className="w-5 h-5 text-warning shrink-0 mt-0.5"

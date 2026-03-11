@@ -11,9 +11,13 @@ import {
     Layers,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
-import { DrugCategory } from "@/interface/medicine";
+import { DrugCategory, Medicine } from "@/interface/medicine";
 import AddCategoryModal from "@/components/medicine/AddCategoryModal";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import swal from "sweetalert2";
+import { formatLocalDate } from "@/utils/dateUtils";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useRef } from "react";
 
 interface AddMedicineModalProps {
     open: boolean;
@@ -29,7 +33,14 @@ export default function AddMedicineModal({
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
-    const getTodayStr = () => new Date().toISOString().split("T")[0];
+
+    // Auto-complete states
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [searchingMedicines, setSearchingMedicines] = useState(false);
+    const [showMedicineDropdown, setShowMedicineDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const getTodayStr = () => formatLocalDate(new Date());
 
     const generateLotNo = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -50,6 +61,61 @@ export default function AddMedicineModal({
         expiry_date: "",
         lot_no: generateLotNo(getTodayStr()),
     });
+
+    const debouncedMedicineSearch = useDebounce(formData.medicine_name, 500);
+
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            if (debouncedMedicineSearch.length < 2) {
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingMedicines(true);
+                const res = await medicineService.getMedicines({
+                    q: debouncedMedicineSearch,
+                    pageSize: 5,
+                    status: "active",
+                });
+                setMedicines(res.data);
+            } catch (error) {
+                console.error("ค้นหายาล้มเหลว", error);
+            } finally {
+                setSearchingMedicines(false);
+            }
+        };
+
+        if (showMedicineDropdown) {
+            fetchMedicines();
+        }
+    }, [debouncedMedicineSearch, showMedicineDropdown]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setShowMedicineDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (open) {
@@ -114,7 +180,7 @@ export default function AddMedicineModal({
             setLoading(true);
 
             await medicineService.createMedicine({
-                drug_name: formData.medicine_name,
+                product_name: formData.medicine_name,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 quantity: Number(formData.quantity),
@@ -169,8 +235,8 @@ export default function AddMedicineModal({
         formData.category_id &&
         formData.unit.trim() &&
         formData.quantity &&
-        formData.buy_price &&
-        formData.sell_price &&
+        Number(formData.buy_price) > 0 &&
+        Number(formData.sell_price) > 0 &&
         formData.expiry_date;
 
     return (
@@ -208,20 +274,52 @@ export default function AddMedicineModal({
                     className="p-6 space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto"
                 >
                     {/* Medicine Name */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 relative" ref={dropdownRef}>
                         <label className="text-sm font-medium text-foreground flex items-center gap-2">
                             <Pill size={16} className="text-primary" />
                             ชื่อยา <span className="text-danger">*</span>
                         </label>
-                        <input
-                            type="text"
-                            name="medicine_name"
-                            placeholder="กรอกชื่อยา"
-                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.medicine_name}
-                            onChange={handleChange}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                name="medicine_name"
+                                placeholder="กรอกชื่อยา"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                value={formData.medicine_name}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    setShowMedicineDropdown(true);
+                                }}
+                                onFocus={() => setShowMedicineDropdown(true)}
+                                required
+                            />
+
+                            {/* Medicine Dropdown */}
+                            <UnifiedDrugDropdown
+                                isOpen={showMedicineDropdown}
+                                searchTerm={formData.medicine_name}
+                                items={medicines}
+                                isSearching={searchingMedicines}
+                                displayMode="category"
+                                onSelect={(m) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        medicine_name: m.product_name,
+                                        category_id:
+                                            m.category?.category_id || "",
+                                        unit: m.unit,
+                                        sell_price: m.sell_price
+                                            ? m.sell_price.toString()
+                                            : "",
+                                        buy_price:
+                                            m.lots && m.lots.length > 0
+                                                ? m.lots[0].buy_price.toString()
+                                                : prev.buy_price,
+                                    }));
+                                    setShowMedicineDropdown(false);
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -330,7 +428,7 @@ export default function AddMedicineModal({
                                 value={formData.buy_price}
                                 onChange={handleChange}
                                 required
-                                min="0"
+                                min="0.01"
                                 step="0.01"
                             />
                         </div>
@@ -353,7 +451,7 @@ export default function AddMedicineModal({
                                 value={formData.sell_price}
                                 onChange={handleChange}
                                 required
-                                min="0"
+                                min="0.01"
                                 step="0.01"
                             />
                         </div>

@@ -3,45 +3,46 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Toast, { ToastType } from "@/components/Toast";
-import { login as loginService } from "@/services/auth";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import usePageTitle from "@/hooks/usePageTitle";
 
 export default function LoginPage() {
     usePageTitle("เข้าสู่ระบบ");
-    console.log("LoginPage rendering, calling useAuth...");
     const [username, setUsername] = useState("");
-    const [password_hash, setPassword] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { login } = useAuth();
 
     const [toast, setToast] = useState<{
         message: string;
         type: ToastType;
     } | null>(null);
 
-    const handleLogin = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         setLoading(true);
 
         try {
-            const response = await loginService({ username, password_hash });
-
-            login({
-                id: response.user.id,
-                username: response.user.username,
+            const res = await signIn("credentials", {
+                username,
+                password,
+                redirect: false,
             });
-        } catch (error: unknown) {
-            let message = "เกิดข้อผิดพลาด";
 
-            if (error instanceof Error) {
-                message = error.message;
+            if (res?.error) {
+                setToast({
+                    message: "ไม่พบผู้ใช้งาน หรือ password ไม่ถูกต้อง",
+                    type: "error",
+                });
+            } else if (res?.ok) {
+                router.push("/dashboard");
+                router.refresh();
             }
-
+        } catch (error: unknown) {
             setToast({
-                message,
+                message: "เกิดข้อผิดพลาดในการเชื่อมต่อ",
                 type: "error",
             });
         } finally {
@@ -56,48 +57,50 @@ export default function LoginPage() {
                     เข้าสู่ระบบ
                 </h1>
 
-                {/* Username */}
-                <input
-                    type="text"
-                    placeholder="ชื่อผู้ใช้"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={loading}
-                    className="w-full mb-4 rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
-                />
-
-                {/* Password */}
-                <div className="relative mb-6">
+                <form onSubmit={handleSubmit}>
+                    {/* Username */}
                     <input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="รหัสผ่าน"
-                        value={password_hash}
-                        onChange={(e) => setPassword(e.target.value)}
+                        type="text"
+                        placeholder="ชื่อผู้ใช้"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         disabled={loading}
-                        className="w-full rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
+                        className="w-full mb-4 rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
                     />
 
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disabled={loading}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-primary cursor-pointer"
-                    >
-                        {showPassword ? (
-                            <Eye size={20} />
-                        ) : (
-                            <EyeOff size={20} />
-                        )}
-                    </button>
-                </div>
+                    {/* Password */}
+                    <div className="relative mb-6">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="รหัสผ่าน"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={loading}
+                            className="w-full rounded-lg px-4 py-3 bg-light text-black placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-secondary"
+                        />
 
-                <button
-                    onClick={handleLogin}
-                    disabled={loading || !username || !password_hash}
-                    className="cursor-pointer w-full rounded-lg py-3 bg-secondary text-black font-semibold hover:opacity-90 transition"
-                >
-                    {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-                </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={loading}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-primary cursor-pointer"
+                        >
+                            {showPassword ? (
+                                <Eye size={20} />
+                            ) : (
+                                <EyeOff size={20} />
+                            )}
+                        </button>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading || !username || !password}
+                        className="cursor-pointer w-full rounded-lg py-3 bg-secondary text-black font-semibold hover:opacity-90 transition"
+                    >
+                        {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+                    </button>
+                </form>
             </div>
             {toast && (
                 <Toast

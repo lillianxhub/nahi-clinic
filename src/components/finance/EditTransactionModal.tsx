@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     X,
     DollarSign,
@@ -12,6 +12,10 @@ import {
     CreditCard,
     Save,
     Loader2,
+    Trash2,
+    Plus,
+    Minus,
+    AlertCircle,
 } from "lucide-react";
 import {
     TransactionItem,
@@ -19,12 +23,27 @@ import {
     Expense,
     CreateIncomePayload,
     CreateExpensePayload,
+    PaymentMethod,
 } from "@/interface/finance";
 import { financeService } from "@/services/finance";
 import { patientService } from "@/services/patient";
+import { Medicine } from "@/interface/medicine";
+import { medicineService } from "@/services/medicine";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search, User } from "lucide-react";
+import { Search, User, Calendar as CalendarIcon } from "lucide-react";
+import { formatLocalDate } from "@/utils/dateUtils";
+import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
+
+interface SelectedItem {
+    item_type: "drug" | "service";
+    product_id?: string;
+    procedure_id?: string;
+    description?: string;
+    quantity: number;
+    unit_price: number;
+}
 
 interface EditTransactionModalProps {
     isOpen: boolean;
@@ -42,6 +61,9 @@ export default function EditTransactionModal({
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [formData, setFormData] = useState<any>(null);
+    const [categories, setCategories] = useState<
+        { category_id: string; category_name: string }[]
+    >([]);
 
     // Patient Search States
     const [searchTerm, setSearchTerm] = useState("");
@@ -57,6 +79,199 @@ export default function EditTransactionModal({
     const [visits, setVisits] = useState<any[]>([]);
     const [loadingVisits, setLoadingVisits] = useState(false);
     const [selectedVisitId, setSelectedVisitId] = useState("");
+
+    // Drug Search States
+    const [drugSearchTerm, setDrugSearchTerm] = useState("");
+    const debouncedDrugSearch = useDebounce(drugSearchTerm, 500);
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [searchingMedicines, setSearchingMedicines] = useState(false);
+    const [showDrugDropdown, setShowDrugDropdown] = useState(false);
+
+    // Procedure Search States
+    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
+    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
+    const [procedures, setProcedures] = useState<any[]>([]);
+    const [searchingProcedures, setSearchingProcedures] = useState(false);
+    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+
+    // Selected Items for "ค่ายา"
+    const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+
+    // Calculate total amount from items
+    const totalFromItems = useMemo(() => {
+        return selectedItems.reduce(
+            (sum, item) => sum + item.quantity * item.unit_price,
+            0,
+        );
+    }, [selectedItems]);
+
+    // Update amount if category is "ค่ายา" or "ค่าบริการ"
+    useEffect(() => {
+        if (
+            formData?.category === "ค่ายา" ||
+            formData?.category === "ค่าบริการ"
+        ) {
+            setFormData((prev: any) => ({
+                ...prev,
+                amount: totalFromItems.toFixed(2),
+            }));
+        }
+    }, [totalFromItems, formData?.category]);
+
+    const isFormValid = useMemo(() => {
+        if (!formData?.category) return false;
+        if (Number(formData?.amount) <= 0) return false;
+
+        if (transaction?.type === "income") {
+            const needsPatient = ["ค่ายา", "ค่าบริการ", "รายได้อื่นๆ"].includes(
+                formData.category,
+            );
+            if (needsPatient && !selectedPatient) return false;
+
+            if (
+                ["ค่ายา", "ค่าบริการ"].includes(formData.category) &&
+                selectedItems.length === 0
+            )
+                return false;
+        }
+
+        return true;
+    }, [formData, transaction, selectedPatient, selectedItems]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await financeService.getIncomeCategories();
+                setCategories(res);
+            } catch (error) {
+                console.error("Failed to fetch income categories:", error);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            if (!debouncedDrugSearch || debouncedDrugSearch.length < 2) {
+                try {
+                    setSearchingMedicines(true);
+                    const res = await medicineService.getMedicines({
+                        pageSize: 10,
+                        status: "active",
+                    });
+                    setMedicines(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                } finally {
+                    setSearchingMedicines(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingMedicines(true);
+                const res = await medicineService.getMedicines({
+                    q: debouncedDrugSearch,
+                    pageSize: 5,
+                    status: "active",
+                });
+                setMedicines(res.data);
+            } catch (error) {
+                console.error("ค้นหายาล้มเหลว", error);
+            } finally {
+                setSearchingMedicines(false);
+            }
+        };
+
+        fetchMedicines();
+    }, [debouncedDrugSearch]);
+
+    useEffect(() => {
+        const fetchProcedures = async () => {
+            if (
+                !debouncedProcedureSearch ||
+                debouncedProcedureSearch.length < 2
+            ) {
+                setProcedures([]);
+                return;
+            }
+
+            try {
+                setSearchingProcedures(true);
+                const res = await fetch(
+                    `/api/procedures?q=${debouncedProcedureSearch}&pageSize=5`,
+                );
+                if (!res.ok) throw new Error("Failed to fetch procedures");
+                const data = await res.json();
+                setProcedures(data.data);
+            } catch (error) {
+                console.error("ค้นหาหัตถการล้มเหลว", error);
+            } finally {
+                setSearchingProcedures(false);
+            }
+        };
+
+        fetchProcedures();
+    }, [debouncedProcedureSearch]);
+
+    const handleSelectMedicine = (medicine: Medicine) => {
+        const existingIndex = selectedItems.findIndex(
+            (item) => item.product_id === medicine.product_id,
+        );
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "drug",
+                    product_id: medicine.product_id,
+                    description: medicine.drug_name,
+                    quantity: 1,
+                    unit_price: Number(medicine.sell_price),
+                },
+            ]);
+        }
+        setDrugSearchTerm("");
+        setShowDrugDropdown(false);
+    };
+
+    const handleSelectProcedure = (procedure: any) => {
+        const existingIndex = selectedItems.findIndex(
+            (item) => item.procedure_id === procedure.procedure_id,
+        );
+        if (existingIndex > -1) {
+            const newItems = [...selectedItems];
+            newItems[existingIndex].quantity += 1;
+            setSelectedItems(newItems);
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "service",
+                    procedure_id: procedure.procedure_id,
+                    description: procedure.procedure_name,
+                    quantity: 1,
+                    unit_price: Number(procedure.price),
+                },
+            ]);
+        }
+        setProcedureSearchTerm("");
+        setShowProcedureDropdown(false);
+    };
+
+    const handleRemoveItem = (index: number) => {
+        setSelectedItems(selectedItems.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateQuantity = (index: number, quantity: number) => {
+        if (quantity < 1) return;
+        const newItems = [...selectedItems];
+        newItems[index].quantity = quantity;
+        setSelectedItems(newItems);
+    };
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -99,16 +314,14 @@ export default function EditTransactionModal({
                 // @ts-ignore
                 const patientVisits = res.visits || [];
                 setVisits(patientVisits);
-                // If it's a new patient selection, select the first visit
+                // ไม่ auto-select visit — ให้ผู้ใช้เลือกเองหรือไม่เลือก (walk-in)
                 if (
                     formData &&
                     !patientVisits.some(
                         (v: any) => v.visit_id === selectedVisitId,
                     )
                 ) {
-                    if (patientVisits.length > 0) {
-                        setSelectedVisitId(patientVisits[0].visit_id);
-                    }
+                    setSelectedVisitId("");
                 }
             } catch (error) {
                 console.error("ดึงข้อมูลการเข้าตรวจล้มเหลว", error);
@@ -125,10 +338,11 @@ export default function EditTransactionModal({
             fetchDetails();
         } else {
             // Reset states when closed
-            setSelectedPatient(null);
-            setSearchTerm("");
             setVisits([]);
             setSelectedVisitId("");
+            setSelectedItems([]);
+            setDrugSearchTerm("");
+            setProcedureSearchTerm("");
         }
     }, [isOpen, transaction]);
 
@@ -136,31 +350,58 @@ export default function EditTransactionModal({
         if (!transaction) return;
         setFetching(true);
         try {
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const res = await financeService.getIncomeById(transaction.id);
                 const dateObj = new Date(res.income_date);
                 setFormData({
                     ...res,
-                    date: dateObj.toISOString().split("T")[0],
+                    date: formatLocalDate(dateObj),
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
+                    category: res.category?.category_name,
                 });
                 setSelectedVisitId(res.visit_id);
 
                 // @ts-ignore - visit and patient are included now
                 if (res.visit?.patient) {
-                    // @ts-ignore
-                    setSelectedPatient(res.visit.patient);
-                    // @ts-ignore
-                    setSearchTerm(res.visit.patient.fullName || "");
+                    const p = res.visit.patient as any;
+                    setSelectedPatient(p);
+                    // fullName อาจไม่ถูก return จาก API — ประกอบจาก first_name + last_name
+                    setSearchTerm(
+                        p.fullName ||
+                            `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim(),
+                    );
+
+                    // Set initial items from visit details (only show drugs or services depending on category)
+                    if (res.visit.visitDetails) {
+                        const targetItemType =
+                            res.category?.category_name === "ค่ายา"
+                                ? "drug"
+                                : "service";
+                        setSelectedItems(
+                            res.visit.visitDetails
+                                .filter(
+                                    (vd: any) =>
+                                        vd.item_type === targetItemType,
+                                )
+                                .map((vd: any) => ({
+                                    item_type: vd.item_type,
+                                    product_id: vd.product_id,
+                                    procedure_id: vd.procedure_id,
+                                    description: vd.description,
+                                    quantity: vd.quantity,
+                                    unit_price: Number(vd.unit_price),
+                                })),
+                        );
+                    }
                 }
             } else {
                 const res = await financeService.getExpenseById(transaction.id);
                 const dateObj = new Date(res.expense_date);
                 setFormData({
                     ...res,
-                    date: dateObj.toISOString().split("T")[0],
+                    date: formatLocalDate(dateObj),
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
@@ -179,8 +420,13 @@ export default function EditTransactionModal({
         e.preventDefault();
         if (!transaction || !formData) return;
 
-        if (transaction.type === "income" && !selectedVisitId) {
-            alert("กรุณาเลือกการเข้าตรวจ (Visit) สำหรับรายรับ");
+        if (
+            transaction.type === "income" &&
+            (formData.category === "ค่าบริการ" ||
+                formData.category === "ค่ายา") &&
+            !selectedPatient?.patient_id
+        ) {
+            alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
             return;
         }
 
@@ -190,13 +436,24 @@ export default function EditTransactionModal({
                 `${formData.date}T${formData.hour}:${formData.minute}:00`,
             ).toISOString();
 
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const payload: Partial<CreateIncomePayload> = {
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
-                    payment_method: formData.payment_method,
+                    payment_method: formData.payment_method as PaymentMethod,
                     receipt_no: formData.receipt_no,
-                    visit_id: selectedVisitId,
+                    visit_id: selectedVisitId || undefined,
+                    patient_id:
+                        !selectedVisitId && selectedPatient
+                            ? selectedPatient.patient_id
+                            : undefined,
+                    income_category: formData.category,
+                    description: formData.description || undefined,
+                    items:
+                        formData.category === "ค่ายา" ||
+                        formData.category === "ค่าบริการ"
+                            ? selectedItems
+                            : undefined,
                 };
                 await financeService.updateIncome(transaction.id, payload);
             } else {
@@ -251,13 +508,13 @@ export default function EditTransactionModal({
                             </h2>
                             <p className="text-white/80 text-sm">
                                 {isIncome ? "รายรับ" : "รายจ่าย"} •{" "}
-                                {transaction.id}
+                                {transaction.receipt_no}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {fetching ? (
+                {fetching || !formData ? (
                     <div className="p-20 flex justify-center flex-col items-center gap-4">
                         <Loader2
                             className="animate-spin text-primary"
@@ -300,13 +557,13 @@ export default function EditTransactionModal({
                                                 onFocus={() =>
                                                     setShowPatientDropdown(true)
                                                 }
-                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white"
+                                                className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                             />
                                         </div>
 
                                         {showPatientDropdown &&
                                             (searchTerm?.length ?? 0) >= 2 && (
-                                                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                                                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
                                                     {searchingPatients ? (
                                                         <div className="p-4 text-center text-gray-500 text-sm">
                                                             กำลังค้นหา...
@@ -377,12 +634,37 @@ export default function EditTransactionModal({
                                                     *
                                                 </span>
                                             </label>
+
+                                            {/* Allergy Alert */}
+                                            {selectedPatient?.allergy?.trim() &&
+                                                selectedPatient.allergy.trim() !==
+                                                    "ไม่มี" &&
+                                                selectedPatient.allergy.trim() !==
+                                                    "-" && (
+                                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <AlertCircle
+                                                            className="text-red-500 shrink-0 mt-0.5"
+                                                            size={18}
+                                                        />
+                                                        <div>
+                                                            <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                                                ประวัติการแพ้ยา/แพ้อื่นๆ
+                                                            </p>
+                                                            <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                                                {
+                                                                    selectedPatient.allergy
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                             {loadingVisits ? (
                                                 <div className="text-sm text-gray-500 animate-pulse flex items-center gap-2 py-2">
                                                     <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                                                     กำลังโหลดข้อมูลการเข้าตรวจ...
                                                 </div>
-                                            ) : visits.length > 0 ? (
+                                            ) : (
                                                 <div className="relative">
                                                     <Calendar
                                                         className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -395,8 +677,13 @@ export default function EditTransactionModal({
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none"
+                                                        className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white appearance-none text-sm"
                                                     >
+                                                        <option value="">
+                                                            — ไม่เลือก Visit
+                                                            (จะสร้าง walk-in
+                                                            อัตโนมัติ)
+                                                        </option>
                                                         {visits.map((visit) => (
                                                             <option
                                                                 key={
@@ -442,134 +729,534 @@ export default function EditTransactionModal({
                                                         </svg>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <div className="text-sm text-red-500 font-medium p-3 bg-red-50 rounded-xl border border-red-100 flex items-center gap-2">
-                                                    <X size={16} />
-                                                    ไม่พบประวัติการเข้าตรวจสำหรับผู้ป่วยรายนี้
-                                                </div>
                                             )}
+                                            {!selectedVisitId &&
+                                                !loadingVisits && (
+                                                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                                                        <span>⚠️</span>
+                                                        จะสร้าง Visit walk-in
+                                                        อัตโนมัติ
+                                                        เพื่อผูกรายการยาและตัดสต็อก
+                                                    </p>
+                                                )}
                                         </div>
                                     )}
                                 </div>
                             )}
-                            {/* Date */}
-                            <div className="space-y-1.5 flex gap-3">
-                                <div className="flex-1">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <Calendar
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        วันที่{" "}
-                                        <span className="text-danger">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={formData?.date || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                date: e.target.value,
-                                            })
-                                        }
-                                        required
+                            {/* Date & Time */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <CalendarIcon
+                                        size={16}
+                                        className="text-primary"
                                     />
-                                </div>
-                                <div className="w-48">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        เวลา{" "}
-                                        <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <select
-                                            value={formData?.hour || "00"}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    hour: e.target.value,
-                                                })
-                                            }
-                                            className="flex-1 px-2 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white text-center"
-                                        >
-                                            {Array.from({ length: 24 }).map(
-                                                (_, i) => (
-                                                    <option
-                                                        key={i}
-                                                        value={i
-                                                            .toString()
-                                                            .padStart(2, "0")}
-                                                    >
-                                                        {i
-                                                            .toString()
-                                                            .padStart(2, "0")}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                        <span className="font-bold text-gray-400">
-                                            :
-                                        </span>
-                                        <select
-                                            value={formData?.minute || "00"}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    minute: e.target.value,
-                                                })
-                                            }
-                                            className="flex-1 px-2 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white text-center"
-                                        >
-                                            {Array.from({ length: 60 }).map(
-                                                (_, i) => (
-                                                    <option
-                                                        key={i}
-                                                        value={i
-                                                            .toString()
-                                                            .padStart(2, "0")}
-                                                    >
-                                                        {i
-                                                            .toString()
-                                                            .padStart(2, "0")}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                    </div>
-                                </div>
+                                    วันที่และเวลา{" "}
+                                    <span className="text-danger">*</span>
+                                </label>
+                                <DateTimePicker24hour
+                                    date={
+                                        formData.date
+                                            ? new Date(
+                                                  `${formData.date}T${formData.hour}:${formData.minute}:00`,
+                                              )
+                                            : undefined
+                                    }
+                                    setDate={(date) => {
+                                        if (date) {
+                                            setFormData((prev: any) => ({
+                                                ...prev,
+                                                date: formatLocalDate(date),
+                                                hour: date
+                                                    .getHours()
+                                                    .toString()
+                                                    .padStart(2, "0"),
+                                                minute: date
+                                                    .getMinutes()
+                                                    .toString()
+                                                    .padStart(2, "0"),
+                                            }));
+                                        }
+                                    }}
+                                />
                             </div>
 
                             {/* Type Specific Fields */}
                             {isIncome ? (
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <CreditCard
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        วิธีการชำระเงิน{" "}
-                                        <span className="text-danger">*</span>
-                                    </label>
-                                    <select
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={formData?.payment_method || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                payment_method: e.target.value,
-                                            })
-                                        }
-                                        required
-                                    >
-                                        <option value="cash">เงินสด</option>
-                                        <option value="transfer">
-                                            เงินโอน
-                                        </option>
-                                        <option value="credit">
-                                            บัตรเครดิต
-                                        </option>
-                                    </select>
-                                </div>
+                                <>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <Tag
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            หมวดหมู่รายการ{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <select
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={formData?.category || ""}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    category: e.target.value,
+                                                    description: "",
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="">
+                                                เลือกหมวดหมู่
+                                            </option>
+                                            {categories.map((cat) => (
+                                                <option
+                                                    key={cat.category_id}
+                                                    value={cat.category_name}
+                                                >
+                                                    {cat.category_name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {formData?.category === "ค่ายา" && (
+                                        <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="relative">
+                                                <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                                    เพิ่มรายการยา{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Search
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={18}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="ค้นหายาด้วยชื่อ..."
+                                                        value={drugSearchTerm}
+                                                        onChange={(e) => {
+                                                            setDrugSearchTerm(
+                                                                e.target.value,
+                                                            );
+                                                            setShowDrugDropdown(
+                                                                true,
+                                                            );
+                                                        }}
+                                                        onFocus={() =>
+                                                            setShowDrugDropdown(
+                                                                true,
+                                                            )
+                                                        }
+                                                        className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
+                                                    />
+                                                </div>
+
+                                                <UnifiedDrugDropdown
+                                                    isOpen={showDrugDropdown}
+                                                    searchTerm={drugSearchTerm}
+                                                    items={medicines}
+                                                    isSearching={
+                                                        searchingMedicines
+                                                    }
+                                                    displayMode="inventory"
+                                                    onSelect={(m) =>
+                                                        handleSelectMedicine(m)
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Medicine Table */}
+                                            <div className="overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                                        <tr className="text-gray-500 font-semibold">
+                                                            <th className="p-3 text-left">
+                                                                รายการ
+                                                            </th>
+                                                            <th className="p-3 text-center">
+                                                                จำนวน
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                ราคาหน่วย
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                รวม
+                                                            </th>
+                                                            <th className="p-3 w-10"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {selectedItems.length >
+                                                        0 ? (
+                                                            selectedItems.map(
+                                                                (
+                                                                    item,
+                                                                    index,
+                                                                ) => (
+                                                                    <tr
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="hover:bg-gray-50/50 transition-colors"
+                                                                    >
+                                                                        <td className="p-3">
+                                                                            <p className="font-semibold text-gray-800">
+                                                                                {
+                                                                                    item.description
+                                                                                }
+                                                                            </p>
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <input
+                                                                                type="number"
+                                                                                value={
+                                                                                    item.quantity
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleUpdateQuantity(
+                                                                                        index,
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0,
+                                                                                    )
+                                                                                }
+                                                                                className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-3 text-right text-gray-600 tabular-nums">
+                                                                            ฿
+                                                                            {Number(
+                                                                                item.unit_price,
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3 text-right font-bold text-primary tabular-nums">
+                                                                            ฿
+                                                                            {(
+                                                                                item.quantity *
+                                                                                Number(
+                                                                                    item.unit_price,
+                                                                                )
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleRemoveItem(
+                                                                                        index,
+                                                                                    )
+                                                                                }
+                                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                            >
+                                                                                <Trash2
+                                                                                    size={
+                                                                                        16
+                                                                                    }
+                                                                                />
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )
+                                                        ) : (
+                                                            <tr>
+                                                                <td
+                                                                    colSpan={5}
+                                                                    className="p-8 text-center text-gray-400 bg-white italic"
+                                                                >
+                                                                    ยังไม่มีรายการที่เลือก
+                                                                    กรุณาค้นหายาด้านบน
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                    {selectedItems.length >
+                                                        0 && (
+                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                            <tr>
+                                                                <td
+                                                                    colSpan={3}
+                                                                    className="p-3 text-right font-semibold text-gray-600"
+                                                                >
+                                                                    ราคารวมทั้งสิ้น:
+                                                                </td>
+                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                    ฿
+                                                                    {totalFromItems.toLocaleString()}
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    )}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData?.category === "ค่าบริการ" && (
+                                        <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <div className="relative">
+                                                <label className="block text-sm font-semibold mb-1.5 text-gray-700">
+                                                    เพิ่มรายการหัตถการ/ค่าบริการ{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </label>
+                                                <div className="relative">
+                                                    <Search
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                                                        size={18}
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="ค้นหาหัตถการ..."
+                                                        value={
+                                                            procedureSearchTerm
+                                                        }
+                                                        onChange={(e) => {
+                                                            setProcedureSearchTerm(
+                                                                e.target.value,
+                                                            );
+                                                            setShowProcedureDropdown(
+                                                                true,
+                                                            );
+                                                        }}
+                                                        onFocus={() =>
+                                                            setShowProcedureDropdown(
+                                                                true,
+                                                            )
+                                                        }
+                                                        className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
+                                                    />
+                                                </div>
+
+                                                {showProcedureDropdown &&
+                                                    procedureSearchTerm && (
+                                                        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
+                                                            {searchingProcedures ? (
+                                                                <div className="p-4 text-center text-gray-500 text-sm">
+                                                                    กำลังค้นหา...
+                                                                </div>
+                                                            ) : procedures.length >
+                                                              0 ? (
+                                                                procedures.map(
+                                                                    (
+                                                                        procedure,
+                                                                    ) => (
+                                                                        <button
+                                                                            key={
+                                                                                procedure.procedure_id
+                                                                            }
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleSelectProcedure(
+                                                                                    procedure,
+                                                                                )
+                                                                            }
+                                                                            className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors"
+                                                                        >
+                                                                            <div>
+                                                                                <p className="font-medium text-gray-800">
+                                                                                    {
+                                                                                        procedure.procedure_name
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                            <span className="text-sm font-semibold text-primary tabular-nums shrink-0">
+                                                                                ฿
+                                                                                {Number(
+                                                                                    procedure.price,
+                                                                                ).toLocaleString()}
+                                                                            </span>
+                                                                        </button>
+                                                                    ),
+                                                                )
+                                                            ) : (
+                                                                <div className="p-4 text-center text-gray-500 text-sm">
+                                                                    ไม่พบข้อมูลหัตถการ
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                            </div>
+
+                                            {/* Service/Procedure Table */}
+                                            <div className="overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                                        <tr className="text-gray-500 font-semibold">
+                                                            <th className="p-3 text-left">
+                                                                รายการ
+                                                            </th>
+                                                            <th className="p-3 text-center">
+                                                                จำนวน
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                ราคา
+                                                            </th>
+                                                            <th className="p-3 text-right">
+                                                                รวม
+                                                            </th>
+                                                            <th className="p-3 w-10"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-100">
+                                                        {selectedItems.length >
+                                                        0 ? (
+                                                            selectedItems.map(
+                                                                (
+                                                                    item,
+                                                                    index,
+                                                                ) => (
+                                                                    <tr
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="hover:bg-gray-50/50 transition-colors"
+                                                                    >
+                                                                        <td className="p-3">
+                                                                            <p className="font-semibold text-gray-800">
+                                                                                {
+                                                                                    item.description
+                                                                                }
+                                                                            </p>
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <input
+                                                                                type="number"
+                                                                                value={
+                                                                                    item.quantity
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleUpdateQuantity(
+                                                                                        index,
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0,
+                                                                                    )
+                                                                                }
+                                                                                className="w-12 text-center border-b border-gray-200 focus:border-primary outline-none py-0.5 bg-transparent font-semibold"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-3 text-right text-gray-600 tabular-nums">
+                                                                            ฿
+                                                                            {Number(
+                                                                                item.unit_price,
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3 text-right font-bold text-primary tabular-nums">
+                                                                            ฿
+                                                                            {(
+                                                                                item.quantity *
+                                                                                Number(
+                                                                                    item.unit_price,
+                                                                                )
+                                                                            ).toLocaleString()}
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleRemoveItem(
+                                                                                        index,
+                                                                                    )
+                                                                                }
+                                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                            >
+                                                                                <Trash2
+                                                                                    size={
+                                                                                        16
+                                                                                    }
+                                                                                />
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )
+                                                        ) : (
+                                                            <tr>
+                                                                <td
+                                                                    colSpan={5}
+                                                                    className="p-8 text-center text-gray-400 bg-white italic"
+                                                                >
+                                                                    ยังไม่มีรายการที่เลือก
+                                                                    กรุณาค้นหาหัตถการด้านบน
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                    {selectedItems.length >
+                                                        0 && (
+                                                        <tfoot className="bg-gray-50/50 border-t border-gray-200">
+                                                            <tr>
+                                                                <td
+                                                                    colSpan={3}
+                                                                    className="p-3 text-right font-semibold text-gray-600"
+                                                                >
+                                                                    ราคารวมทั้งสิ้น:
+                                                                </td>
+                                                                <td className="p-3 text-right text-lg font-bold text-primary tabular-nums">
+                                                                    ฿
+                                                                    {totalFromItems.toLocaleString()}
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    )}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <CreditCard
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            วิธีการชำระเงิน{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <select
+                                            className="w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
+                                            value={
+                                                formData?.payment_method || ""
+                                            }
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    payment_method:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            required
+                                        >
+                                            <option value="cash">เงินสด</option>
+                                            <option value="transfer">
+                                                เงินโอน
+                                            </option>
+                                            <option value="credit">
+                                                บัตรเครดิต
+                                            </option>
+                                        </select>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -581,7 +1268,7 @@ export default function EditTransactionModal({
                                         <span className="text-danger">*</span>
                                     </label>
                                     <select
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        className="w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                         value={formData?.expense_type || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -617,9 +1304,18 @@ export default function EditTransactionModal({
                                 <input
                                     type="number"
                                     step="0.01"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
+                                        formData?.category === "ค่ายา" ||
+                                        formData?.category === "ค่าบริการ"
+                                            ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
+                                            : "focus:border-primary"
+                                    }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
+                                    readOnly={
+                                        formData?.category === "ค่ายา" ||
+                                        formData?.category === "ค่าบริการ"
+                                    }
                                     onChange={(e) =>
                                         setFormData({
                                             ...formData,
@@ -628,32 +1324,50 @@ export default function EditTransactionModal({
                                     }
                                     required
                                 />
+                                {(formData?.category === "ค่ายา" ||
+                                    formData?.category === "ค่าบริการ") && (
+                                    <p className="text-xs text-muted mt-1 px-1">
+                                        * คำนวณอัตโนมัติจากรายการ
+                                        {formData?.category === "ค่ายา"
+                                            ? "ยาและเวชภัณฑ์"
+                                            : "หัตถการ"}
+                                    </p>
+                                )}
                             </div>
 
-                            {/* Description (Only for Expense) */}
-                            {!isIncome && (
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                        <FileText
-                                            size={16}
-                                            className="text-primary"
-                                        />
-                                        รายละเอียด
-                                    </label>
-                                    <textarea
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                                        rows={3}
-                                        placeholder="ระบุรายละเอียดเพิ่มเติม..."
-                                        value={formData?.description || ""}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                description: e.target.value,
-                                            })
-                                        }
+                            {/* Description */}
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                    <FileText
+                                        size={16}
+                                        className="text-primary"
                                     />
-                                </div>
-                            )}
+                                    รายละเอียด
+                                    {isIncome && (
+                                        <span className="text-gray-400 font-normal text-xs">
+                                            (ถ้าไม่กรอกระบบจะสร้างอัตโนมัติ)
+                                        </span>
+                                    )}
+                                </label>
+                                <textarea
+                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-sm"
+                                    rows={2}
+                                    placeholder={
+                                        isIncome
+                                            ? selectedPatient
+                                                ? `ค่าเริ่มต้น: "${formData?.category || "หมวดหมู่"}: ผู้ป่วย ${selectedPatient.fullName}"`
+                                                : `ค่าเริ่มต้น: "${formData?.category || "หมวดหมู่"}"`
+                                            : "ระบุรายละเอียดเพิ่มเติม..."
+                                    }
+                                    value={formData?.description || ""}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            description: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
 
                             {/* Receipt No */}
                             <div className="space-y-1.5">
@@ -666,7 +1380,7 @@ export default function EditTransactionModal({
                                 </label>
                                 <input
                                     type="text"
-                                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                    className="w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                                     placeholder="ระบุเลขที่ใบเสร็จ"
                                     value={formData?.receipt_no || ""}
                                     onChange={(e) =>
@@ -680,31 +1394,31 @@ export default function EditTransactionModal({
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+                        <div className="p-8 bg-light flex justify-end gap-3 border-t border-gray-200">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-5 py-2.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition-colors"
+                                className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-foreground hover:bg-gray-50 transition-colors"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={loading || !isFormValid}
+                                className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/30"
                             >
                                 {loading ? (
                                     <>
                                         <Loader2
                                             className="animate-spin"
-                                            size={18}
+                                            size={20}
                                         />
-                                        กำลังบันทึก...
+                                        <span>กำลังบันทึก...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Save size={18} />
-                                        บันทึกการแก้ไข
+                                        <Save size={20} />
+                                        <span>บันทึกการแก้ไข</span>
                                     </>
                                 )}
                             </button>

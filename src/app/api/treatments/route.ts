@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CreateTreatmentDTO } from "@/interface/treatment";
+import { generateReceiptNo, calculateAge, formatAge } from "@/lib/utils";
 
 export async function GET(req: Request) {
     try {
@@ -41,13 +42,19 @@ export async function GET(req: Request) {
 
         // search patient name
         if (q) {
-            where.patient = {
-                OR: [
-                    { first_name: { contains: q } },
-                    { last_name: { contains: q } },
-                    { hospital_number: { contains: q } },
-                ],
-            };
+            const terms = q.split(/\s+/).filter(Boolean);
+            if (terms.length > 0) {
+                where.patient = {
+                    AND: terms.map((term) => ({
+                        OR: [
+                            { first_name: { contains: term } },
+                            { last_name: { contains: term } },
+                            { hospital_number: { contains: term } },
+                            { citizen_number: { contains: term } },
+                        ],
+                    })),
+                };
+            }
         }
 
         const [visits, total] = await Promise.all([
@@ -61,6 +68,20 @@ export async function GET(req: Request) {
                             first_name: true,
                             last_name: true,
                             hospital_number: true,
+                            citizen_number: true,
+                        },
+                    },
+                    items: {
+                        where: { is_active: true },
+                        include: {
+                            product: {
+                                select: {
+                                    product_id: true,
+                                    product_name: true,
+                                    product_type: true,
+                                    unit: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -70,8 +91,17 @@ export async function GET(req: Request) {
             prisma.visit.count({ where }),
         ]);
 
+        const mappedVisits = visits.map((visit: any) => ({
+            ...visit,
+            age_formatted: formatAge(
+                visit.age_years || 0,
+                visit.age_months || 0,
+                visit.age_days || 0,
+            ),
+        }));
+
         return NextResponse.json({
-            data: visits,
+            data: mappedVisits,
             meta: {
                 pagination: {
                     page,
@@ -94,46 +124,98 @@ export async function POST(req: Request) {
     try {
         const body: CreateTreatmentDTO = await req.json();
 
+        if (body.heart_rate !== undefined && Number(body.heart_rate) <= 0) {
+            throw new Error("heart rate ไม่ถูกต้อง");
+        }
+
+        if (body.weight !== undefined && Number(body.weight) <= 0) {
+            throw new Error("น้ำหนักไม่ถูกต้อง");
+        }
+
+        if (body.height !== undefined && Number(body.height) <= 0) {
+            throw new Error("ส่วนสูงไม่ถูกต้อง");
+        }
+
         const result = await prisma.$transaction(async (tx) => {
+            const patient = await tx.patient.findUnique({
+                where: { patient_id: body.patient_id },
+                select: { birth_date: true },
+            });
+
+            let age_years = null,
+                age_months = null,
+                age_days = null;
+
+            if (patient?.birth_date) {
+                const age = calculateAge(
+                    new Date(patient.birth_date),
+                    new Date(body.visit_date),
+                );
+                age_years = age.years;
+                age_months = age.months;
+                age_days = age.days;
+            }
+
             // 1. Create Visit
             const visit = await tx.visit.create({
                 data: {
-                    patient_id: body.patient_id,
+                    patient: { connect: { patient_id: body.patient_id } },
                     visit_date: new Date(body.visit_date),
+                    status: body.status ?? "draft",
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
                     note: body.note,
+                    temperature: body.temperature
+                        ? Number(body.temperature)
+                        : null,
+                    blood_pressure: body.blood_pressure,
+                    heart_rate: body.heart_rate
+                        ? Number(body.heart_rate)
+                        : null,
+                    weight: body.weight ? Number(body.weight) : null,
+                    height: body.height ? Number(body.height) : null,
+                    waistline: body.waistline ? Number(body.waistline) : null,
+                    smoking_history: body.smoking_history,
+                    drinking_history: body.drinking_history,
+                    age_years: age_years,
+                    age_months: age_months,
+                    age_days: age_days,
                 },
             });
 
+            const isCompleted = visit.status === "completed";
             let totalAmount = 0;
 
             // 2. Process Items
             for (const item of body.items) {
-                // 2.1 Create Visit Detail
-                await tx.visit_Detail.create({
-                    data: {
-                        visit_id: visit.visit_id,
-                        item_type: item.item_type,
-                        drug_id: item.drug_id,
-                        description: item.description,
-                        quantity: Number(item.quantity),
-                        unit_price: Number(item.unit_price),
-                    },
+                const qty = Number(item.quantity);
+                const price = Number(item.unit_price);
+                const totalPrice = qty * price;
+                totalAmount += totalPrice;
+
+                // 2.1 Get product type to decide if stock deduction is needed
+                const product = await tx.product.findUnique({
+                    where: { product_id: item.product_id },
+                    select: { product_type: true },
                 });
 
-                totalAmount += Number(item.quantity) * Number(item.unit_price);
+                let usedLotId: string | null = null;
 
-                // 2.2 If it's a drug, handle FEFO stock deduction
-                if (item.item_type === "drug" && item.drug_id) {
-                    let remainingToDeduct = Number(item.quantity);
+                // 2.2 If drug or supply AND status is completed → FEFO stock deduction
+                if (
+                    isCompleted &&
+                    product &&
+                    (product.product_type === "drug" ||
+                        product.product_type === "supply")
+                ) {
+                    let remainingToDeduct = qty;
 
-                    // Find lots with stock, ordered by expiry (FEFO)
-                    const lots = await tx.drug_Lot.findMany({
+                    const lots = await tx.inventoryLot.findMany({
                         where: {
-                            drug_id: item.drug_id,
+                            product_id: item.product_id,
                             qty_remaining: { gt: 0 },
                             is_active: true,
+                            deleted_at: null,
                         },
                         orderBy: { expire_date: "asc" },
                     });
@@ -146,19 +228,21 @@ export async function POST(req: Request) {
                             remainingToDeduct,
                         );
 
-                        // Update Lot
-                        await tx.drug_Lot.update({
+                        if (!usedLotId) usedLotId = lot.lot_id;
+
+                        await tx.inventoryLot.update({
                             where: { lot_id: lot.lot_id },
                             data: {
                                 qty_remaining: { decrement: deduction },
                             },
                         });
 
-                        // Create Drug Usage history
-                        await tx.drug_Usage.create({
+                        await tx.stockUsage.create({
                             data: {
-                                visit_id: visit.visit_id,
-                                lot_id: lot.lot_id,
+                                visit: {
+                                    connect: { visit_id: visit.visit_id },
+                                },
+                                lot: { connect: { lot_id: lot.lot_id } },
                                 quantity: deduction,
                                 used_at: new Date(body.visit_date),
                             },
@@ -169,21 +253,40 @@ export async function POST(req: Request) {
 
                     if (remainingToDeduct > 0) {
                         throw new Error(
-                            `ยาในสต็อกไม่เพียงพอ (เหลือที่ต้องหักอีก ${remainingToDeduct} หน่วย)`,
+                            `สินค้าในสต็อกไม่เพียงพอ (เหลือที่ต้องหักอีก ${remainingToDeduct} หน่วย)`,
                         );
                     }
                 }
+
+                // 2.3 Create VisitItem
+                await tx.visitItem.create({
+                    data: {
+                        visit: { connect: { visit_id: visit.visit_id } },
+                        product: { connect: { product_id: item.product_id } },
+                        lot: usedLotId
+                            ? { connect: { lot_id: usedLotId } }
+                            : undefined,
+                        quantity: qty,
+                        unit_price: price,
+                        total_price: totalPrice,
+                    },
+                });
             }
 
-            // 3. Create Income record
-            await tx.income.create({
-                data: {
-                    visit_id: visit.visit_id,
-                    income_date: new Date(body.visit_date),
-                    amount: totalAmount,
-                    payment_method: body.payment_method as any,
-                },
-            });
+            // 3. Create Income (1-1 with Visit) only if completed
+            if (isCompleted && totalAmount > 0) {
+                await tx.income.create({
+                    data: {
+                        visit: { connect: { visit_id: visit.visit_id } },
+                        income_type: "service", // Default for treatment
+                        amount: totalAmount,
+                        payment_method: body.payment_method as any,
+                        receipt_no:
+                            body.receipt_no || generateReceiptNo("รักษา"),
+                        income_date: new Date(body.visit_date),
+                    },
+                });
+            }
 
             return visit;
         });

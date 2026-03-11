@@ -16,11 +16,17 @@ export async function GET(req: Request) {
 
         const whereClause: any = { deleted_at: null };
         if (q) {
-            whereClause.OR = [
-                { first_name: { contains: q } },
-                { last_name: { contains: q } },
-                { hospital_number: { contains: q } },
-            ];
+            const terms = q.split(/\s+/).filter(Boolean);
+            if (terms.length > 0) {
+                whereClause.AND = terms.map((term) => ({
+                    OR: [
+                        { first_name: { contains: term } },
+                        { last_name: { contains: term } },
+                        { hospital_number: { contains: term } },
+                        { citizen_number: { contains: term } },
+                    ],
+                }));
+            }
         }
 
         const patients = await prisma.patient.findMany({
@@ -61,15 +67,15 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        // 1. Find latest patient
+        // 1. Find latest patient by hospital_number to get the highest one
         const lastPatient = await prisma.patient.findFirst({
             where: {
                 hospital_number: {
-                    not: null,
+                    startsWith: "HN",
                 },
             },
             orderBy: {
-                created_at: "desc",
+                hospital_number: "desc",
             },
             select: {
                 hospital_number: true,
@@ -80,11 +86,11 @@ export async function POST(req: Request) {
         let nextNumber = 1;
 
         if (lastPatient?.hospital_number) {
-            const lastNumber = parseInt(
-                lastPatient.hospital_number.replace("HN", ""),
-                10,
-            );
-            nextNumber = lastNumber + 1;
+            // Extract only digits from the HN string (e.g., "HN00005" -> "00005")
+            const numberMatch = lastPatient.hospital_number.match(/\d+/);
+            if (numberMatch) {
+                nextNumber = parseInt(numberMatch[0], 10) + 1;
+            }
         }
 
         const hospitalNumber = `HN${nextNumber.toString().padStart(5, "0")}`;
@@ -97,6 +103,7 @@ export async function POST(req: Request) {
                 gender: body.gender,
                 phone: body.phone,
                 address: body.address,
+                citizen_number: body.citizen_number,
                 birth_date: body.birth_date ? new Date(body.birth_date) : null,
                 allergy: body.allergy,
             },

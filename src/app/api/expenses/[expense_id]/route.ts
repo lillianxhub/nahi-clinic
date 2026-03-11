@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 type Params = {
-    params: Promise<{
-        expense_id: string;
-    }>;
+    params: Promise<{ expense_id: string }>;
 };
 
 export async function GET(req: Request, { params }: Params) {
@@ -12,9 +10,7 @@ export async function GET(req: Request, { params }: Params) {
         const { expense_id } = await params;
 
         const expense = await prisma.expense.findUnique({
-            where: {
-                expense_id,
-            },
+            where: { expense_id },
         });
 
         if (!expense) {
@@ -38,8 +34,6 @@ export async function PATCH(req: Request, { params }: Params) {
     try {
         const { expense_id } = await params;
         const body = await req.json();
-
-        // Prevent updating ID
         delete body.expense_id;
 
         const updatedExpense = await prisma.expense.update({
@@ -64,15 +58,40 @@ export async function DELETE(req: Request, { params }: Params) {
     try {
         const { expense_id } = await params;
 
-        await prisma.expense.update({
-            where: { expense_id },
-            data: {
-                is_active: false,
-                deleted_at: new Date(),
-            },
+        const result = await prisma.$transaction(async (tx) => {
+            const current = await tx.expense.findUnique({
+                where: { expense_id },
+                include: { expenseLots: true },
+            });
+
+            if (!current) throw new Error("ไม่พบข้อมูลรายจ่าย");
+
+            const now = new Date();
+
+            // If it's a drug expense, zero out linked inventory lots
+            if (current.expense_type === "drug") {
+                for (const link of current.expenseLots) {
+                    await tx.inventoryLot.update({
+                        where: { lot_id: link.lot_id },
+                        data: {
+                            qty_remaining: 0,
+                            is_active: false,
+                            deleted_at: now,
+                        },
+                    });
+                }
+            }
+
+            return await tx.expense.update({
+                where: { expense_id },
+                data: { deleted_at: now },
+            });
         });
 
-        return NextResponse.json({ message: "ลบข้อมูลรายจ่ายสำเร็จ" });
+        return NextResponse.json({
+            message: "ลบข้อมูลรายจ่ายสำเร็จ",
+            data: result,
+        });
     } catch (error: any) {
         console.error("Delete expense error:", error);
         return NextResponse.json(

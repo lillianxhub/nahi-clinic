@@ -5,6 +5,8 @@ import { X, User, Phone, Calendar, Droplet, MapPin, Save } from "lucide-react";
 import { patientService } from "@/services/patient";
 import { Patient, CreatePatientPayload } from "@/interface/patient";
 import { Gender } from "@/constants/gender";
+import { DatePickerSimple } from "@/components/ui/date-picker-simple";
+import { parseISO, format } from "date-fns";
 
 interface EditPatientModalProps {
     open: boolean;
@@ -23,6 +25,7 @@ export default function EditPatientModal({
     const [formData, setFormData] = useState<Partial<CreatePatientPayload>>({
         first_name: "",
         last_name: "",
+        citizen_number: "",
         gender: Gender.male,
         phone: "",
         address: undefined,
@@ -33,15 +36,16 @@ export default function EditPatientModal({
     useEffect(() => {
         if (open && patient) {
             setFormData({
-                first_name: patient.first_name,
-                last_name: patient.last_name,
+                first_name: patient.first_name || "",
+                last_name: patient.last_name || "",
+                citizen_number: patient.citizen_number || "",
                 gender: patient.gender,
-                phone: patient.phone,
-                address: patient.address,
+                phone: patient.phone || "",
+                address: patient.address || "",
                 birth_date: patient.birthDate
                     ? patient.birthDate.split("T")[0]
                     : "",
-                allergy: patient.allergy,
+                allergy: patient.allergy || "",
             });
         }
     }, [open, patient]);
@@ -75,10 +79,17 @@ export default function EditPatientModal({
         }
     };
 
+    const isCitizenIdValid = (id: string) => /^\d{13}$/.test(id);
+
+    const isFormValid =
+        formData.first_name?.trim() !== "" &&
+        formData.last_name?.trim() !== "" &&
+        isCitizenIdValid(formData.citizen_number || "");
+
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div
                 className="bg-card w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
                 onClick={(e) => e.stopPropagation()}
@@ -178,17 +189,50 @@ export default function EditPatientModal({
 
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                <Calendar size={16} className="text-primary" />
-                                วันเกิด
+                                เลขบัตรประชาชน{" "}
+                                <span className="text-danger">*</span>
+                                {formData.citizen_number &&
+                                    !isCitizenIdValid(
+                                        formData.citizen_number,
+                                    ) && (
+                                        <span className="text-xs text-danger font-normal">
+                                            (ต้องมี 13 หลัก)
+                                        </span>
+                                    )}
                             </label>
                             <input
-                                type="date"
-                                name="birth_date"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                value={formData.birth_date}
+                                type="text"
+                                required
+                                name="citizen_number"
+                                maxLength={13}
+                                className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                    formData.citizen_number &&
+                                    !isCitizenIdValid(formData.citizen_number)
+                                        ? "border-danger focus:ring-danger/20"
+                                        : "border-gray-300 focus:ring-primary focus:border-transparent"
+                                }`}
+                                value={formData.citizen_number}
                                 onChange={handleChange}
                             />
                         </div>
+
+                        <DatePickerSimple
+                            date={
+                                formData.birth_date
+                                    ? parseISO(formData.birth_date)
+                                    : undefined
+                            }
+                            setDate={(date) =>
+                                setFormData({
+                                    ...formData,
+                                    birth_date: date
+                                        ? format(date, "yyyy-MM-dd")
+                                        : "",
+                                })
+                            }
+                            label="วันเกิด"
+                            placeholder="เลือกวันเกิด"
+                        />
 
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -231,7 +275,7 @@ export default function EditPatientModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !isFormValid}
                             className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/30"
                         >
                             {loading ? (

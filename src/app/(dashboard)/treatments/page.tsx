@@ -13,6 +13,8 @@ import Swal from "sweetalert2";
 import AddTreatmentModal from "@/components/treatment/AddTreatmentModal";
 import ViewTreatmentModal from "@/components/treatment/ViewTreatmentModal";
 import EditTreatmentModal from "@/components/treatment/EditTreatmentModal";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function TreatmentsPage() {
     usePageTitle("Treatments");
@@ -69,6 +71,12 @@ export default function TreatmentsPage() {
             render: (row) => `${row.patient.hospital_number}`,
         },
         {
+            key: "citizen_number",
+            header: "เลขบัตรประชาชน",
+            align: "center",
+            render: (row) => `${row.patient.citizen_number}`,
+        },
+        {
             key: "patient_name",
             header: "ชื่อ-นามสกุล",
             render: (row) =>
@@ -92,6 +100,22 @@ export default function TreatmentsPage() {
             header: "การวินิจฉัย",
         },
         {
+            key: "status",
+            header: "สถานะ",
+            align: "center",
+            render: (row) => (
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        row.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                    }`}
+                >
+                    {row.status === "completed" ? "เสร็จสิ้น" : "ร่าง"}
+                </span>
+            ),
+        },
+        {
             key: "action",
             header: "จัดการ",
             align: "center",
@@ -107,23 +131,27 @@ export default function TreatmentsPage() {
                     >
                         <Eye size={18} />
                     </button>
-                    <button
-                        onClick={() => {
-                            setSelectedTreatment(row);
-                            setOpenEdit(true);
-                        }}
-                        className="text-blue-600 hover:opacity-70"
-                        title="แก้ไข"
-                    >
-                        <Pencil size={18} />
-                    </button>
-                    <button
-                        onClick={() => handleDelete(row)}
-                        className="text-red-600 hover:opacity-70"
-                        title="ลบ"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => {
+                                setSelectedTreatment(row);
+                                setOpenEdit(true);
+                            }}
+                            className="text-blue-600 hover:opacity-70"
+                            title="แก้ไข"
+                        >
+                            <Pencil size={18} />
+                        </button>
+                    )}
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => handleDelete(row)}
+                            className="text-red-600 hover:opacity-70"
+                            title="ลบ"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -167,24 +195,24 @@ export default function TreatmentsPage() {
                 <div className="relative w-full md:w-80">
                     <Search
                         size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 bg-white"
                     />
-                    <input
+                    <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="ค้นหา..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                        placeholder="ค้นหา (ชื่อ-สกุล, HN, เลขบัตร...)"
+                        className="pl-10 h-10 bg-white"
                     />
                 </div>
 
                 {/* Add Button */}
-                <button
+                <Button
                     onClick={() => setOpenAdd(true)}
-                    className="cursor-pointer flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
+                    className="cursor-pointer"
                 >
                     <Plus size={18} />
                     บันทึกการรักษา
-                </button>
+                </Button>
             </div>
 
             {/* Table */}
@@ -220,6 +248,9 @@ export default function TreatmentsPage() {
                     setOpenView(false);
                     setSelectedTreatment(treatment);
                     setOpenEdit(true);
+                }}
+                onSuccess={() => {
+                    fetchTreatments();
                 }}
             />
 

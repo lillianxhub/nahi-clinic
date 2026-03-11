@@ -5,11 +5,8 @@ import {
     endOfDay,
     startOfMonth,
     endOfMonth,
-    startOfYear,
-    endOfYear,
     subDays,
     subMonths,
-    subYears,
     format,
     isSameMonth,
     isSameDay,
@@ -20,7 +17,6 @@ import { th } from "date-fns/locale";
 
 export async function GET(request: Request) {
     try {
-        // 1. Receive filter from URL
         const { searchParams } = new URL(request.url);
         const range = searchParams.get("range") || "year";
         const startDateParam = searchParams.get("startDate");
@@ -31,11 +27,9 @@ export async function GET(request: Request) {
         let endDate: Date;
         let groupBy: "day" | "month" = "month";
 
-        // 2. Define time range based on filter
         if (startDateParam && endDateParam) {
             startDate = startOfDay(new Date(startDateParam));
             endDate = endOfDay(new Date(endDateParam));
-
             const diffDays = Math.ceil(
                 (endDate.getTime() - startDate.getTime()) /
                     (1000 * 60 * 60 * 24),
@@ -55,27 +49,30 @@ export async function GET(request: Request) {
             groupBy = "month";
         }
 
-        // 3. Fetch Income data
+        // Income: filter via visit.visit_date (no income_date field)
         const incomes = await prisma.income.findMany({
             where: {
-                income_date: { gte: startDate, lte: endDate },
-                is_active: true,
                 deleted_at: null,
+                visit: {
+                    visit_date: { gte: startDate, lte: endDate },
+                    deleted_at: null,
+                },
             },
-            select: { amount: true, income_date: true },
+            select: {
+                amount: true,
+                visit: { select: { visit_date: true } },
+            },
         });
 
-        // 4. Fetch Expense data
+        // Expense: filter by created_at (no expense_date field)
         const expenses = await prisma.expense.findMany({
             where: {
-                expense_date: { gte: startDate, lte: endDate },
-                is_active: true,
+                created_at: { gte: startDate, lte: endDate },
                 deleted_at: null,
             },
-            select: { amount: true, expense_date: true },
+            select: { amount: true, created_at: true },
         });
 
-        // 5. Process data (Loop through time range)
         const chartData = [];
         let currentLoop = startDate;
 
@@ -85,32 +82,30 @@ export async function GET(request: Request) {
             let expenseSum = 0;
 
             if (groupBy === "month") {
-                // --- Case: Group by month (for "Last 1 Year") ---
-                label = format(currentLoop, "MMM", { locale: th }); // e.g., "Jan"
+                label = format(currentLoop, "MMM", { locale: th });
 
                 incomeSum = incomes
-                    .filter((i) => isSameMonth(i.income_date, currentLoop))
+                    .filter((i) =>
+                        isSameMonth(i.visit!.visit_date, currentLoop),
+                    )
                     .reduce((sum, i) => sum + Number(i.amount), 0);
 
                 expenseSum = expenses
-                    .filter((e) => isSameMonth(e.expense_date, currentLoop))
+                    .filter((e) => isSameMonth(e.created_at, currentLoop))
                     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-                // Move to next month
                 currentLoop = addMonths(currentLoop, 1);
             } else {
-                // --- Case: Group by day (for "Last 7 Days" or "Last 1 Month") ---
                 label = format(currentLoop, "d MMM", { locale: th });
 
                 incomeSum = incomes
-                    .filter((i) => isSameDay(i.income_date, currentLoop))
+                    .filter((i) => isSameDay(i.visit!.visit_date, currentLoop))
                     .reduce((sum, i) => sum + Number(i.amount), 0);
 
                 expenseSum = expenses
-                    .filter((e) => isSameDay(e.expense_date, currentLoop))
+                    .filter((e) => isSameDay(e.created_at, currentLoop))
                     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-                // Move to next day
                 currentLoop = addDays(currentLoop, 1);
             }
 

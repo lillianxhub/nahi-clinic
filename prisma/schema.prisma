@@ -1,256 +1,286 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
-//////////////////////////////////////////////////
-// ENUMS
-//////////////////////////////////////////////////
-
-enum Gender {
-  male
-  female
-  other
-}
-
-enum ItemType {
-  drug
-  service
-}
-
-enum DrugStatus {
-  active
-  inactive
-}
-
-enum PaymentMethod {
-  cash
-  transfer
-  credit
-}
-
-enum ExpenseType {
-  drug
-  utility
-  general
-}
-//////////////////////////////////////////////////
-// MODELS
-//////////////////////////////////////////////////
-
+// --- Users ---
 model User {
-  user_id       String   @id @default(uuid()) @db.Char(36)
-  username      String   @unique @db.VarChar(100)
-  password_hash String   @db.VarChar(255)
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now())
+  user_id       String    @id @default(uuid()) @db.Char(36)
+  username      String    @unique @db.VarChar(100)
+  password_hash String    @db.VarChar(255)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
 
   @@map("users")
 }
 
-//////////////////////////////////////////////////
-
+// --- Patients & Visits ---
 model Patient {
-  patient_id      String   @id @default(uuid()) @db.Char(36)
-  hospital_number String?  @db.VarChar(50) @unique 
-  citizen_number  String?  @db.Char(13) @unique
-  first_name      String   @db.VarChar(100)
-  last_name       String   @db.VarChar(100)
-  gender          Gender?
+  patient_id      String    @id @default(uuid()) @db.Char(36)
+  hospital_number String?   @unique @db.VarChar(50)
+  citizen_number  String?   @unique @db.VarChar(50)
+  prefix          String?   @db.VarChar(50)
+  first_name      String    @db.VarChar(100)
+  last_name       String    @db.VarChar(100)
+  gender          Gender
   birth_date      DateTime?
-  phone           String?  @db.VarChar(50)
-  address         String?  @db.VarChar(255)
-  allergy         String?  @db.VarChar(255)
-  is_active       Boolean  @default(true)
-  created_at      DateTime @default(now())
+  phone           String?   @db.VarChar(50)
+  address         String?   @db.VarChar(255)
+  occupation      String?   @db.VarChar(100)
+  // treatment_right String?   @db.VarChar(100)
+  allergy         String?   @db.VarChar(255)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
   updated_at      DateTime?
   deleted_at      DateTime?
 
-  visits Visit[]
+  visits          Visit[]
 
   @@map("patients")
 }
 
-//////////////////////////////////////////////////
-
 model Visit {
-  visit_id   String   @id @default(uuid()) @db.Char(36)
-  patient_id String   @db.Char(36)
-  visit_date DateTime
-  symptom    String?  @db.Text
-  diagnosis  String?  @db.Text
-  note       String?  @db.Text
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime?
-  deleted_at DateTime?
+  visit_id        String      @id @default(uuid()) @db.Char(36)
+  patient_id      String      @db.Char(36)
+  visit_date      DateTime
 
-  patient      Patient        @relation(fields: [patient_id], references: [patient_id])
-  visitDetails Visit_Detail[]
-  drugUsages   Drug_Usage[]
-  incomes      Income[]
+  status          VisitStatus @default(draft)
+  symptom         String?
+  diagnosis       String?
+  note            String?
+  
+  temperature     Decimal?    @db.Decimal(4, 2)
+  blood_pressure  String?     @db.VarChar(20)
+  heart_rate      Int?
+  weight          Decimal?    @db.Decimal(5, 2)
+  height          Decimal?    @db.Decimal(5, 2)
+  waistline       Decimal?    @db.Decimal(5, 2)
+  smoking_history String?     @db.VarChar(100)
+  drinking_history String?     @db.VarChar(100) 
+
+  age_years        Int?
+  age_months       Int?
+  age_days         Int?
+  
+  is_active       Boolean     @default(true)
+
+  created_at      DateTime    @default(now())
+  updated_at      DateTime?
+  deleted_at      DateTime?
+
+  patient         Patient     @relation(fields: [patient_id], references: [patient_id])
+  items           VisitItem[]
+  stockUsages     StockUsage[]
+  income          Income?
 
   @@map("visits")
 }
 
-//////////////////////////////////////////////////
+model VisitItem {
+  visit_item_id String       @id @default(uuid()) @db.Char(36)
+  visit_id      String       @db.Char(36)
+  product_id    String       @db.Char(36)
+  lot_id        String?      @db.Char(36)
+  quantity      Int
+  unit_price    Decimal      @db.Decimal(10, 2)
+  total_price   Decimal      @db.Decimal(10, 2)
+  description   String?      @db.VarChar(255)
+  is_active     Boolean      @default(true)
 
-model Visit_Detail {
-  visit_detail_id String   @id @default(uuid()) @db.Char(36)
-  visit_id        String   @db.Char(36)
-  item_type       ItemType
-  drug_id         String?  @db.Char(36)
-  description     String?  @db.VarChar(255)
-  quantity        Int
-  unit_price      Decimal  @db.Decimal(10, 2)
-  is_active       Boolean  @default(true)
-  created_at      DateTime @default(now())
-  updated_at      DateTime?
-  deleted_at      DateTime?
-
-  visit Visit @relation(fields: [visit_id], references: [visit_id])
-  drug  Drug? @relation(fields: [drug_id], references: [drug_id])
-
-  @@map("visit_details")
-}
-
-//////////////////////////////////////////////////
-
-model Drug_Category {
-  category_id   String   @id @default(uuid()) @db.Char(36)
-  category_name String   @db.VarChar(100)
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now())
+  created_at    DateTime     @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
 
-  drugs Drug[]
+  visit         Visit        @relation(fields: [visit_id], references: [visit_id])
+  product       Product      @relation(fields: [product_id], references: [product_id])
+  lot           InventoryLot? @relation(fields: [lot_id], references: [lot_id])
 
-  @@map("drug_categories")
+  @@map("visit_items")
 }
 
-//////////////////////////////////////////////////
+// --- Inventory System ---
+model Category {
+  category_id   String    @id @default(uuid()) @db.Char(36)
+  category_name String    @db.VarChar(100)
+  is_active     Boolean   @default(true)
 
-model Drug {
-  drug_id     String     @id @default(uuid()) @db.Char(36)
-  drug_name   String     @db.VarChar(150)
-  category_id String     @db.Char(36)
-  unit        String     @db.VarChar(50)
-  sell_price  Decimal    @db.Decimal(10, 2)
-  min_stock   Int        @default(0)
-  status      DrugStatus @default(active)
-  is_active   Boolean    @default(true)
-  created_at  DateTime   @default(now())
-  updated_at  DateTime?
-  deleted_at  DateTime?
-
-  category   Drug_Category @relation(fields: [category_id], references: [category_id])
-  lots       Drug_Lot[]
-  visitItems Visit_Detail[]
-
-  @@map("drugs")
-}
-
-//////////////////////////////////////////////////
-
-model Drug_Lot {
-  lot_id        String   @id @default(uuid()) @db.Char(36)
-  drug_id       String   @db.Char(36)
-  lot_no        String?  @db.VarChar(100)
-  received_date DateTime
-  expire_date   DateTime
-  qty_received  Int
-  qty_remaining Int
-  buy_price     Decimal  @db.Decimal(10, 2)
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now())
+  created_at    DateTime    @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
 
-  drug        Drug @relation(fields: [drug_id], references: [drug_id])
-  usages      Drug_Usage[]
-  expenseLots Expense_Drug_Lot[]
+  products      Product[]
 
-  @@map("drug_lots")
+  @@map("categories")
 }
 
-//////////////////////////////////////////////////
+model Product {
+  product_id   String      @id @default(uuid()) @db.Char(36)
+  product_name String      @db.VarChar(150)
+  category_id  String      @db.Char(36)
+  product_type ProductType
+  unit         String      @db.VarChar(50)
+  min_stock    Int         @default(0)
+  is_active    Boolean     @default(true)
 
-model Drug_Usage {
-  usage_id   String   @id @default(uuid()) @db.Char(36)
-  visit_id   String   @db.Char(36)
-  lot_id     String   @db.Char(36)
-  quantity   Int
-  used_at    DateTime
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime?
-  deleted_at DateTime?
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
 
-  visit Visit   @relation(fields: [visit_id], references: [visit_id])
-  lot   Drug_Lot @relation(fields: [lot_id], references: [lot_id])
+  category     Category     @relation(fields: [category_id], references: [category_id])
+  lots         InventoryLot[]
+  visitItems   VisitItem[]
 
-  @@map("drug_usages")
+  @@map("products")
 }
 
-//////////////////////////////////////////////////
+model InventoryLot {
+  lot_id            String    @id @default(uuid()) @db.Char(36)
+  product_id        String    @db.Char(36)
+  lot_no            String?   @db.VarChar(100)
+  
+  buy_unit          String    @db.VarChar(50)
+  conversion_factor Int       @default(1)
+  buy_price         Decimal   @db.Decimal(10, 2)
+  sell_price        Decimal   @db.Decimal(10, 2)
 
+  received_date     DateTime
+  expire_date       DateTime
+  qty_received      Int
+  qty_remaining     Int
+
+  is_active         Boolean   @default(true)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  product           Product   @relation(fields: [product_id], references: [product_id])
+  visitItems        VisitItem[]
+  usages            StockUsage[]
+  adjustments       StockAdjustment[]
+  expenseLots       ExpenseInventoryLot[]
+  
+
+  @@map("inventory_lots")
+}
+
+model StockAdjustment {
+  adjustment_id String       @id @default(uuid()) @db.Char(36)
+  lot_id        String       @db.Char(36)
+  quantity_lost Int
+  reason        String?      @db.VarChar(255)
+
+  created_at    DateTime     @default(now())
+  
+  lot           InventoryLot @relation(fields: [lot_id], references: [lot_id])
+
+  @@map("stock_adjustments")
+}
+
+model StockUsage {
+  usage_id String       @id @default(uuid()) @db.Char(36)
+  visit_id String       @db.Char(36)
+  lot_id   String       @db.Char(36)
+  quantity Int
+  used_at  DateTime
+
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  lot      InventoryLot @relation(fields: [lot_id], references: [lot_id])
+  visit    Visit        @relation(fields: [visit_id], references: [visit_id])
+
+  @@map("stock_usages")
+}
+
+// --- Finance ---
 model Income {
-  income_id      String         @id @default(uuid()) @db.Char(36)
-  visit_id       String         @db.Char(36)
-  income_date    DateTime
-  amount         Decimal        @db.Decimal(10, 2)
+  income_id      String        @id @default(uuid()) @db.Char(36)
+  income_type    IncomeType
+  visit_id       String?        @unique @db.Char(36)
+  amount         Decimal       @db.Decimal(10, 2)
   payment_method PaymentMethod
-  receipt_no     String?        @db.VarChar(100)
-  is_active      Boolean        @default(true)
-  created_at     DateTime       @default(now())
-  updated_at     DateTime?
-  deleted_at     DateTime?
+  receipt_no     String?       @db.VarChar(100)
+  income_date    DateTime
 
-  visit Visit @relation(fields: [visit_id], references: [visit_id])
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  visit          Visit?         @relation(fields: [visit_id], references: [visit_id])
 
   @@map("incomes")
 }
 
-//////////////////////////////////////////////////
-
 model Expense {
-  expense_id   String      @id @default(uuid()) @db.Char(36)
-  expense_date DateTime
+  expense_id  String      @id @default(uuid()) @db.Char(36)
   expense_type ExpenseType
-  description  String?     @db.VarChar(255)
-  amount       Decimal     @db.Decimal(10, 2)
-  receipt_no   String?     @db.VarChar(100)
-  is_active    Boolean     @default(true)
-  created_at   DateTime    @default(now())
-  updated_at   DateTime?
-  deleted_at   DateTime?
+  amount      Decimal     @db.Decimal(10, 2)
+  description String?     @db.VarChar(255)
+  receipt_no  String?     @db.VarChar(100)
+  expense_date DateTime
 
-  drugLots Expense_Drug_Lot[]
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  expenseLots ExpenseInventoryLot[]
 
   @@map("expenses")
 }
 
-//////////////////////////////////////////////////
+model ExpenseInventoryLot {
+  id         String       @id @default(uuid()) @db.Char(36)
+  expense_id String       @db.Char(36)
+  lot_id     String       @db.Char(36)
 
-model Expense_Drug_Lot {
-  id         String   @id @default(uuid()) @db.Char(36)
-  expense_id String   @db.Char(36)
-  lot_id     String   @db.Char(36)
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime?
-  deleted_at DateTime?
+  expense    Expense      @relation(fields: [expense_id], references: [expense_id])
+  lot        InventoryLot @relation(fields: [lot_id], references: [lot_id])
 
-  expense Expense  @relation(fields: [expense_id], references: [expense_id])
-  lot     Drug_Lot @relation(fields: [lot_id], references: [lot_id])
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
 
-  @@unique([expense_id, lot_id])
-  @@map("expense_drug_lots")
+  @@map("expense_inventory_lots")
+}
+
+// --- Enums ---
+enum Gender { 
+  male
+  female 
+}
+enum ProductType { 
+  drug
+  supply
+  service 
+}
+enum PaymentMethod { 
+  cash
+  transfer
+  credit 
+}
+enum ExpenseType { 
+  drug
+  equipment_supply
+  utility
+  general 
+}
+
+enum IncomeType {
+  service
+  supply
+  drug
+  other
+}
+
+enum VisitStatus { 
+  draft
+  completed
+  cancelled 
 }

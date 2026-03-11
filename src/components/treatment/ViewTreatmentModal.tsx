@@ -10,17 +10,23 @@ import {
     Pencil,
     Clock,
     ClipboardList,
+    Activity,
+    Package,
+    Pill,
 } from "lucide-react";
 import { treatmentService } from "@/services/treatment";
 import { Treatment } from "@/interface/treatment";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { GenderLabelTH } from "@/constants/gender";
+import Swal from "sweetalert2";
 
 interface ViewTreatmentModalProps {
     open: boolean;
     onClose: () => void;
     treatmentId: string | null;
     onEdit: (treatment: Treatment) => void;
+    onSuccess?: () => void;
 }
 
 export default function ViewTreatmentModal({
@@ -28,6 +34,7 @@ export default function ViewTreatmentModal({
     onClose,
     treatmentId,
     onEdit,
+    onSuccess,
 }: ViewTreatmentModalProps) {
     const [treatment, setTreatment] = useState<Treatment | null>(null);
     const [loading, setLoading] = useState(false);
@@ -42,11 +49,69 @@ export default function ViewTreatmentModal({
         try {
             setLoading(true);
             const data = await treatmentService.getTreatmentById(treatmentId!);
+
+            // Map data for UI compatibility
+            if (data && data.items) {
+                data.items = data.items.map((item: any) => ({
+                    ...item,
+                    item_type: item.product?.product_type || "service",
+                    item_name: item.product?.product_name || "ไม่มีชื่อรายการ",
+                    description: item.description || "",
+                }));
+            }
+
             setTreatment(data);
         } catch (error) {
             console.error("โหลดข้อมูลการรักษาไม่สำเร็จ", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleComplete = async () => {
+        if (!treatmentId) return;
+
+        const result = await Swal.fire({
+            title: "ยืนยันการชำระเงิน?",
+            text: "คุณต้องการยืนยันการชำระเงินใช่หรือไม่? เมื่อยืนยันแล้วจะไม่สามารถแก้ไขหรือลบรายการนี้ได้อีก และระบบจะทำการตัดสต็อกและบันทึกรายรับทันที",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "ยืนยันการชำระเงิน",
+            cancelButtonText: "ยกเลิก",
+            reverseButtons: true,
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                await treatmentService.updateTreatment(treatmentId, {
+                    status: "completed" as any,
+                } as any);
+
+                await Swal.fire({
+                    title: "สำเร็จ!",
+                    text: "ยืนยันการชำระเงินเรียบร้อยแล้ว",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+
+                if (onSuccess) {
+                    onSuccess();
+                }
+                onClose();
+            } catch (error) {
+                console.error("ยืนยันการชำระเงินล้มเหลว", error);
+                Swal.fire({
+                    title: "เกิดข้อผิดพลาด",
+                    text: "ไม่สามารถยืนยันการชำระเงินได้: " + String(error),
+                    icon: "error",
+                });
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -92,30 +157,40 @@ export default function ViewTreatmentModal({
                         <div className="space-y-8">
                             {/* Basic Info Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-gray-100">
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs text-muted font-medium uppercase tracking-wider flex items-center gap-1.5">
+                                        <label className="text-m text-muted font-medium uppercase tracking-wider flex items-center gap-1.5">
                                             <User
                                                 size={12}
                                                 className="text-primary"
                                             />
                                             ผู้ป่วย
                                         </label>
-                                        <p className="text-foreground font-semibold text-lg">
+                                        <p className="text-foreground font-semibold text-xl flex items-center gap-2">
                                             {treatment?.patient
                                                 ? `${treatment.patient.first_name} ${treatment.patient.last_name}`
                                                 : "-"}
+                                            <span className="text-sm text-muted">
+                                                (
+                                                {treatment?.patient
+                                                    ?.hospital_number || "-"}
+                                                )
+                                            </span>
                                         </p>
-                                        <p className="text-sm text-muted">
-                                            HN:{" "}
-                                            {treatment?.patient
-                                                ?.hospital_number || "-"}
-                                        </p>
+                                        <div className="space-y-1">
+                                            <label className="text-m text-muted font-medium uppercase">
+                                                เลขบัตรประชาชน
+                                            </label>
+                                            <p className="text-foreground font-medium text-m">
+                                                {treatment?.patient
+                                                    ?.citizen_number || "-"}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4 text-right md:text-left">
+                                <div className="space-y-2 text-right md:text-left">
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs text-muted font-medium uppercase tracking-wider flex items-center gap-1.5 md:justify-start">
+                                        <label className="text-m text-muted font-medium uppercase tracking-wider flex items-center gap-1.5 md:justify-start">
                                             <Calendar
                                                 size={12}
                                                 className="text-primary"
@@ -134,6 +209,58 @@ export default function ViewTreatmentModal({
                                                 : "-"}
                                         </p>
                                     </div>
+                                    <div className="space-y-1">
+                                        <label className="text-m text-muted font-medium uppercase">
+                                            อายุ
+                                        </label>
+                                        <p className="text-foreground font-medium text-m">
+                                            {treatment?.age_formatted || "-"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Vital Signs Section */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 -mt-9 border-b border-gray-100">
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
+                                        ความดันโลหิต
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.blood_pressure
+                                            ? `${treatment.blood_pressure} mmHg`
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
+                                        อัตราเต้นหัวใจ
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.heart_rate
+                                            ? `${treatment.heart_rate} bpm`
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
+                                        น้ำหนัก
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.weight
+                                            ? `${treatment.weight} kg`
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
+                                        ส่วนสูง
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.height
+                                            ? `${treatment.height} cm`
+                                            : "-"}
+                                    </p>
                                 </div>
                             </div>
 
@@ -176,116 +303,236 @@ export default function ViewTreatmentModal({
                                         />
                                         รายการยาและค่าบริการ
                                     </h3>
-                                    <div className="border border-gray-100 rounded-xl overflow-hidden">
-                                        <table className="w-full text-sm">
-                                            <thead className="bg-gray-50 text-muted font-medium">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left">
-                                                        รายการ
-                                                    </th>
-                                                    <th className="px-4 py-3 text-center">
-                                                        จำนวน
-                                                    </th>
-                                                    <th className="px-4 py-3 text-right">
-                                                        ราคา/หน่วย
-                                                    </th>
-                                                    <th className="px-4 py-3 text-right">
-                                                        รวม
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {treatment?.visitDetails &&
-                                                treatment.visitDetails.length >
-                                                    0 ? (
-                                                    treatment.visitDetails.map(
-                                                        (item, idx) => (
-                                                            <tr
-                                                                key={idx}
-                                                                className="hover:bg-gray-50/50 transition-colors"
-                                                            >
-                                                                <td className="px-4 py-3">
-                                                                    <div className="font-medium text-foreground">
-                                                                        {item.description ||
-                                                                            "ไม่ระบุรายการ"}
-                                                                    </div>
-                                                                    <div className="text-[11px] text-muted">
-                                                                        {item.item_type ===
-                                                                        "drug"
-                                                                            ? "ยารักษา"
-                                                                            : "ค่าบริการ/อื่นๆ"}
-                                                                    </div>
-                                                                </td>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    {
-                                                                        item.quantity
-                                                                    }
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right">
-                                                                    ฿
-                                                                    {Number(
-                                                                        item.unit_price,
-                                                                    ).toLocaleString()}
-                                                                </td>
-                                                                <td className="px-4 py-3 text-right font-semibold">
-                                                                    ฿
-                                                                    {(
-                                                                        Number(
-                                                                            item.quantity,
-                                                                        ) *
-                                                                        Number(
-                                                                            item.unit_price,
-                                                                        )
-                                                                    ).toLocaleString()}
-                                                                </td>
+                                    <div className="space-y-6">
+                                        {/* Section A: Procedures */}
+                                        {treatment?.items?.some(
+                                            (i) =>
+                                                i.item_type === "service" ||
+                                                i.item_type === "procedure",
+                                        ) && (
+                                            <div className="space-y-3">
+                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                    <Activity size={14} />{" "}
+                                                    รายการหัตถการและบริการ
+                                                </h4>
+                                                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
+                                                            <tr>
+                                                                <th className="px-4 py-2.5 text-left">
+                                                                    รายการหัตถการ/บริการ
+                                                                </th>
+                                                                <th className="px-4 py-2.5 text-right w-24">
+                                                                    ราคา
+                                                                </th>
                                                             </tr>
-                                                        ),
-                                                    )
-                                                ) : (
-                                                    <tr>
-                                                        <td
-                                                            colSpan={4}
-                                                            className="px-4 py-8 text-center text-muted italic"
-                                                        >
-                                                            ไม่มีรายการยาหรือค่าบริการ
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                            {treatment?.visitDetails &&
-                                                treatment.visitDetails.length >
-                                                    0 && (
-                                                    <tfoot className="bg-gray-50/80 font-bold border-t border-gray-100">
-                                                        <tr>
-                                                            <td
-                                                                colSpan={3}
-                                                                className="px-4 py-3 text-right"
-                                                            >
-                                                                ยอดรวมสุทธิ
-                                                            </td>
-                                                            <td className="px-4 py-3 text-right text-primary text-lg">
-                                                                ฿
-                                                                {treatment.visitDetails
-                                                                    .reduce(
-                                                                        (
-                                                                            sum,
-                                                                            item,
-                                                                        ) =>
-                                                                            sum +
-                                                                            Number(
-                                                                                item.quantity,
-                                                                            ) *
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                                            {treatment.items.map(
+                                                                (item, idx) =>
+                                                                    (item.item_type ===
+                                                                        "service" ||
+                                                                        item.item_type ===
+                                                                            "procedure") && (
+                                                                        <tr
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                            className="hover:bg-gray-50/30 transition-colors"
+                                                                        >
+                                                                            <td className="px-4 py-3 font-medium text-gray-800">
+                                                                                {
+                                                                                    item.item_name
+                                                                                }
+                                                                                {item.description && (
+                                                                                    <div className="text-xs text-muted font-normal mt-0.5 whitespace-pre-wrap">
+                                                                                        {
+                                                                                            item.description
+                                                                                        }
+                                                                                    </div>
+                                                                                )}
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-right text-gray-600">
+                                                                                ฿
+                                                                                {Number(
+                                                                                    item.unit_price,
+                                                                                ).toLocaleString()}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Section B: Supplies */}
+                                        {treatment?.items?.some(
+                                            (i) => i.item_type === "supply",
+                                        ) && (
+                                            <div className="space-y-3">
+                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                    <Package size={14} />{" "}
+                                                    รายการเวชภัณฑ์
+                                                </h4>
+                                                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
+                                                            <tr>
+                                                                <th className="px-4 py-2.5 text-left">
+                                                                    รายการเวชภัณฑ์
+                                                                </th>
+                                                                <th className="px-4 py-2.5 text-center w-24">
+                                                                    จำนวน
+                                                                </th>
+                                                                <th className="px-4 py-2.5 text-right w-24">
+                                                                    ราคา
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                                            {treatment.items.map(
+                                                                (item, idx) =>
+                                                                    item.item_type ===
+                                                                        "supply" && (
+                                                                        <tr
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                            className="hover:bg-gray-50/30 transition-colors"
+                                                                        >
+                                                                            <td className="px-4 py-3 font-medium text-gray-800">
+                                                                                {
+                                                                                    item.item_name
+                                                                                }
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                                                {
+                                                                                    item.quantity
+                                                                                }
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-right text-gray-600">
+                                                                                ฿
+                                                                                {(
+                                                                                    Number(
+                                                                                        item.quantity,
+                                                                                    ) *
+                                                                                    Number(
+                                                                                        item.unit_price,
+                                                                                    )
+                                                                                ).toLocaleString()}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Section C: Medications */}
+                                        {treatment?.items?.some(
+                                            (i) => i.item_type === "drug",
+                                        ) && (
+                                            <div className="space-y-3">
+                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                    <Pill size={14} /> รายการยา
+                                                </h4>
+                                                <div className="grid gap-3">
+                                                    {treatment.items.map(
+                                                        (item, idx) => {
+                                                            if (
+                                                                item.item_type !==
+                                                                "drug"
+                                                            )
+                                                                return null;
+
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm flex justify-between items-start"
+                                                                >
+                                                                    <div className="space-y-1">
+                                                                        <p className="font-bold text-gray-800">
+                                                                            {
+                                                                                item.item_name
+                                                                            }
+                                                                        </p>
+                                                                        {item.description && (
+                                                                            <div className="inline-flex items-center gap-1.5 bg-primary/5 text-primary px-2.5 py-1 rounded-lg text-xs font-semibold border border-primary/10">
+                                                                                <FileText
+                                                                                    size={
+                                                                                        12
+                                                                                    }
+                                                                                />
+                                                                                {
+                                                                                    item.description
+                                                                                }
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="text-xs font-bold text-gray-500 uppercase">
+                                                                            รวม
+                                                                        </p>
+                                                                        <p className="font-bold text-gray-900">
+                                                                            {
+                                                                                item.quantity
+                                                                            }{" "}
+                                                                            × ฿
+                                                                            {Number(
+                                                                                item.unit_price,
+                                                                            ).toLocaleString()}{" "}
+                                                                            = ฿
+                                                                            {(
+                                                                                Number(
+                                                                                    item.quantity,
+                                                                                ) *
                                                                                 Number(
                                                                                     item.unit_price,
-                                                                                ),
-                                                                        0,
-                                                                    )
-                                                                    .toLocaleString()}
-                                                            </td>
-                                                        </tr>
-                                                    </tfoot>
-                                                )}
-                                        </table>
+                                                                                )
+                                                                            ).toLocaleString()}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Total Summary */}
+                                        <div className="bg-gray-900 text-white p-5 rounded-2xl shadow-xl flex justify-between items-center mt-6 ring-4 ring-gray-100">
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                                                    Total Amount
+                                                </p>
+                                                <p className="text-xs text-gray-300">
+                                                    ยอดรวมทั้งสิ้นสำหรับการรักษานี้
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-3xl font-black text-white">
+                                                    ฿
+                                                    {treatment?.items
+                                                        ?.reduce(
+                                                            (sum, item) =>
+                                                                sum +
+                                                                Number(
+                                                                    item.quantity,
+                                                                ) *
+                                                                    Number(
+                                                                        item.unit_price,
+                                                                    ),
+                                                            0,
+                                                        )
+                                                        .toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -303,6 +550,37 @@ export default function ViewTreatmentModal({
                                     </div>
                                 </div>
                             </div>
+
+                            {treatment?.status === "draft" && (
+                                <div className="mt-8 flex flex-col justify-center gap-4 w-full items-center">
+                                    <button
+                                        onClick={handleComplete}
+                                        disabled={loading}
+                                        className="w-full max-w-sm px-8 py-4 bg-success text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-success/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                    >
+                                        {loading ? (
+                                            <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                <Activity size={24} />
+                                                ยืนยันการชำระเงินและการรักษา
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (treatment) {
+                                                onEdit(treatment);
+                                            }
+                                        }}
+                                        className="w-full max-w-sm px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                        disabled={!treatment}
+                                    >
+                                        <Pencil size={18} />
+                                        แก้ไขข้อมูล
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -319,18 +597,6 @@ export default function ViewTreatmentModal({
                             className="px-6 py-2.5 rounded-xl font-medium text-foreground hover:bg-gray-100 transition-all border border-gray-200"
                         >
                             ปิดหน้าต่าง
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (treatment) {
-                                    onEdit(treatment);
-                                }
-                            }}
-                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
-                            disabled={!treatment}
-                        >
-                            <Pencil size={18} />
-                            แก้ไขข้อมูล
                         </button>
                     </div>
                 </div>

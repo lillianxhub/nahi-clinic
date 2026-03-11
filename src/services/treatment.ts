@@ -13,14 +13,11 @@ export const treatmentService = {
     ): Promise<ResponseData<Treatment[]>> {
         const query = buildQuery(params);
 
-        // The apiClient already prepends the base URL if needed,
-        // but here we want to call our own Next.js API routes.
         return apiClient.get<ResponseData<Treatment[]>>(
             `/api/treatments${query}`,
         );
     },
 
-    // ✓ เพิ่มฟังก์ชันนี้
     async createTreatment(data: CreateTreatmentDTO): Promise<Treatment> {
         return apiClient.post(`/api/treatments`, data);
     },

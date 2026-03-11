@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Pagination from "@/components/Pagination";
 import { Patient } from "@/interface/patient";
 import { Eye, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import DataTable, { Column } from "@/components/table/Table";
 import AddPatientModal from "@/components/patient/AddPatientModal";
 import ViewPatientModal from "@/components/patient/ViewPatientModal";
@@ -176,24 +178,24 @@ export default function PatientsPage() {
                 <div className="relative w-full md:w-80">
                     <Search
                         size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 bg-white"
                     />
-                    <input
+                    <Input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="ค้นหาชื่อ / เลข HN"
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="pl-10 h-10 bg-white"
                     />
                 </div>
 
                 {/* Add Button */}
-                <button
+                <Button
                     onClick={() => setOpenAdd(true)}
-                    className="cursor-pointer flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all shadow-lg shadow-primary/20"
+                    className="cursor-pointer shadow-lg shadow-primary/20"
                 >
                     <Plus size={18} />
                     เพิ่มผู้ป่วยใหม่
-                </button>
+                </Button>
             </div>
 
             {/* Table */}

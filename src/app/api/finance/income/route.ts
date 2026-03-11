@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { generateReceiptNo } from "@/lib/utils";
 
 export async function GET(request: Request) {
     try {
@@ -26,7 +27,6 @@ export async function GET(request: Request) {
             startDate.setDate(now.getDate() - 6);
             startDate.setHours(0, 0, 0, 0);
         } else {
-            // Default to month
             startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
             endDate = new Date(
                 now.getFullYear(),
@@ -37,41 +37,37 @@ export async function GET(request: Request) {
                 59,
             );
         }
-        const visitDetails = await prisma.visit_Detail.findMany({
+
+        // Get VisitItems within date range, joined via visit_date
+        const visitItems = await prisma.visitItem.findMany({
             where: {
+                is_active: true,
                 deleted_at: null,
                 visit: {
-                    incomes: {
-                        some: {
-                            income_date: {
-                                gte: startDate,
-                                lte: endDate,
-                            },
-                        },
-                    },
+                    visit_date: { gte: startDate, lte: endDate },
+                    deleted_at: null,
                 },
             },
             select: {
-                item_type: true,
-                unit_price: true,
                 quantity: true,
+                unit_price: true,
+                total_price: true,
+                product: { select: { product_type: true } },
             },
         });
 
-        // 3. Sum amount by type
-        const summary = {
-            drug: 0,
-            service: 0,
-        };
+        const summary = { drug: 0, service: 0, supply: 0 };
 
-        for (const item of visitDetails) {
-            const amount = Number(item.unit_price) * item.quantity;
-            summary[item.item_type] += amount;
+        for (const item of visitItems) {
+            const amount = Number(item.total_price);
+            const type = item.product?.product_type;
+            if (type === "drug") summary.drug += amount;
+            else if (type === "service") summary.service += amount;
+            else if (type === "supply") summary.supply += amount;
         }
 
-        const total = summary.drug + summary.service;
+        const total = summary.drug + summary.service + summary.supply;
 
-        // 4. Calculate proportion (%)
         const result = [
             {
                 type: "drug",
@@ -82,6 +78,11 @@ export async function GET(request: Request) {
                 type: "service",
                 amount: summary.service,
                 percentage: total > 0 ? (summary.service / total) * 100 : 0,
+            },
+            {
+                type: "supply",
+                amount: summary.supply,
+                percentage: total > 0 ? (summary.supply / total) * 100 : 0,
             },
         ];
 
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
             },
         });
     } catch (error) {
-        console.log("Dashboard stat API Error", error);
+        console.log("Finance income GET API Error", error);
         return NextResponse.json(
             { error: "Internal Server Error" },
             { status: 500 },
@@ -105,13 +106,29 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        if (body.visit_id) {
-            const visit = await prisma.visit.findUnique({
-                where: {
-                    visit_id: body.visit_id,
-                },
-            });
 
+        // Validate required fields
+        if (!body.amount) {
+            return NextResponse.json(
+                { message: "Amount is required" },
+                { status: 400 },
+            );
+        }
+        if (!body.payment_method) {
+            return NextResponse.json(
+                { message: "Payment method is required" },
+                { status: 400 },
+            );
+        }
+
+        let visit: { visit_id: string } | null = null;
+
+        // Fetch or validate visit
+        if (body.visit_id) {
+            visit = await prisma.visit.findUnique({
+                where: { visit_id: body.visit_id },
+                select: { visit_id: true },
+            });
             if (!visit) {
                 return NextResponse.json(
                     { message: "Visit not found" },
@@ -120,35 +137,130 @@ export async function POST(request: Request) {
             }
         }
 
-        if (!body.income_date) {
-            return NextResponse.json(
-                { message: "Income date is required" },
-                { status: 400 },
-            );
-        } else if (!body.amount) {
-            return NextResponse.json(
-                { message: "Amount is required" },
-                { status: 400 },
-            );
-        } else if (!body.payment_method) {
-            return NextResponse.json(
-                { message: "Payment method is required" },
-                { status: 400 },
-            );
-        }
+        const result = await prisma.$transaction(async (tx) => {
+            let resolvedVisitId: string | undefined =
+                body.visit_id || undefined;
 
-        const income = await prisma.income.create({
-            data: {
-                visit_id: body.visit_id,
-                income_date: body.income_date,
-                amount: body.amount,
-                payment_method: body.payment_method,
-                receipt_no: body.receipt_no,
-            },
+            // Auto-create walk-in visit if patient_id given but no visit_id
+            if (!resolvedVisitId && body.patient_id) {
+                const patient = await tx.patient.findUnique({
+                    where: { patient_id: body.patient_id },
+                    select: { first_name: true, last_name: true },
+                });
+                if (!patient) {
+                    throw new Error("Patient not found");
+                }
+                const walkInVisit = await tx.visit.create({
+                    data: {
+                        patient: { connect: { patient_id: body.patient_id } },
+                        visit_date: new Date(body.income_date || new Date()),
+                        status: "completed",
+                        symptom: "walk-in",
+                        note: `สร้างอัตโนมัติจากการบันทึกรายรับ`,
+                    },
+                });
+                resolvedVisitId = walkInVisit.visit_id;
+            }
+
+            // Create Income (1-1 with Visit)
+            const income = await tx.income.create({
+                data: {
+                    ...(resolvedVisitId && {
+                        visit: { connect: { visit_id: resolvedVisitId } },
+                    }),
+                    income_type: (body.income_type as any) || "other",
+                    amount: Number(body.amount),
+                    payment_method: body.payment_method,
+                    receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                    income_date: body.income_date
+                        ? new Date(body.income_date)
+                        : new Date(),
+                },
+            });
+
+            // Process VisitItems if provided
+            if (body.items && Array.isArray(body.items) && resolvedVisitId) {
+                for (const item of body.items) {
+                    const qty = Number(item.quantity);
+                    const price = Number(item.unit_price);
+                    const totalPrice = qty * price;
+
+                    const product = await tx.product.findUnique({
+                        where: { product_id: item.product_id },
+                        select: { product_type: true },
+                    });
+
+                    let usedLotId: string | null = null;
+
+                    if (
+                        product &&
+                        (product.product_type === "drug" ||
+                            product.product_type === "supply")
+                    ) {
+                        let remainingToDeduct = qty;
+                        const lots = await tx.inventoryLot.findMany({
+                            where: {
+                                product_id: item.product_id,
+                                qty_remaining: { gt: 0 },
+                                is_active: true,
+                                deleted_at: null,
+                            },
+                            orderBy: { expire_date: "asc" },
+                        });
+
+                        for (const lot of lots) {
+                            if (remainingToDeduct === 0) break;
+                            const deduction = Math.min(
+                                lot.qty_remaining,
+                                remainingToDeduct,
+                            );
+                            if (!usedLotId) usedLotId = lot.lot_id;
+                            await tx.inventoryLot.update({
+                                where: { lot_id: lot.lot_id },
+                                data: {
+                                    qty_remaining: { decrement: deduction },
+                                },
+                            });
+                            await tx.stockUsage.create({
+                                data: {
+                                    visit_id: resolvedVisitId!,
+                                    lot_id: lot.lot_id,
+                                    quantity: deduction,
+                                    used_at: new Date(),
+                                },
+                            });
+                            remainingToDeduct -= deduction;
+                        }
+
+                        if (remainingToDeduct > 0) {
+                            throw new Error(
+                                `สินค้าในสต็อกไม่เพียงพอ (เหลือที่ต้องหักอีก ${remainingToDeduct} หน่วย)`,
+                            );
+                        }
+                    }
+
+                    await tx.visitItem.create({
+                        data: {
+                            visit_id: resolvedVisitId!,
+                            product_id: item.product_id,
+                            lot_id: usedLotId ?? undefined,
+                            quantity: qty,
+                            unit_price: price,
+                            total_price: totalPrice,
+                        },
+                    });
+                }
+            }
+
+            return income;
         });
 
-        return NextResponse.json(income, { status: 201 });
+        return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        console.error("Create income API Error:", error.message);
+        return NextResponse.json(
+            { message: error.message || "Internal Server Error" },
+            { status: 500 },
+        );
     }
 }
