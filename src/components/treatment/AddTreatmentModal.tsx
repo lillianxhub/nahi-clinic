@@ -131,7 +131,7 @@ export default function AddTreatmentModal({
                     setSearchingMedicines(true);
                     const res = await medicineService.getMedicines({
                         pageSize: 10,
-                        status: "active",
+                        activeStatus: "active",
                     });
                     setMedicines(res.data);
                 } catch (error) {
@@ -147,7 +147,7 @@ export default function AddTreatmentModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedDrugSearch,
                     pageSize: 5,
-                    status: "active",
+                    activeStatus: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
@@ -204,7 +204,7 @@ export default function AddTreatmentModal({
                     setSearchingSupplies(true);
                     const res = await medicineService.getSupplies({
                         pageSize: 10,
-                        status: "active",
+                        activeStatus: "active",
                     });
                     setSupplies(res.data);
                 } catch (error) {
@@ -220,7 +220,7 @@ export default function AddTreatmentModal({
                 const res = await medicineService.getSupplies({
                     q: debouncedSupplySearch,
                     pageSize: 5,
-                    status: "active",
+                    activeStatus: "active",
                 });
                 setSupplies(res.data);
             } catch (error) {
@@ -269,8 +269,8 @@ export default function AddTreatmentModal({
                 {
                     item_type: "drug",
                     product_id: medicine.product_id,
-                    name: medicine.drug_name,
-                    description: medicine.drug_name,
+                    name: medicine.product_name,
+                    description: medicine.product_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
                     instruction: "",
@@ -317,8 +317,8 @@ export default function AddTreatmentModal({
                 {
                     item_type: "supply",
                     product_id: supply.product_id,
-                    name: supply.drug_name,
-                    description: supply.drug_name,
+                    name: supply.product_name,
+                    description: supply.product_name,
                     quantity: 1,
                     unit_price: Number(supply.sell_price),
                     instruction: "",

@@ -147,7 +147,9 @@ export default function FinancePage() {
                 ? "จ่ายยา"
                 : item.type === "service"
                   ? "บริการ"
-                  : item.type,
+                  : item.type === "supply"
+                    ? "เวชภัณฑ์"
+                    : item.type,
         value: item.percentage,
         amount: item.amount,
         color: incomeColors[index % incomeColors.length],

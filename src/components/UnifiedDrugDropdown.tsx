@@ -38,7 +38,7 @@ export default function UnifiedDrugDropdown({
                         >
                             <div>
                                 <div className="font-medium text-foreground group-hover:text-primary">
-                                    {m.drug_name}
+                                    {m.product_name}
                                 </div>
                                 <div className="text-xs text-muted">
                                     {displayMode === "inventory" ? (

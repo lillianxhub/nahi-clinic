@@ -41,7 +41,7 @@ export interface Medicine {
     product_name: string;
     unit: string;
     sell_price: number;
-    status: "active" | "inactive";
+    is_active: boolean;
     min_stock: number;
     category: DrugCategory;
 

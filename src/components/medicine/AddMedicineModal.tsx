@@ -71,7 +71,7 @@ export default function AddMedicineModal({
                     setSearchingMedicines(true);
                     const res = await medicineService.getMedicines({
                         pageSize: 10,
-                        status: "active",
+                        activeStatus: "active",
                     });
                     setMedicines(res.data);
                 } catch (error) {
@@ -87,7 +87,7 @@ export default function AddMedicineModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedMedicineSearch,
                     pageSize: 5,
-                    status: "active",
+                    activeStatus: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {

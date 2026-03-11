@@ -26,7 +26,8 @@ export default function EditMedicineModal({
         unit: "",
         sell_price: "",
         min_stock: "",
-        status: "active" as "active" | "inactive",
+        // status: "active" as "active" | "inactive",
+        is_active: true,
     });
 
     useEffect(() => {
@@ -39,7 +40,7 @@ export default function EditMedicineModal({
                     unit: medicine.unit,
                     sell_price: String(medicine.sell_price),
                     min_stock: String(medicine.min_stock || 0),
-                    status: medicine.status || "active",
+                    is_active: medicine.is_active,
                 });
             }
         }
@@ -60,7 +61,7 @@ export default function EditMedicineModal({
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: name === "is_active" ? value === "true" : value,
         }));
     };
 
@@ -77,7 +78,7 @@ export default function EditMedicineModal({
                 unit: formData.unit,
                 sell_price: Number(formData.sell_price),
                 min_stock: Number(formData.min_stock),
-                status: formData.status,
+                is_active: formData.is_active,
             });
 
             onSuccess();
@@ -246,9 +247,9 @@ export default function EditMedicineModal({
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="radio"
-                                    name="status"
-                                    value="active"
-                                    checked={formData.status === "active"}
+                                    name="is_active"
+                                    value="true"
+                                    checked={formData.is_active === true}
                                     onChange={handleChange}
                                     className="w-4 h-4 text-primary focus:ring-primary"
                                 />
@@ -257,9 +258,9 @@ export default function EditMedicineModal({
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="radio"
-                                    name="status"
-                                    value="inactive"
-                                    checked={formData.status === "inactive"}
+                                    name="is_active"
+                                    value="false"
+                                    checked={formData.is_active === false}
                                     onChange={handleChange}
                                     className="w-4 h-4 text-primary focus:ring-primary"
                                 />

@@ -23,7 +23,7 @@ export async function GET(req: Request, { params }: Params) {
             include: {
                 category: true,
                 lots: {
-                    where: { is_active: true, deleted_at: null },
+                    where: { deleted_at: null },
                     orderBy: { expire_date: "asc" },
                 },
             },
@@ -36,17 +36,7 @@ export async function GET(req: Request, { params }: Params) {
             );
         }
 
-        const mappedProduct = {
-            ...product,
-            drug_id: product.product_id,
-            drug_name: product.product_name,
-            sell_price: product.lots?.[0]?.sell_price
-                ? Number(product.lots[0].sell_price)
-                : 0,
-            status: product.is_active ? "active" : "inactive",
-        };
-
-        return NextResponse.json({ data: mappedProduct });
+        return NextResponse.json({ data: product });
     } catch (error) {
         console.error("Get product detail error:", error);
         return NextResponse.json(
@@ -76,15 +66,7 @@ export async function PATCH(req: Request, { params }: Params) {
             },
         });
 
-        const mappedProduct = {
-            ...updatedProduct,
-            drug_id: updatedProduct.product_id,
-            drug_name: updatedProduct.product_name,
-            sell_price: 0, // Will be updated by client if needed or fetched from details
-            status: updatedProduct.is_active ? "active" : "inactive",
-        };
-
-        return NextResponse.json({ data: mappedProduct });
+        return NextResponse.json({ data: updatedProduct });
     } catch (error: any) {
         console.error("Update product error:", error);
         return NextResponse.json(
@@ -104,7 +86,6 @@ export async function DELETE(req: Request, { params }: Params) {
         await prisma.product.update({
             where: { product_id },
             data: {
-                is_active: false,
                 deleted_at: new Date(),
             },
         });
