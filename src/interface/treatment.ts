@@ -20,17 +20,6 @@ export interface TreatmentItem {
 }
 
 export interface Treatment {
-<<<<<<< HEAD
-  hospital_number: string;
-  treatment_id: string;
-  visit_id: string;
-  visit_date: string; 
-  symptom?: string;
-  diagnosis?: string;
-  note?: string;
-  items?: TreatmentItem[];
-  visitDetails?: VisitDetail[];
-=======
     hospital_number: string;
     treatment_id: string;
     visit_id: string;

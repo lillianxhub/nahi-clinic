@@ -12,21 +12,9 @@ export async function GET(req: Request) {
         const pageSize = parseInt(searchParams.get("pageSize") || "10");
         const skip = (page - 1) * pageSize;
 
-<<<<<<< HEAD
-    // เรียก backend API ของคุณ
-    const backendUrl = new URL(
-      `${process.env.NEXT_PUBLIC_API_URL}/treatments`
-    );
-    backendUrl.searchParams.append("page", page);
-    backendUrl.searchParams.append("pageSize", pageSize);
-    if (q) backendUrl.searchParams.append("q", q);
-    // include visitDetails เพื่อให้ได้ข้อมูลยา
-    backendUrl.searchParams.append("include", "visitDetails");
-=======
         const where: any = {
             deleted_at: null,
         };
->>>>>>> a6cfb6d5ff3cebacd3167edfc818325fe232e6dc
 
         // filter by month
         if (month) {
