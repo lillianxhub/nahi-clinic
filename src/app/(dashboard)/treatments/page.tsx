@@ -233,9 +233,13 @@ export default function TreatmentsPage() {
             <AddTreatmentModal
                 open={openAdd}
                 onClose={() => setOpenAdd(false)}
-                onSuccess={() => {
+                onSuccess={(visitId) => {
                     setPage(1);
                     fetchTreatments();
+                    if (visitId) {
+                        setSelectedTreatmentId(visitId);
+                        setOpenView(true);
+                    }
                 }}
             />
 

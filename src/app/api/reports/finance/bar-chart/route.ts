@@ -49,28 +49,25 @@ export async function GET(request: Request) {
             groupBy = "month";
         }
 
-        // Income: filter via visit.visit_date (no income_date field)
+        // Income: use income_date
         const incomes = await prisma.income.findMany({
             where: {
                 deleted_at: null,
-                visit: {
-                    visit_date: { gte: startDate, lte: endDate },
-                    deleted_at: null,
-                },
+                income_date: { gte: startDate, lte: endDate },
             },
             select: {
                 amount: true,
-                visit: { select: { visit_date: true } },
+                income_date: true,
             },
         });
 
-        // Expense: filter by created_at (no expense_date field)
+        // Expense: use expense_date
         const expenses = await prisma.expense.findMany({
             where: {
-                created_at: { gte: startDate, lte: endDate },
+                expense_date: { gte: startDate, lte: endDate },
                 deleted_at: null,
             },
-            select: { amount: true, created_at: true },
+            select: { amount: true, expense_date: true },
         });
 
         const chartData = [];
@@ -86,12 +83,12 @@ export async function GET(request: Request) {
 
                 incomeSum = incomes
                     .filter((i) =>
-                        isSameMonth(i.visit!.visit_date, currentLoop),
+                        isSameMonth(i.income_date, currentLoop),
                     )
                     .reduce((sum, i) => sum + Number(i.amount), 0);
 
                 expenseSum = expenses
-                    .filter((e) => isSameMonth(e.created_at, currentLoop))
+                    .filter((e) => isSameMonth(e.expense_date, currentLoop))
                     .reduce((sum, e) => sum + Number(e.amount), 0);
 
                 currentLoop = addMonths(currentLoop, 1);
@@ -99,11 +96,11 @@ export async function GET(request: Request) {
                 label = format(currentLoop, "d MMM", { locale: th });
 
                 incomeSum = incomes
-                    .filter((i) => isSameDay(i.visit!.visit_date, currentLoop))
+                    .filter((i) => isSameDay(i.income_date, currentLoop))
                     .reduce((sum, i) => sum + Number(i.amount), 0);
 
                 expenseSum = expenses
-                    .filter((e) => isSameDay(e.created_at, currentLoop))
+                    .filter((e) => isSameDay(e.expense_date, currentLoop))
                     .reduce((sum, e) => sum + Number(e.amount), 0);
 
                 currentLoop = addDays(currentLoop, 1);
@@ -117,10 +114,13 @@ export async function GET(request: Request) {
         }
 
         return NextResponse.json(chartData);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching finance chart data:", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

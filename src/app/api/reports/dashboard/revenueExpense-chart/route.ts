@@ -23,25 +23,22 @@ export async function GET(req: Request) {
             count = 7;
         }
 
-        // Income: filter via visit.visit_date (no income_date field)
-        // Expense: filter via created_at (no expense_date field)
+        // Income: use income_date
+        // Expense: use expense_date
         const [revenue, expense] = await Promise.all([
             prisma.income.findMany({
                 where: {
                     deleted_at: null,
-                    visit: { visit_date: { gte: startDate } },
+                    income_date: { gte: startDate },
                 },
-                include: {
-                    visit: { select: { visit_date: true } },
-                },
-                orderBy: { created_at: "asc" },
+                orderBy: { income_date: "asc" },
             }),
             prisma.expense.findMany({
                 where: {
                     deleted_at: null,
-                    created_at: { gte: startDate },
+                    expense_date: { gte: startDate },
                 },
-                orderBy: { created_at: "asc" },
+                orderBy: { expense_date: "asc" },
             }),
         ]);
 
@@ -75,9 +72,9 @@ export async function GET(req: Request) {
             };
         }
 
-        // Add revenue data — use visit.visit_date as the date key
+        // Add revenue data — use income_date as the date key
         revenue.forEach((r) => {
-            const date = r.visit?.visit_date ?? r.created_at;
+            const date = r.income_date;
             const key =
                 groupBy === "day"
                     ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
@@ -91,9 +88,9 @@ export async function GET(req: Request) {
             }
         });
 
-        // Add expense data — use created_at as the date key
+        // Add expense data — use expense_date as the date key
         expense.forEach((e) => {
-            const date = e.created_at;
+            const date = e.expense_date;
             const key =
                 groupBy === "day"
                     ? `${date.toLocaleDateString("th-TH", { day: "numeric" })} ${date.toLocaleDateString("th-TH", { month: "short" })}`
@@ -115,10 +112,14 @@ export async function GET(req: Request) {
             }));
 
         return NextResponse.json({ data: revenueExpenseChart });
-    } catch (error) {
+    } catch (error: any) {
         console.log("Revenue Expense Chart API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                error: "Internal Server Error",
+                message: error.message,
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

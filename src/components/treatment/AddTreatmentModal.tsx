@@ -24,9 +24,9 @@ import { patientService } from "@/services/patient";
 import { Patient } from "@/interface/patient";
 import { useDebounce } from "@/hooks/useDebounce";
 import AddPatientModal from "../patient/AddPatientModal";
-import { procedureService } from "@/services/procedure";
-import { Procedure } from "@/interface/procedure";
-import AddProcedureModal from "./AddProcedureModal";
+import { serviceService } from "@/services/service";
+import { Service } from "@/interface/service";
+import AddServiceModal from "./AddServiceModal";
 import Swal from "sweetalert2";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
@@ -35,7 +35,7 @@ import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 interface AddTreatmentModalProps {
     open: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (visitId?: string) => void;
 }
 
 export default function AddTreatmentModal({
@@ -80,13 +80,13 @@ export default function AddTreatmentModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
-    // Procedure Search States
-    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
-    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
-    const [procedures, setProcedures] = useState<Procedure[]>([]);
-    const [searchingProcedures, setSearchingProcedures] = useState(false);
-    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
-    const [openAddProcedure, setOpenAddProcedure] = useState(false);
+    // Service Search States
+    const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+    const debouncedServiceSearch = useDebounce(serviceSearchTerm, 500);
+    const [services, setServices] = useState<Service[]>([]);
+    const [searchingServices, setSearchingServices] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+    const [openAddService, setOpenAddService] = useState(false);
 
     // Supply Search States
     const [supplySearchTerm, setSupplySearchTerm] = useState("");
@@ -161,41 +161,38 @@ export default function AddTreatmentModal({
     }, [debouncedDrugSearch]);
 
     useEffect(() => {
-        const fetchProcedures = async () => {
-            if (debouncedProcedureSearch.length < 2) {
-                // Fetch all active procedures if search is empty or short?
-                // Or just show nothing. User said "dropdown".
-                // Usually we want to show some initial options if it's a small list.
+        const fetchServices = async () => {
+            if (debouncedServiceSearch.length < 2) {
                 try {
-                    setSearchingProcedures(true);
-                    const res = await procedureService.getProcedures({
+                    setSearchingServices(true);
+                    const res = await serviceService.getServices({
                         pageSize: 10,
                     });
-                    setProcedures(res.data);
+                    setServices(res.data);
                 } catch (error) {
-                    console.error("ดึงข้อมูลหัตถการล้มเหลว", error);
+                    console.error("ดึงข้อมูลบริการล้มเหลว", error);
                 } finally {
-                    setSearchingProcedures(false);
+                    setSearchingServices(false);
                 }
                 return;
             }
 
             try {
-                setSearchingProcedures(true);
-                const res = await procedureService.getProcedures({
-                    q: debouncedProcedureSearch,
+                setSearchingServices(true);
+                const res = await serviceService.getServices({
+                    q: debouncedServiceSearch,
                     pageSize: 10,
                 });
-                setProcedures(res.data);
+                setServices(res.data);
             } catch (error) {
-                console.error("ค้นหาหัตถการล้มเหลว", error);
+                console.error("ค้นหาบริการล้มเหลว", error);
             } finally {
-                setSearchingProcedures(false);
+                setSearchingServices(false);
             }
         };
 
-        fetchProcedures();
-    }, [debouncedProcedureSearch]);
+        fetchServices();
+    }, [debouncedServiceSearch]);
 
     useEffect(() => {
         const fetchSupplies = async () => {
@@ -281,21 +278,21 @@ export default function AddTreatmentModal({
         setShowDrugDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: any) => {
+    const handleSelectService = (service: Service) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                product_id: procedure.product_id,
-                name: procedure.product_name,
-                description: procedure.product_name,
+                service_id: service.service_id,
+                name: service.service_name,
+                description: service.service_name,
                 quantity: 1,
-                unit_price: Number(procedure.price),
+                unit_price: Number(service.price),
                 instruction: "",
             },
         ]);
-        setProcedureSearchTerm("");
-        setShowProcedureDropdown(false);
+        setServiceSearchTerm("");
+        setShowServiceDropdown(false);
     };
 
     const handleSelectSupply = (supply: Medicine) => {
@@ -393,12 +390,13 @@ export default function AddTreatmentModal({
                 `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
             ).toISOString();
 
-            await treatmentService.createTreatment({
+            const result = await treatmentService.createTreatment({
                 ...formData,
                 visit_date: isoDateTime,
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
+                    item_type: item.item_type === "drug" || item.item_type === "supply" ? "product" : item.item_type,
                     product_id: item.product_id,
                     description: item.instruction || "",
                 })),
@@ -429,7 +427,7 @@ export default function AddTreatmentModal({
             setSelectedItems([]);
             setPaymentMethod("cash");
 
-            onSuccess();
+            onSuccess(result.visit_id);
             onClose();
         } catch (error) {
             console.error("สร้างการรักษาไม่สำเร็จ", error);
@@ -813,7 +811,7 @@ export default function AddTreatmentModal({
                         </div>
                         {/* Right Column: Treatment Items & Payment */}
                         <div className="space-y-6">
-                            {/* Section A: Procedures */}
+                            {/* Section A: Services */}
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -821,7 +819,7 @@ export default function AddTreatmentModal({
                                             size={18}
                                             className="text-primary"
                                         />
-                                        รายการหัตถการ
+                                        รายการบริการ
                                     </h3>
                                 </div>
 
@@ -832,56 +830,56 @@ export default function AddTreatmentModal({
                                     />
                                     <input
                                         type="text"
-                                        placeholder="ค้นหาหรือเลือกหัตถการ..."
+                                        placeholder="ค้นหาหรือเลือกบริการ..."
                                         className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
-                                        value={procedureSearchTerm}
+                                        value={serviceSearchTerm}
                                         onChange={(e) => {
-                                            setProcedureSearchTerm(
+                                            setServiceSearchTerm(
                                                 e.target.value,
                                             );
-                                            setShowProcedureDropdown(true);
+                                            setShowServiceDropdown(true);
                                         }}
                                         onFocus={() =>
-                                            setShowProcedureDropdown(true)
+                                            setShowServiceDropdown(true)
                                         }
                                         onBlur={() =>
                                             setTimeout(() => {
-                                                setShowProcedureDropdown(false);
+                                                setShowServiceDropdown(false);
                                             }, 200)
                                         }
                                     />
-                                    {showProcedureDropdown && (
+                                    {showServiceDropdown && (
                                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                            {searchingProcedures ? (
+                                            {searchingServices ? (
                                                 <div className="p-4 text-center text-muted text-sm">
                                                     กำลังค้นหา...
                                                 </div>
-                                            ) : procedures.length > 0 ? (
+                                            ) : services.length > 0 ? (
                                                 <div className="py-1">
-                                                    {procedures.map(
-                                                        (p: any) => (
+                                                    {services.map(
+                                                        (s: any) => (
                                                             <button
                                                                 key={
-                                                                    p.product_id
+                                                                    s.service_id
                                                                 }
                                                                 type="button"
                                                                 className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
                                                                 onClick={() =>
-                                                                    handleSelectProcedure(
-                                                                        p,
+                                                                    handleSelectService(
+                                                                        s,
                                                                     )
                                                                 }
                                                             >
                                                                 <div>
                                                                     <div className="font-medium text-foreground group-hover:text-primary">
                                                                         {
-                                                                            p.product_name
+                                                                            s.service_name
                                                                         }
                                                                     </div>
                                                                     <div className="text-xs text-muted">
                                                                         ฿
                                                                         {Number(
-                                                                            p.price,
+                                                                            s.price,
                                                                         ).toLocaleString()}
                                                                     </div>
                                                                 </div>
@@ -895,7 +893,7 @@ export default function AddTreatmentModal({
                                                 </div>
                                             ) : (
                                                 <div className="p-4 text-center text-muted text-sm">
-                                                    ไม่พบข้อมูลหัตถการ
+                                                    ไม่พบข้อมูลบริการ
                                                 </div>
                                             )}
 
@@ -904,16 +902,16 @@ export default function AddTreatmentModal({
                                                     type="button"
                                                     className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
                                                     onClick={() => {
-                                                        setOpenAddProcedure(
+                                                        setOpenAddService(
                                                             true,
                                                         );
-                                                        setShowProcedureDropdown(
+                                                        setShowServiceDropdown(
                                                             false,
                                                         );
                                                     }}
                                                 >
                                                     <Plus size={16} />
-                                                    สร้างหัตถการใหม่
+                                                    สร้างบริการใหม่
                                                 </button>
                                             </div>
                                         </div>
@@ -928,7 +926,7 @@ export default function AddTreatmentModal({
                                             <thead className="bg-gray-50/50 text-gray-500 text-xs">
                                                 <tr>
                                                     <th className="text-left px-4 py-2 font-semibold">
-                                                        หัตถการ
+                                                        บริการ
                                                     </th>
                                                     <th className="text-right px-4 py-2 font-semibold w-24">
                                                         ราคา
@@ -1408,11 +1406,11 @@ export default function AddTreatmentModal({
                 </div>
             </div>
 
-            <AddProcedureModal
-                open={openAddProcedure}
-                onClose={() => setOpenAddProcedure(false)}
-                onSuccess={(newProcedure) => {
-                    handleSelectProcedure(newProcedure);
+            <AddServiceModal
+                open={openAddService}
+                onClose={() => setOpenAddService(false)}
+                onSuccess={(newService) => {
+                    handleSelectService(newService);
                 }}
             />
 

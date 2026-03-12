@@ -109,7 +109,11 @@ export async function GET(req: Request) {
     } catch (error: any) {
         console.error("Get treatments error:", error);
         return NextResponse.json(
-            { message: "Internal server error" },
+            { 
+                message: "Internal server error",
+                error: error.message,
+                stack: error.stack
+            },
             { status: 500 },
         );
     }
@@ -306,6 +310,12 @@ export async function POST(req: Request) {
         return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
         console.error("Create treatment error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json(
+            { 
+                message: error.message || "Internal server error",
+                stack: error.stack
+            },
+            { status: 500 },
+        );
     }
 }

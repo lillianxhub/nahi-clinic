@@ -6,9 +6,13 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
     try {
         return NextResponse.json([]);
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Finance categories API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

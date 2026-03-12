@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
-import { procedureService } from "@/services/procedure";
-import { Procedure } from "@/interface/procedure";
-import AddProcedureModal from "./AddProcedureModal";
+import { serviceService } from "@/services/service";
+import { Service } from "@/interface/service";
+import AddServiceModal from "./AddServiceModal";
 import { formatLocalDate } from "@/utils/dateUtils";
 import { treatmentService } from "@/services/treatment";
 import { Treatment, CreateTreatmentDTO } from "@/interface/treatment";
@@ -80,13 +80,13 @@ export default function EditTreatmentModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
-    // Procedure Search States
-    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
-    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
-    const [procedures, setProcedures] = useState<Procedure[]>([]);
-    const [searchingProcedures, setSearchingProcedures] = useState(false);
-    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
-    const [openAddProcedure, setOpenAddProcedure] = useState(false);
+    // Service Search States
+    const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+    const debouncedServiceSearch = useDebounce(serviceSearchTerm, 500);
+    const [services, setServices] = useState<Service[]>([]);
+    const [searchingServices, setSearchingServices] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+    const [openAddService, setOpenAddService] = useState(false);
 
     // Supply Search States
     const [supplySearchTerm, setSupplySearchTerm] = useState("");
@@ -139,21 +139,23 @@ export default function EditTreatmentModal({
 
             const existingItems = details.map((detail: any) => {
                 let instruction = detail.description || "";
+                const name = detail.service
+                    ? detail.service.service_name
+                    : detail.product?.product_name;
 
                 // Cleanup legacy concatenated format: "Product Name : Instruction"
-                const productName = detail.product?.product_name;
-                if (
-                    productName &&
-                    instruction.startsWith(`${productName} : `)
-                ) {
-                    instruction = instruction.substring(productName.length + 3);
+                if (name && instruction.startsWith(`${name} : `)) {
+                    instruction = instruction.substring(name.length + 3);
                 }
 
                 return {
-                    item_type: detail.product?.product_type,
+                    item_type: detail.service
+                        ? "service"
+                        : detail.product?.product_type,
                     product_id: detail.product_id,
-                    name: detail.product?.product_name,
-                    description: detail.product?.product_name, // keep as fallback
+                    service_id: detail.service_id,
+                    name: name,
+                    description: name, // keep as fallback
                     instruction: instruction,
                     quantity: Number(detail.quantity),
                     unit_price: Number(detail.unit_price),
@@ -211,38 +213,38 @@ export default function EditTreatmentModal({
     }, [debouncedDrugSearch]);
 
     useEffect(() => {
-        const fetchProcedures = async () => {
-            if (debouncedProcedureSearch.length < 2) {
+        const fetchServices = async () => {
+            if (debouncedServiceSearch.length < 2) {
                 try {
-                    setSearchingProcedures(true);
-                    const res = await procedureService.getProcedures({
+                    setSearchingServices(true);
+                    const res = await serviceService.getServices({
                         pageSize: 10,
                     });
-                    setProcedures(res.data);
+                    setServices(res.data);
                 } catch (error) {
-                    console.error("ดึงข้อมูลหัตถการล้มเหลว", error);
+                    console.error("ดึงข้อมูลบริการล้มเหลว", error);
                 } finally {
-                    setSearchingProcedures(false);
+                    setSearchingServices(false);
                 }
                 return;
             }
 
             try {
-                setSearchingProcedures(true);
-                const res = await procedureService.getProcedures({
-                    q: debouncedProcedureSearch,
+                setSearchingServices(true);
+                const res = await serviceService.getServices({
+                    q: debouncedServiceSearch,
                     pageSize: 10,
                 });
-                setProcedures(res.data);
+                setServices(res.data);
             } catch (error) {
-                console.error("ค้นหาหัตถการล้มเหลว", error);
+                console.error("ค้นหาบริการล้มเหลว", error);
             } finally {
-                setSearchingProcedures(false);
+                setSearchingServices(false);
             }
         };
 
-        fetchProcedures();
-    }, [debouncedProcedureSearch]);
+        fetchServices();
+    }, [debouncedServiceSearch]);
 
     useEffect(() => {
         const fetchSupplies = async () => {
@@ -353,40 +355,21 @@ export default function EditTreatmentModal({
         setShowSupplyDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: any) => {
+    const handleSelectService = (service: Service) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                product_id: procedure.product_id,
-                name: procedure.product_name,
-                description: procedure.product_name,
+                service_id: service.service_id,
+                name: service.service_name,
+                description: service.service_name,
                 quantity: 1,
-                unit_price: Number(procedure.price),
+                unit_price: Number(service.price),
                 instruction: "",
             },
         ]);
-        setProcedureSearchTerm("");
-        setShowProcedureDropdown(false);
-    };
-
-    const handleAddService = (
-        name: string,
-        price: number,
-        instruction?: string,
-        type: "service" | "procedure" = "service",
-    ) => {
-        setSelectedItems([
-            ...selectedItems,
-            {
-                item_type: type,
-                name: name,
-                description: name,
-                quantity: 1,
-                unit_price: price,
-                instruction: instruction || "",
-            },
-        ]);
+        setServiceSearchTerm("");
+        setShowServiceDropdown(false);
     };
 
     const handleUpdateDescription = (index: number, description: string) => {
@@ -439,6 +422,10 @@ export default function EditTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
+                    item_type:
+                        item.item_type === "drug" || item.item_type === "supply"
+                            ? "product"
+                            : item.item_type,
                     product_id: item.product_id,
                     description: item.instruction || "",
                 })),
@@ -734,7 +721,7 @@ export default function EditTreatmentModal({
                     </div>
                     {/* Right Column: Treatment Items & Payment */}
                     <div className="space-y-6">
-                        {/* Section A: Procedures */}
+                        {/* Section A: Services */}
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -742,7 +729,7 @@ export default function EditTreatmentModal({
                                         size={18}
                                         className="text-primary"
                                     />
-                                    รายการหัตถการ
+                                    รายการบริการ
                                 </h3>
                             </div>
 
@@ -753,47 +740,43 @@ export default function EditTreatmentModal({
                                 />
                                 <input
                                     type="text"
-                                    placeholder="ค้นหาหรือเลือกหัตถการ..."
+                                    placeholder="ค้นหาหรือเลือกบริการ..."
                                     className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
-                                    value={procedureSearchTerm}
+                                    value={serviceSearchTerm}
                                     onChange={(e) => {
-                                        setProcedureSearchTerm(e.target.value);
-                                        setShowProcedureDropdown(true);
+                                        setServiceSearchTerm(e.target.value);
+                                        setShowServiceDropdown(true);
                                     }}
-                                    onFocus={() =>
-                                        setShowProcedureDropdown(true)
-                                    }
+                                    onFocus={() => setShowServiceDropdown(true)}
                                     onBlur={() =>
                                         setTimeout(() => {
-                                            setShowProcedureDropdown(false);
+                                            setShowServiceDropdown(false);
                                         }, 200)
                                     }
                                 />
 
-                                {showProcedureDropdown && (
+                                {showServiceDropdown && (
                                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searchingProcedures ? (
+                                        {searchingServices ? (
                                             <div className="p-4 text-center text-muted text-sm">
                                                 กำลังค้นหา...
                                             </div>
-                                        ) : procedures.length > 0 ? (
+                                        ) : services.length > 0 ? (
                                             <div className="py-1">
-                                                {procedures.map((p: any) => (
+                                                {services.map((p: any) => (
                                                     <button
-                                                        key={p.product_id}
+                                                        key={p.service_id}
                                                         type="button"
                                                         className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
                                                         onClick={() =>
-                                                            handleSelectProcedure(
+                                                            handleSelectService(
                                                                 p,
                                                             )
                                                         }
                                                     >
                                                         <div>
                                                             <div className="font-medium text-foreground group-hover:text-primary">
-                                                                {
-                                                                    p.product_name
-                                                                }
+                                                                {p.service_name}
                                                             </div>
                                                             <div className="text-xs text-muted">
                                                                 ฿
@@ -811,7 +794,7 @@ export default function EditTreatmentModal({
                                             </div>
                                         ) : (
                                             <div className="p-4 text-center text-muted text-sm">
-                                                ไม่พบข้อมูลหัตถการ
+                                                ไม่พบข้อมูลบริการ
                                             </div>
                                         )}
 
@@ -820,14 +803,14 @@ export default function EditTreatmentModal({
                                                 type="button"
                                                 className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
                                                 onClick={() => {
-                                                    setOpenAddProcedure(true);
-                                                    setShowProcedureDropdown(
+                                                    setOpenAddService(true);
+                                                    setShowServiceDropdown(
                                                         false,
                                                     );
                                                 }}
                                             >
                                                 <Plus size={16} />
-                                                สร้างหัตถการใหม่
+                                                สร้างบริการใหม่
                                             </button>
                                         </div>
                                     </div>
@@ -842,7 +825,7 @@ export default function EditTreatmentModal({
                                         <thead className="bg-gray-50/50 text-gray-500 text-xs">
                                             <tr>
                                                 <th className="text-left px-4 py-2 font-semibold">
-                                                    หัตถการ
+                                                    บริการ
                                                 </th>
                                                 <th className="text-right px-4 py-2 font-semibold w-24">
                                                     ราคา
@@ -1301,11 +1284,11 @@ export default function EditTreatmentModal({
                     </button>
                 </div>
 
-                <AddProcedureModal
-                    open={openAddProcedure}
-                    onClose={() => setOpenAddProcedure(false)}
-                    onSuccess={(newProcedure) => {
-                        handleSelectProcedure(newProcedure);
+                <AddServiceModal
+                    open={openAddService}
+                    onClose={() => setOpenAddService(false)}
+                    onSuccess={(newService) => {
+                        handleSelectService(newService);
                     }}
                 />
             </div>

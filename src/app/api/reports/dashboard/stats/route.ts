@@ -15,11 +15,12 @@ export async function GET() {
             },
         });
 
-        // Income has no income_date → filter via visit.visit_date
+        // Income has income_date field
         const todayIncome = await prisma.income.aggregate({
             _sum: { amount: true },
             where: {
-                visit: { visit_date: { gte: todayStart, lte: todayEnd } },
+                income_date: { gte: todayStart, lte: todayEnd },
+                deleted_at: null,
             },
         });
 
@@ -51,10 +52,13 @@ export async function GET() {
                 lowStockCount,
             },
         });
-    } catch (error) {
-        console.log("Dashboard stat API Error", error);
+    } catch (error: any) {
+        console.error("Dashboard stat API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

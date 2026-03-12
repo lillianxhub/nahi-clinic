@@ -38,20 +38,20 @@ export async function GET(request: Request) {
             );
         }
 
-        // Get VisitItems within date range, joined via visit_date
+        // Filter VisitItems based on their linked Income records' income_date
         const visitItems = await prisma.visitItem.findMany({
             where: {
                 is_active: true,
                 deleted_at: null,
-                visit: {
-                    visit_date: { gte: startDate, lte: endDate },
+                income: {
+                    income_date: { gte: startDate, lte: endDate },
                     deleted_at: null,
                 },
             },
             select: {
+                item_type: true,
                 quantity: true,
                 unit_price: true,
-                total_price: true,
                 product: { select: { product_type: true } },
             },
         });
@@ -59,11 +59,15 @@ export async function GET(request: Request) {
         const summary = { drug: 0, service: 0, supply: 0 };
 
         for (const item of visitItems) {
-            const amount = Number(item.total_price);
-            const type = item.product?.product_type;
-            if (type === "drug") summary.drug += amount;
-            else if (type === "service") summary.service += amount;
-            else if (type === "supply") summary.supply += amount;
+            const amount = Number(item.quantity) * Number(item.unit_price);
+            if (item.item_type === "service") {
+                summary.service += amount;
+            } else {
+                const type = item.product?.product_type;
+                if (type === "drug") summary.drug += amount;
+                else if (type === "supply") summary.supply += amount;
+                else summary.service += amount; // Fallback if somehow it's a product but typed as service
+            }
         }
 
         const total = summary.drug + summary.service + summary.supply;
@@ -94,10 +98,13 @@ export async function GET(request: Request) {
                 totalAmount: total,
             },
         });
-    } catch (error) {
-        console.log("Finance income GET API Error", error);
+    } catch (error: any) {
+        console.error("Finance income GET API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }
@@ -162,41 +169,59 @@ export async function POST(request: Request) {
                 resolvedVisitId = walkInVisit.visit_id;
             }
 
-            // Create Income (1-1 with Visit)
-            const income = await tx.income.create({
-                data: {
-                    ...(resolvedVisitId && {
-                        visit: { connect: { visit_id: resolvedVisitId } },
-                    }),
-                    income_type: (body.income_type as any) || "other",
-                    amount: Number(body.amount),
-                    payment_method: body.payment_method,
-                    receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
-                    income_date: body.income_date
-                        ? new Date(body.income_date)
-                        : new Date(),
-                },
-            });
+            if (!resolvedVisitId) {
+                throw new Error("Visit ID or Patient ID is required to create income items");
+            }
 
-            // Process VisitItems if provided
-            if (body.items && Array.isArray(body.items) && resolvedVisitId) {
+            const createdIncomes = [];
+
+            // Process VisitItems and Incomes
+            if (body.items && Array.isArray(body.items)) {
                 for (const item of body.items) {
                     const qty = Number(item.quantity);
                     const price = Number(item.unit_price);
-                    const totalPrice = qty * price;
-
-                    const product = await tx.product.findUnique({
-                        where: { product_id: item.product_id },
-                        select: { product_type: true },
+                    
+                    // 1. Create VisitItem
+                    const visitItem = await tx.visitItem.create({
+                        data: {
+                            visit_id: resolvedVisitId,
+                            item_type: item.item_type, // 'product' or 'service'
+                            product_id: item.item_type === 'product' ? item.product_id : null,
+                            service_id: item.item_type === 'service' ? item.service_id : null,
+                            quantity: qty,
+                            unit_price: price,
+                            description: item.description,
+                        },
                     });
 
-                    let usedLotId: string | null = null;
+                    // 2. Create Income linked 1-1 with VisitItem
+                    let incomeType: any = item.income_type || "other";
+                    if (item.item_type === "service") {
+                        incomeType = "service";
+                    } else if (item.product_id) {
+                        const product = await tx.product.findUnique({
+                            where: { product_id: item.product_id },
+                            select: { product_type: true },
+                        });
+                        incomeType = product?.product_type || "other";
+                    }
 
-                    if (
-                        product &&
-                        (product.product_type === "drug" ||
-                            product.product_type === "supply")
-                    ) {
+                    const income = await tx.income.create({
+                        data: {
+                            visit_item_id: visitItem.visit_item_id,
+                            income_type: incomeType,
+                            amount: qty * price,
+                            payment_method: body.payment_method,
+                            receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                            income_date: body.income_date
+                                ? new Date(body.income_date)
+                                : new Date(),
+                        },
+                    });
+                    createdIncomes.push(income);
+
+                    // 3. Handle Stock Deduction if it's a product
+                    if (item.item_type === 'product' && item.product_id) {
                         let remainingToDeduct = qty;
                         const lots = await tx.inventoryLot.findMany({
                             where: {
@@ -214,16 +239,17 @@ export async function POST(request: Request) {
                                 lot.qty_remaining,
                                 remainingToDeduct,
                             );
-                            if (!usedLotId) usedLotId = lot.lot_id;
+
                             await tx.inventoryLot.update({
                                 where: { lot_id: lot.lot_id },
                                 data: {
                                     qty_remaining: { decrement: deduction },
                                 },
                             });
+
                             await tx.stockUsage.create({
                                 data: {
-                                    visit_id: resolvedVisitId!,
+                                    visit_item_id: visitItem.visit_item_id,
                                     lot_id: lot.lot_id,
                                     quantity: deduction,
                                     used_at: new Date(),
@@ -238,28 +264,47 @@ export async function POST(request: Request) {
                             );
                         }
                     }
-
-                    await tx.visitItem.create({
-                        data: {
-                            visit_id: resolvedVisitId!,
-                            product_id: item.product_id,
-                            lot_id: usedLotId ?? undefined,
-                            quantity: qty,
-                            unit_price: price,
-                            total_price: totalPrice,
-                        },
-                    });
                 }
+            } else {
+                // Handle single total income without items (Create a dummy VisitItem)
+                // However, schema designs imply we should have items for tracking.
+                // For now, let's create a generic VisitItem.
+                const visitItem = await tx.visitItem.create({
+                    data: {
+                        visit_id: resolvedVisitId,
+                        item_type: 'service', // Default to service for generic income
+                        quantity: 1,
+                        unit_price: Number(body.amount),
+                        description: 'รายรับอื่นๆ/เหมาจ่าย',
+                    },
+                });
+
+                const income = await tx.income.create({
+                    data: {
+                        visit_item_id: visitItem.visit_item_id,
+                        income_type: body.income_type || 'other',
+                        amount: Number(body.amount),
+                        payment_method: body.payment_method,
+                        receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                        income_date: body.income_date
+                            ? new Date(body.income_date)
+                            : new Date(),
+                    },
+                });
+                createdIncomes.push(income);
             }
 
-            return income;
+            return createdIncomes;
         });
 
         return NextResponse.json(result, { status: 201 });
     } catch (error: any) {
-        console.error("Create income API Error:", error.message);
+        console.error("Create income API Error:", error);
         return NextResponse.json(
-            { message: error.message || "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

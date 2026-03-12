@@ -8,13 +8,13 @@
         "start": "next start",
         "lint": "eslint",
         "test": "vitest",
-        "db:migrate:dev": "dotenv -e .env.development -- prisma migrate dev",
-        "db:push:dev": "dotenv -e .env.development -- prisma db push",
-        "db:push:prod": "dotenv -e .env.production -- prisma db push",
-        "db:seed:dev": "dotenv -e .env.development -- prisma db seed",
-        "db:seed:prod": "dotenv -e .env.production -- prisma db seed",
-        "db:studio:dev": "dotenv -e .env.development -- prisma studio",
-        "db:studio:prod": "dotenv -e .env.production -- prisma studio"
+        "db:migrate:dev": "dotenv -e .env.dev -- prisma migrate dev",
+        "db:push:dev": "dotenv -e .env.dev -- prisma db push",
+        "db:push:prod": "dotenv -e .env.prod -- prisma db push",
+        "db:seed:dev": "dotenv -e .env.dev -- prisma db seed",
+        "db:seed:prod": "dotenv -e .env.prod -- prisma db seed",
+        "db:studio:dev": "dotenv -e .env.dev -- prisma studio",
+        "db:studio:prod": "dotenv -e .env.prod -- prisma studio"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.4.2",

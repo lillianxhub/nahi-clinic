@@ -49,10 +49,13 @@ export async function GET() {
         return NextResponse.json({
             data: chartData,
         });
-    } catch (error) {
-        console.log("Patient Chart API Error", error);
+    } catch (error: any) {
+        console.error("Patient Chart API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

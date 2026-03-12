@@ -3,7 +3,7 @@ services:
         image: postgres:15-alpine
         restart: always
         env_file:
-            - .env.development
+            - .env.dev
         ports:
             - "5432:5432"
         volumes:
@@ -19,7 +19,7 @@ services:
             - /app/node_modules
             - /app/.next
         env_file:
-            - .env.development
+            - .env.dev
         restart: always
         environment:
             TZ: Asia/Bangkok

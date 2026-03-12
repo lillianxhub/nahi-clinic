@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
             };
         }
 
-        const type = searchParams.get("type"); // drug, supply, service
+        const type = searchParams.get("type"); // drug, supply
         const q = searchParams.get("q");
         const status = searchParams.get("status");
 
@@ -30,10 +30,10 @@ export async function GET(req: NextRequest) {
             deleted_at: null,
         };
 
-        if (type) {
+        if (type && ["drug", "supply"].includes(type)) {
             where.product_type = type;
         } else {
-            // Default to drugs and supplies for the main medicine list
+            // Default to drugs and supplies
             where.product_type = { in: ["drug", "supply"] };
         }
 
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const {
+        let {
             product_name,
             category_id,
             unit,
@@ -198,6 +198,7 @@ export async function POST(req: Request) {
             lot_no,
             received_date,
             product_type: bodyProductType,
+            supplier_id,
         } = body;
 
         const effectiveProductType = bodyProductType || "drug";
@@ -212,6 +213,20 @@ export async function POST(req: Request) {
                     deleted_at: null,
                 },
             });
+
+            if (!supplier_id) {
+                // Check if any supplier exists, if not, create a default one
+                let supplier = await tx.supplier.findFirst();
+                if (!supplier) {
+                    supplier = await tx.supplier.create({
+                        data: {
+                            supplier_name: "General Supplier",
+                            contact: "N/A",
+                        },
+                    });
+                }
+                supplier_id = supplier.supplier_id;
+            }
 
             if (product) {
                 product = await tx.product.update({
@@ -245,6 +260,7 @@ export async function POST(req: Request) {
             const lot = await tx.inventoryLot.create({
                 data: {
                     product_id: product.product_id,
+                    supplier_id: supplier_id,
                     lot_no: lot_no || autoLotNo,
                     buy_unit: buy_unit || unit,
                     conversion_factor: conversion_factor

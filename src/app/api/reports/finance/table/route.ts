@@ -49,27 +49,25 @@ export async function GET(request: Request) {
             }
         }
 
-        // Income: date filter via visit.visit_date
+        // Date filters
         if (start) {
-            incomeWhere.visit = { visit_date: { gte: start } };
-            expenseWhere.created_at = { gte: start };
+            incomeWhere.income_date = { gte: start };
+            expenseWhere.expense_date = { gte: start };
         }
         if (end) {
-            incomeWhere.visit = {
-                ...incomeWhere.visit,
-                visit_date: { ...incomeWhere.visit?.visit_date, lte: end },
-            };
-            expenseWhere.created_at = { ...expenseWhere.created_at, lte: end };
+            incomeWhere.income_date = { ...incomeWhere.income_date, lte: end };
+            expenseWhere.expense_date = { ...expenseWhere.expense_date, lte: end };
         }
 
         if (search) {
-            incomeWhere.visit = {
-                ...incomeWhere.visit,
-                patient: {
-                    OR: [
-                        { first_name: { contains: search } },
-                        { last_name: { contains: search } },
-                    ],
+            incomeWhere.visitItem = {
+                visit: {
+                    patient: {
+                        OR: [
+                            { first_name: { contains: search } },
+                            { last_name: { contains: search } },
+                        ],
+                    },
                 },
             };
             expenseWhere.description = { contains: search };
@@ -82,24 +80,23 @@ export async function GET(request: Request) {
             incomes = await prisma.income.findMany({
                 where: incomeWhere,
                 include: {
-                    visit: {
+                    visitItem: {
                         include: {
-                            patient: true,
-                            items: {
-                                where: { is_active: true },
+                            visit: {
                                 include: {
-                                    product: {
-                                        select: {
-                                            product_name: true,
-                                            product_type: true,
-                                        },
-                                    },
+                                    patient: true,
+                                },
+                            },
+                            product: {
+                                select: {
+                                    product_name: true,
+                                    product_type: true,
                                 },
                             },
                         },
                     },
                 },
-                orderBy: { created_at: "desc" },
+                orderBy: { income_date: "desc" },
                 take: 100,
             });
         }
@@ -107,49 +104,56 @@ export async function GET(request: Request) {
         if (type === "all" || type === "expense") {
             expenses = await prisma.expense.findMany({
                 where: expenseWhere,
-                orderBy: { created_at: "desc" },
+                orderBy: { expense_date: "desc" },
                 take: 100,
             });
         }
 
-        const formattedIncomes = incomes.map((item) => ({
-            id: item.income_id,
-            receipt_no: item.receipt_no,
-            timestamp: (item.visit?.visit_date ?? item.created_at).getTime(),
-            date: (item.visit?.visit_date ?? item.created_at).toLocaleString(
-                "th-TH",
-                {
-                    timeZone: "Asia/Bangkok",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                },
-            ),
-            type: "income",
-            category: "ค่าตรวจรักษา",
-            description: item.visit?.patient
-                ? `ผู้ป่วย: ${item.visit.patient.first_name} ${item.visit.patient.last_name}`
-                : "รายรับอื่นๆ",
-            amount: Number(item.amount),
-            status: "เสร็จสิ้น",
-            visit: item.visit
-                ? {
-                      symptom: item.visit.symptom,
-                      diagnosis: item.visit.diagnosis,
-                      note: item.visit.note,
-                      items: item.visit.items.map((vi: any) => ({
-                          product_name: vi.product?.product_name,
-                          product_type: vi.product?.product_type,
-                          quantity: Number(vi.quantity),
-                          unit_price: Number(vi.unit_price),
-                          total_price: Number(vi.total_price),
-                      })),
-                  }
-                : undefined,
-        }));
+        const formattedIncomes = incomes.map((item) => {
+            const visit = item.visitItem?.visit;
+            const product = item.visitItem?.product;
+            
+            return {
+                id: item.income_id,
+                receipt_no: item.receipt_no,
+                timestamp: item.income_date.getTime(),
+                date: item.income_date.toLocaleString(
+                    "th-TH",
+                    {
+                        timeZone: "Asia/Bangkok",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                    },
+                ),
+                type: "income",
+                category: "ค่าตรวจรักษา",
+                description: visit?.patient
+                    ? `ผู้ป่วย: ${visit.patient.first_name} ${visit.patient.last_name}`
+                    : "รายรับอื่นๆ",
+                amount: Number(item.amount),
+                status: "เสร็จสิ้น",
+                visit: visit
+                    ? {
+                        symptom: visit.symptom,
+                        diagnosis: visit.diagnosis,
+                        note: visit.note,
+                        items: [
+                            {
+                                product_name: product?.product_name,
+                                product_type: product?.product_type,
+                                quantity: Number(item.visitItem.quantity),
+                                unit_price: Number(item.visitItem.unit_price),
+                                total_price: Number(item.visitItem.quantity) * Number(item.visitItem.unit_price),
+                            }
+                        ],
+                    }
+                    : undefined,
+            };
+        });
 
         const formattedExpenses = expenses.map((item) => {
             let categoryTH = "ค่าใช้จ่ายทั่วไป";
@@ -162,8 +166,8 @@ export async function GET(request: Request) {
             return {
                 id: item.expense_id,
                 receipt_no: item.receipt_no,
-                timestamp: item.created_at.getTime(),
-                date: item.created_at.toLocaleString("th-TH", {
+                timestamp: item.expense_date.getTime(),
+                date: item.expense_date.toLocaleString("th-TH", {
                     timeZone: "Asia/Bangkok",
                     year: "numeric",
                     month: "short",
@@ -195,10 +199,13 @@ export async function GET(request: Request) {
             page,
             limit,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching transactions:", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

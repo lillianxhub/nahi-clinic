@@ -77,34 +77,34 @@ export async function GET(request: Request) {
             }
         }
 
-        // Income is filtered via visit.visit_date (Income has no income_date)
+        // Income/Expense date filtering
         const [monthIncome, monthExpense, prevMonthIncome, prevMonthExpense] =
             await Promise.all([
                 prisma.income.aggregate({
                     _sum: { amount: true },
                     where: {
-                        visit: {
-                            visit_date: { gte: currentStart, lte: currentEnd },
-                        },
+                        income_date: { gte: currentStart, lte: currentEnd },
+                        deleted_at: null,
                     },
                 }),
                 prisma.expense.aggregate({
                     _sum: { amount: true },
                     where: {
-                        created_at: { gte: currentStart, lte: currentEnd },
+                        expense_date: { gte: currentStart, lte: currentEnd },
                         deleted_at: null,
                     },
                 }),
                 prisma.income.aggregate({
                     _sum: { amount: true },
                     where: {
-                        visit: { visit_date: { gte: prevStart, lte: prevEnd } },
+                        income_date: { gte: prevStart, lte: prevEnd },
+                        deleted_at: null,
                     },
                 }),
                 prisma.expense.aggregate({
                     _sum: { amount: true },
                     where: {
-                        created_at: { gte: prevStart, lte: prevEnd },
+                        expense_date: { gte: prevStart, lte: prevEnd },
                         deleted_at: null,
                     },
                 }),
@@ -142,10 +142,13 @@ export async function GET(request: Request) {
                 netProfitGrowth: parseFloat(netProfitGrowth),
             },
         });
-    } catch (error) {
-        console.log("Finance stats API Error", error);
+    } catch (error: any) {
+        console.error("Finance stats API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

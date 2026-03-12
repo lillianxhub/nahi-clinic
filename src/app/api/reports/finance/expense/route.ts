@@ -64,10 +64,13 @@ export async function GET(request: Request) {
         });
 
         return NextResponse.json({ total: totalAmount, data: stats });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching expense stats:", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }
@@ -100,10 +103,13 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json(newExpense, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating expense:", error);
         return NextResponse.json(
-            { error: "Internal Server Error", details: error },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }

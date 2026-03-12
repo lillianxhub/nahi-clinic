@@ -29,10 +29,13 @@ export async function GET() {
             .filter(Boolean);
 
         return NextResponse.json({ data: lowStock });
-    } catch (error) {
-        console.log("Low Stock Table API Error", error);
+    } catch (error: any) {
+        console.error("Low Stock Table API Error", error);
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { 
+                message: error.message || "Internal Server Error",
+                stack: error.stack
+            },
             { status: 500 },
         );
     }
