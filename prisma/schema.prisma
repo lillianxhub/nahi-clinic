@@ -24,7 +24,7 @@ model User {
 model Patient {
   patient_id      String    @id @default(uuid()) @db.Char(36)
   hospital_number String?   @unique @db.VarChar(50)
-  citizen_number  String?   @unique @db.VarChar(50)
+  citizen_number  String?   @unique @db.Char(13)
   prefix          String?   @db.VarChar(50)
   first_name      String    @db.VarChar(100)
   last_name       String    @db.VarChar(100)
@@ -89,12 +89,13 @@ model VisitItem {
   visit_item_id String       @id @default(uuid()) @db.Char(36)
   visit_id      String       @db.Char(36)
 
+  item_type     VisitItemType
+
   service_id    String?       @db.Char(36)
   product_id    String?       @db.Char(36)
 
   quantity      Int
   unit_price    Decimal      @db.Decimal(10, 2)
-  total_price   Decimal      @db.Decimal(10, 2)
   description   String?      @db.VarChar(255)
 
   is_active     Boolean      @default(true)
@@ -132,6 +133,7 @@ model Product {
   product_name String      @db.VarChar(150)
   category_id  String      @db.Char(36)
   product_type ProductType
+
   unit         String      @db.VarChar(50)
   min_stock    Int         @default(0)
   is_active    Boolean     @default(true)
@@ -153,9 +155,9 @@ model Service {
   price         Decimal @db.Decimal(10,2)
   is_active     Boolean @default(true)
   
-  create_at DateTime  @default(now())
-  update_at DateTime?
-  delete_at DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  deleted_at DateTime?
 
   visitItems  VisitItem[]
   
@@ -165,13 +167,13 @@ model Service {
 model Supplier {
   supplier_id String   @id @default(uuid()) @db.Char(36)
   supplier_name        String   @db.VarChar(150)
-  contract    String   @db.VarChar(50)
+  contact    String   @db.VarChar(50)
   
   is_active   Boolean   @default(true)
   
-  create_at   DateTime  @default(now())
-  update_at   DateTime?
-  delete_at   DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime?
+  deleted_at   DateTime?
 
   lots        InventoryLot[]
 
@@ -340,4 +342,9 @@ enum DrinkingStatus {
   regular     // ดื่มประจำ
   heavy       // ดื่มหนัก
   ex          // เลิกแล้ว
+}
+
+enum VisitItemType {
+  product
+  service
 }

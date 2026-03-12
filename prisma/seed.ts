@@ -7,6 +7,7 @@ import {
     ExpenseType,
     IncomeType,
     Prisma,
+    VisitItemType,
 } from "../src/generated/prisma/client";
 import bcrypt from "bcrypt";
 import { calculateAge } from "@/lib/utils";
@@ -88,7 +89,7 @@ async function main() {
     const supplier = await prisma.supplier.create({
         data: {
             supplier_name: "บริษัท ยาสามัญประจำบ้าน จำกัด",
-            contract: "02-123-4567",
+            contact: "02-123-4567",
         },
     });
 
@@ -466,7 +467,7 @@ async function main() {
                             service_id: s.service_id,
                             quantity: 1,
                             unit_price: sPrice,
-                            total_price: sPrice,
+                            item_type: VisitItemType.service,
                             description: s.service_name,
                         },
                     });
@@ -519,7 +520,7 @@ async function main() {
                                 product_id: p.product_id,
                                 quantity: finalQty,
                                 unit_price: price,
-                                total_price: lineTotal,
+                                item_type: VisitItemType.product,
                                 description: p.product_name,
                                 stockUsage: {
                                     create: {
