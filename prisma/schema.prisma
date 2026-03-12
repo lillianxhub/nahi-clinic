@@ -33,7 +33,6 @@ model Patient {
   phone           String?   @db.VarChar(50)
   address         String?   @db.VarChar(255)
   occupation      String?   @db.VarChar(100)
-  // treatment_right String?   @db.VarChar(100)
   allergy         String?   @db.VarChar(255)
   is_active       Boolean   @default(true)
   created_at      DateTime  @default(now())
@@ -49,19 +48,22 @@ model Visit {
   visit_id        String      @id @default(uuid()) @db.Char(36)
   patient_id      String      @db.Char(36)
   visit_date      DateTime
-
   status          VisitStatus @default(draft)
+
   symptom         String?
   diagnosis       String?
   note            String?
-  
   temperature     Decimal?    @db.Decimal(4, 2)
   blood_pressure  String?     @db.VarChar(20)
   heart_rate      Int?
   weight          Decimal?    @db.Decimal(5, 2)
   height          Decimal?    @db.Decimal(5, 2)
   waistline       Decimal?    @db.Decimal(5, 2)
-  smoking_history String?     @db.VarChar(100)
+
+  smoking_status  SmokingStatus? @default(none)
+  drinking_status DrinkingStatus? @default(none)
+
+  smoking_history  String?     @db.VarChar(100)
   drinking_history String?     @db.VarChar(100) 
 
   age_years        Int?
@@ -85,12 +87,16 @@ model Visit {
 model VisitItem {
   visit_item_id String       @id @default(uuid()) @db.Char(36)
   visit_id      String       @db.Char(36)
+
+  service_id    String       @db.Char(36)
   product_id    String       @db.Char(36)
   lot_id        String?      @db.Char(36)
+
   quantity      Int
   unit_price    Decimal      @db.Decimal(10, 2)
   total_price   Decimal      @db.Decimal(10, 2)
   description   String?      @db.VarChar(255)
+
   is_active     Boolean      @default(true)
 
   created_at    DateTime     @default(now())
@@ -98,6 +104,7 @@ model VisitItem {
   deleted_at    DateTime?
 
   visit         Visit        @relation(fields: [visit_id], references: [visit_id])
+  service       Service      @relation(fields: [service_id], references: [service_id])
   product       Product      @relation(fields: [product_id], references: [product_id])
   lot           InventoryLot? @relation(fields: [lot_id], references: [lot_id])
 
@@ -139,9 +146,41 @@ model Product {
   @@map("products")
 }
 
+model Service {
+  service_id    String  @id @default(uuid()) @db.Char(36)
+  service_name  String @db.VarChar(150)
+  price         Decimal @db.Decimal(10,2)
+  is_active     Boolean @default(true)
+  
+  create_at DateTime  @default(now())
+  update_at DateTime?
+  delete_at DateTime?
+
+  visitItems  VisitItem[]
+  
+  @@map("services")
+}
+
+model Supplier {
+  supplier_id String   @id @default(uuid()) @db.Char(36)
+  supplier_name        String   @db.VarChar(150)
+  contract    String   @db.VarChar(50)
+  
+  is_active   Boolean   @default(true)
+  
+  create_at   DateTime  @default(now())
+  update_at   DateTime?
+  delete_at   DateTime?
+
+  lots        InventoryLot[]
+
+  @@map("suppliers")
+}
+
 model InventoryLot {
   lot_id            String    @id @default(uuid()) @db.Char(36)
   product_id        String    @db.Char(36)
+  supplier_id       String    @db.Char(36)
   lot_no            String?   @db.VarChar(100)
   
   buy_unit          String    @db.VarChar(50)
@@ -164,7 +203,7 @@ model InventoryLot {
   usages            StockUsage[]
   adjustments       StockAdjustment[]
   expenseLots       ExpenseInventoryLot[]
-  
+  supplier          Supplier @relation(fields: [supplier_id], references: [supplier_id])
 
   @@map("inventory_lots")
 }
@@ -269,7 +308,7 @@ enum PaymentMethod {
 }
 enum ExpenseType { 
   drug
-  equipment_supply
+  supply
   utility
   general 
 }
@@ -285,4 +324,19 @@ enum VisitStatus {
   draft
   completed
   cancelled 
+}
+
+enum SmokingStatus {
+  none        // ไม่สูบ
+  current     // สูบอยู่
+  ex          // เลิกแล้ว
+  occasional  // นานๆ ครั้ง
+}
+
+enum DrinkingStatus {
+  none
+  social      // ดื่มตามสังคม
+  regular     // ดื่มประจำ
+  heavy       // ดื่มหนัก
+  ex          // เลิกแล้ว
 }
