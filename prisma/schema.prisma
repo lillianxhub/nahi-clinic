@@ -299,7 +299,6 @@ enum Gender {
 enum ProductType { 
   drug
   supply
-  service 
 }
 enum PaymentMethod { 
   cash

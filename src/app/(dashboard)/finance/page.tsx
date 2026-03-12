@@ -160,6 +160,7 @@ export default function FinancePage() {
         drug: "ค่ายา",
         utility: "ค่าเช่า/สาธารณูปโภค",
         general: "ค่าใช้จ่ายอื่นๆ",
+        supply: "ค่าเวชภัณฑ์",
     };
     const formattedExpenseDistribution = expenseStats.map((item, index) => ({
         name:

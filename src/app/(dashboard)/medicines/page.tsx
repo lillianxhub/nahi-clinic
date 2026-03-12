@@ -25,6 +25,7 @@ export default function MedicinesPage() {
     const [search, setSearch] = useState("");
     const [debouncedSearch] = useDebounce(search, 500);
     const [status, setStatus] = useState<"all" | "normal" | "low">("all");
+    const [type, setType] = useState<"all" | "drug" | "supply">("all");
     const [openLot, setOpenLot] = useState(false);
     const [openExpiring, setOpenExpiring] = useState(false);
     const [selectedDrug, setSelectedDrug] = useState<Medicine | null>(null);
@@ -52,6 +53,7 @@ export default function MedicinesPage() {
                 order: "asc",
                 ...(debouncedSearch && { q: debouncedSearch }),
                 ...(status !== "all" && { status }),
+                ...(type !== "all" && { type }),
             });
             // Map the quantities correctly from the backend since we removed client-side calculation
             const mappedMedicines = res.data.map((m) => {
@@ -127,6 +129,17 @@ export default function MedicinesPage() {
                         className="pl-10 h-10 bg-card"
                     />
                 </div>
+                <select
+                    value={type}
+                    onChange={(e) =>
+                        setType(e.target.value as "all" | "drug" | "supply")
+                    }
+                    className="bg-card border border-border rounded-lg px-3 py-2 text-sm"
+                >
+                    <option value="all">ทั้งหมด</option>
+                    <option value="drug">ยา</option>
+                    <option value="supply">เวชภัณฑ์</option>
+                </select>
 
                 <select
                     value={status}

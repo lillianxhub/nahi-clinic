@@ -147,15 +147,12 @@ export async function GET(req: NextRequest) {
 
         const mappedData = data.map((p) => ({
             ...p,
-            drug_id: p.product_id,
-            drug_name: p.product_name,
-            procedure_id: p.product_id,
-            procedure_name: p.product_name,
             price: p.lots?.[0]?.sell_price ? Number(p.lots[0].sell_price) : 0,
             sell_price: p.lots?.[0]?.sell_price
                 ? Number(p.lots[0].sell_price)
                 : 0,
             status: p.is_active ? "active" : "inactive",
+            product_type: p.product_type,
         }));
 
         return NextResponse.json({
@@ -257,8 +254,12 @@ export async function POST(req: Request) {
                     sell_price: Number(sell_price),
                     received_date: dateForLot,
                     expire_date: new Date(expiry_date),
-                    qty_received: Number(quantity),
-                    qty_remaining: Number(quantity),
+                    qty_received:
+                        Number(quantity) *
+                        (conversion_factor ? Number(conversion_factor) : 1),
+                    qty_remaining:
+                        Number(quantity) *
+                        (conversion_factor ? Number(conversion_factor) : 1),
                 },
             });
 
@@ -267,10 +268,8 @@ export async function POST(req: Request) {
             const expense = await tx.expense.create({
                 data: {
                     expense_type:
-                        effectiveProductType === "drug"
-                            ? "drug"
-                            : "equipment_supply",
-                    description: `ซื้อ${effectiveProductType === "drug" ? "ยา" : "เวชภัณฑ์"}: ${product_name} (${quantity} ${unit})`,
+                        effectiveProductType === "drug" ? "drug" : "supply",
+                    description: `ซื้อ${effectiveProductType === "drug" ? "ยา" : "เวชภัณฑ์"}: ${product_name} (${quantity} ${buy_unit})`,
                     amount: totalAmount,
                     expense_date: dateForLot,
                 },
@@ -289,8 +288,6 @@ export async function POST(req: Request) {
 
         const response = {
             ...result.product,
-            drug_id: result.product.product_id,
-            drug_name: result.product.product_name,
             lot: result.lot,
             expense: result.expense,
         };
