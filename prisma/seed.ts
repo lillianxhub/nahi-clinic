@@ -6,6 +6,7 @@ import {
     PaymentMethod,
     ExpenseType,
     IncomeType,
+    Prisma,
 } from "../src/generated/prisma/client";
 import bcrypt from "bcrypt";
 import { calculateAge } from "@/lib/utils";
@@ -64,7 +65,9 @@ async function main() {
     await prisma.visit.deleteMany();
     await prisma.stockAdjustment.deleteMany();
     await prisma.inventoryLot.deleteMany();
+    await prisma.supplier.deleteMany();
     await prisma.expense.deleteMany();
+    await prisma.service.deleteMany();
     await prisma.product.deleteMany();
     await prisma.category.deleteMany();
     await prisma.patient.deleteMany();
@@ -82,108 +85,160 @@ async function main() {
         },
     });
 
+    const supplier = await prisma.supplier.create({
+        data: {
+            supplier_name: "บริษัท ยาสามัญประจำบ้าน จำกัด",
+            contract: "02-123-4567",
+        },
+    });
+
     // 2. Categories
-    const categoriesData = [
+    const categoriesNames = [
         { name: "ยาปฏิชีวนะ" },
         { name: "ยาแก้ปวด" },
         { name: "ยาแก้อักเสบ" },
         { name: "ยาแก้แพ้" },
         { name: "วิตามิน" },
         { name: "ยาระบบทางเดินอาหาร" },
+        { name: "วัสดุสิ้นเปลือง" },
         { name: "ทั่วไป" },
     ];
-    for (const cat of categoriesData) {
+    for (const cat of categoriesNames) {
         await prisma.category.create({
             data: { category_name: cat.name },
         });
     }
     const categories = await prisma.category.findMany();
-    const generalCategory = categories.find(
-        (c) => c.category_name === "ทั่วไป",
-    )!;
 
     // 3. Products (Procedures as Services)
-    const proceduresData = [
-        { name: "ฉีดยา", price: 50, unit: "ครั้ง" },
-        { name: "เจาะเลือด", price: 100, unit: "ครั้ง" },
-        { name: "ตรวจร่างกาย", price: 100, unit: "ครั้ง" },
-        { name: "ตรวจเลือด", price: 200, unit: "ครั้ง" },
-        { name: "ตรวจปัสสาวะ", price: 150, unit: "ครั้ง" },
+    const serviceData = [
+        { name: "ตรวจร่างกายทั่วไป", price: 100 },
+        { name: "ฉีดยา", price: 50 },
+        { name: "ทำแผล", price: 80 },
+        { name: "ตรวจเลือด (Lab)", price: 300 },
     ];
-    for (const p of proceduresData) {
+    for (const s of serviceData) {
+        await prisma.service.create({
+            data: {
+                service_name: s.name,
+                price: new Prisma.Decimal(s.price),
+            },
+        });
+    }
+
+    const allServices = await prisma.service.findMany();
+
+    // 4. Products
+    const itemToSeed = [
+        {
+            name: "Ibuprofen 400mg",
+            type: ProductType.drug,
+            cat: "ยาแก้ปวด",
+            price: 45,
+            unit: "เม็ด",
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "Omeprazole 20mg",
+            type: ProductType.drug,
+            cat: "ยาระบบทางเดินอาหาร",
+            price: 150,
+            unit: "กล่อง",
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "Vitamin C 1000mg",
+            type: ProductType.drug,
+            cat: "วิตามิน",
+            price: 250,
+            unit: "ขวด",
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "Amoxicillin 500mg",
+            type: ProductType.drug,
+            unit: "แผง",
+            cat: "ยาปฏิชีวนะ",
+            price: 120,
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "Paracetamol 500mg",
+            type: ProductType.drug,
+            unit: "แผง",
+            cat: "ยาแก้ปวด",
+            price: 20,
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "CPM",
+            type: ProductType.drug,
+            unit: "เม็ด",
+            cat: "ยาแก้แพ้",
+            price: 15,
+            buy_unit: "กระปุก",
+            conversion_factor: 100,
+        },
+        {
+            name: "ชุดทำแผล (S)",
+            type: ProductType.supply,
+            unit: "ชุด",
+            cat: "วัสดุสิ้นเปลือง",
+            price: 150,
+            buy_unit: "ลัง",
+            conversion_factor: 100,
+        },
+        {
+            name: "Mask N95",
+            type: ProductType.supply,
+            unit: "ชิ้น",
+            cat: "วัสดุสิ้นเปลือง",
+            price: 45,
+            buy_unit: "กล่อง",
+            conversion_factor: 100,
+        },
+        {
+            name: "Alcohol 70%",
+            type: ProductType.supply,
+            unit: "ขวด",
+            cat: "วัสดุสิ้นเปลือง",
+            price: 60,
+            buy_unit: "ลัง",
+            conversion_factor: 100,
+        },
+    ];
+    for (const p of itemToSeed) {
         await prisma.product.create({
             data: {
                 product_name: p.name,
-                product_type: ProductType.service,
-                category_id: generalCategory.category_id,
+                product_type: p.type,
                 unit: p.unit,
+                min_stock: 50,
+                category_id: categories.find((c) => c.category_name === p.cat)!
+                    .category_id,
                 lots: {
                     create: {
-                        buy_unit: p.unit,
-                        buy_price: 0,
+                        supplier_id: supplier.supplier_id,
+                        buy_unit: p.buy_unit,
+                        conversion_factor: p.conversion_factor,
+                        buy_price: p.price * 0.4,
                         sell_price: p.price,
                         received_date: new Date(),
-                        expire_date: new Date("2099-12-31"),
-                        qty_received: 999999,
-                        qty_remaining: 999999,
-                    },
-                },
-            },
-        });
-    }
-    const supplyData = [
-        { name: "ชุดทำแผลเล็ก", price: 100, unit: "ชุด" },
-        { name: "ชุดทำแผลใหญ่", price: 200, unit: "ชุด" },
-    ];
-    for (const s of supplyData) {
-        await prisma.product.create({
-            data: {
-                product_name: s.name,
-                product_type: ProductType.supply,
-                category_id: generalCategory.category_id,
-                unit: s.unit,
-                lots: {
-                    create: {
-                        buy_unit: s.unit,
-                        buy_price: 0,
-                        sell_price: s.price,
-                        received_date: new Date(),
-                        expire_date: new Date("2099-12-31"),
-                        qty_received: 999999,
-                        qty_remaining: 999999,
+                        expire_date: new Date("2027-12-31"),
+                        qty_received: 500,
+                        qty_remaining: 500,
                     },
                 },
             },
         });
     }
 
-    // 4. Products (Drugs)
-    const drugsData = [
-        { name: "Amoxicillin 500mg", price: 120, unit: "แผง" },
-        { name: "Paracetamol 500mg", price: 20, unit: "แผง" },
-        { name: "Ibuprofen 400mg", price: 45, unit: "เม็ด" },
-        { name: "CPM", price: 15, unit: "เม็ด" },
-        { name: "Omeprazole 20mg", price: 150, unit: "กล่อง" },
-        { name: "Vitamin C 1000mg", price: 250, unit: "ขวด" },
-    ];
-    for (const d of drugsData) {
-        await prisma.product.create({
-            data: {
-                product_name: d.name,
-                category_id:
-                    categories[randomInt(0, categories.length - 2)].category_id, // skip last "General"
-                unit: d.unit,
-                product_type: ProductType.drug,
-                min_stock: 50,
-            },
-        });
-    }
-    const drugs = await prisma.product.findMany({
-        where: { product_type: ProductType.drug },
-    });
-    const procedures = await prisma.product.findMany({
-        where: { product_type: ProductType.service },
-    });
+    const allProducts = await prisma.product.findMany();
 
     // 5. Patients
     const maleFirstNames = [
@@ -234,8 +289,14 @@ async function main() {
         ),
     );
 
-    const TOTAL_PATIENTS = 50;
-    const patientsData: { f: string; l: string; g: Gender }[] = [];
+    const TOTAL_PATIENTS = 45;
+    const patientsData: { f: string; l: string; g: Gender }[] = [
+        { f: "ก้องภพ", l: "โชควิริยะ", g: Gender.male },
+        { f: "ถิรวัฒน์", l: "อุจินา", g: Gender.male },
+        { f: "กรมภัฏ", l: "พิริยะ", g: Gender.male },
+        { f: "ณพวิทย์", l: "วงษ์ประเสริฐ", g: Gender.male },
+        { f: "รัฐภูมิ", l: "เกิดพระจีน", g: Gender.male },
+    ];
     let mi = 0,
         fi = 0;
     for (let i = 0; i < TOTAL_PATIENTS; i++) {
@@ -260,7 +321,7 @@ async function main() {
             },
         });
     }
-    const patients = await prisma.patient.findMany();
+    const allPatients = await prisma.patient.findMany();
 
     // 6. Simulation
     const symptoms = ["ปวดหัว", "ไข้", "ท้องเสีย", "ผื่น", "ปวดเมื่อย"];
@@ -301,10 +362,10 @@ async function main() {
             }
 
             // Drug Restock
-            for (const drug of drugs) {
+            for (const item of allProducts) {
                 const stockSummary = await tx.inventoryLot.aggregate({
                     where: {
-                        product_id: drug.product_id,
+                        product_id: item.product_id,
                         is_active: true,
                         deleted_at: null,
                     },
@@ -312,18 +373,21 @@ async function main() {
                 });
                 const currentQty = stockSummary._sum.qty_remaining || 0;
 
-                if (currentQty < drug.min_stock) {
+                if (currentQty < item.min_stock) {
                     const buyQty = randomInt(300, 500);
                     const sellPrice =
-                        drugsData.find((d) => d.name === drug.product_name)
+                        itemToSeed.find((d) => d.name === item.product_name)
                             ?.price || 100;
                     const buyPrice = sellPrice * 0.4;
 
                     const expense = await tx.expense.create({
                         data: {
                             created_at: date,
-                            expense_type: ExpenseType.drug,
-                            description: `เติมยา: ${drug.product_name} (สต็อกเหลือ ${currentQty})`,
+                            expense_type:
+                                item.product_type === ProductType.drug
+                                    ? ExpenseType.drug
+                                    : ExpenseType.supply,
+                            description: `เติม: ${item.product_name} (สต็อกเหลือ ${currentQty})`,
                             amount: buyPrice * buyQty,
                             receipt_no: `EXP-${date.getTime()}`,
                             expense_date: date,
@@ -332,7 +396,8 @@ async function main() {
 
                     await tx.inventoryLot.create({
                         data: {
-                            product_id: drug.product_id,
+                            supplier_id: supplier.supplier_id,
+                            product_id: item.product_id,
                             lot_no: `LOT-${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${randomInt(10, 99)}`,
                             received_date: date,
                             expire_date: new Date(
@@ -344,7 +409,14 @@ async function main() {
                             qty_remaining: buyQty,
                             buy_price: buyPrice,
                             sell_price: sellPrice,
-                            buy_unit: drug.unit,
+                            buy_unit:
+                                itemToSeed.find(
+                                    (d) => d.name === item.product_name,
+                                )?.buy_unit ?? item.unit,
+                            conversion_factor:
+                                itemToSeed.find(
+                                    (d) => d.name === item.product_name,
+                                )?.conversion_factor ?? 1,
                             expenseLots: {
                                 create: { expense_id: expense.expense_id },
                             },
@@ -356,7 +428,8 @@ async function main() {
             // Visits
             const dailyVisits = isWeekend ? randomInt(10, 15) : randomInt(4, 8);
             for (let v = 0; v < dailyVisits; v++) {
-                const patient = patients[randomInt(0, patients.length - 1)];
+                const patient =
+                    allPatients[randomInt(0, allPatients.length - 1)];
                 const age = patient.birth_date
                     ? calculateAge(patient.birth_date, date)
                     : { years: 0, months: 0, days: 0 };
@@ -379,16 +452,54 @@ async function main() {
                     },
                 });
 
-                let totalAmount = 0;
+                const serviceToApply = shuffle(allServices).slice(
+                    0,
+                    randomInt(1, 2),
+                );
 
-                // Items (Drugs)
-                const drugCount = randomInt(1, 3);
-                for (let i = 0; i < drugCount; i++) {
-                    const drug = drugs[randomInt(0, drugs.length - 1)];
-                    const qty = randomInt(1, 5);
+                for (const s of serviceToApply) {
+                    const sPrice = Number(s.price);
+
+                    const item = await tx.visitItem.create({
+                        data: {
+                            visit_id: visit.visit_id,
+                            service_id: s.service_id,
+                            quantity: 1,
+                            unit_price: sPrice,
+                            total_price: sPrice,
+                            description: s.service_name,
+                        },
+                    });
+
+                    await tx.income.create({
+                        data: {
+                            visit_item_id: item.visit_item_id,
+                            income_type: IncomeType.service,
+                            amount: sPrice,
+                            payment_method: PaymentMethod.cash,
+                            income_date: date,
+                        },
+                    });
+                }
+
+                // Items shuffle
+                const itemsToSell = [
+                    ...shuffle(
+                        allProducts.filter(
+                            (p) => p.product_type === ProductType.supply,
+                        ),
+                    ).slice(0, 1),
+                    ...shuffle(
+                        allProducts.filter(
+                            (p) => p.product_type === ProductType.drug,
+                        ),
+                    ).slice(0, randomInt(1, 2)),
+                ];
+
+                for (const p of itemsToSell) {
                     const lot = await tx.inventoryLot.findFirst({
                         where: {
-                            product_id: drug.product_id,
+                            product_id: p.product_id,
                             qty_remaining: { gt: 0 },
                             is_active: true,
                             deleted_at: null,
@@ -397,80 +508,55 @@ async function main() {
                     });
 
                     if (lot) {
-                        const deduct = Math.min(qty, lot.qty_remaining);
-                        const itemPrice = Number(lot.sell_price);
-                        totalAmount += itemPrice * deduct;
+                        const qty = randomInt(1, 10);
+                        const finalQty = Math.min(qty, lot.qty_remaining);
+                        const price = Number(lot.sell_price);
+                        const lineTotal = price * finalQty;
 
-                        await tx.visitItem.create({
+                        const item = await tx.visitItem.create({
                             data: {
                                 visit_id: visit.visit_id,
-                                product_id: drug.product_id,
-                                lot_id: lot.lot_id,
-                                quantity: deduct,
-                                unit_price: itemPrice,
-                                total_price: itemPrice * deduct,
-                                description: `${drug.product_name} : ${qty} ${drug.unit}`,
+                                product_id: p.product_id,
+                                quantity: finalQty,
+                                unit_price: price,
+                                total_price: lineTotal,
+                                description: p.product_name,
+                                stockUsage: {
+                                    create: {
+                                        lot_id: lot.lot_id,
+                                        quantity: finalQty,
+                                        used_at: date,
+                                    },
+                                },
                             },
                         });
-
                         await tx.stockUsage.create({
                             data: {
-                                visit_id: visit.visit_id,
+                                visit_item_id: item.visit_item_id,
                                 lot_id: lot.lot_id,
-                                quantity: deduct,
+                                quantity: finalQty,
                                 used_at: date,
                             },
                         });
-
                         await tx.inventoryLot.update({
                             where: { lot_id: lot.lot_id },
-                            data: { qty_remaining: { decrement: deduct } },
-                        });
-                    }
-                }
-
-                // Items (Services)
-                if (Math.random() > 0.3) {
-                    const procCount = randomInt(1, 2);
-                    for (let i = 0; i < procCount; i++) {
-                        const proc =
-                            procedures[randomInt(0, procedures.length - 1)];
-                        const lot = await tx.inventoryLot.findFirst({
-                            where: { product_id: proc.product_id },
-                        });
-                        const price = Number(lot?.sell_price || 100);
-                        totalAmount += price;
-
-                        await tx.visitItem.create({
                             data: {
-                                visit_id: visit.visit_id,
-                                product_id: proc.product_id,
-                                lot_id: lot?.lot_id,
-                                quantity: 1,
-                                unit_price: price,
-                                total_price: price,
-                                description: `${proc.product_name} : ${proc.unit}`,
+                                qty_remaining: { decrement: finalQty },
+                            },
+                        });
+                        await tx.income.create({
+                            data: {
+                                visit_item_id: item.visit_item_id,
+                                income_type:
+                                    p.product_type === ProductType.drug
+                                        ? IncomeType.drug
+                                        : IncomeType.supply,
+                                amount: new Prisma.Decimal(lineTotal),
+                                payment_method: PaymentMethod.cash,
+                                income_date: date,
                             },
                         });
                     }
-                }
-
-                // Income
-                if (totalAmount > 0) {
-                    await tx.income.create({
-                        data: {
-                            visit_id: visit.visit_id,
-                            income_type: IncomeType.service,
-                            amount: totalAmount,
-                            payment_method:
-                                Math.random() > 0.4
-                                    ? PaymentMethod.transfer
-                                    : PaymentMethod.cash,
-                            receipt_no: `RC-${date.getTime()}-${v}`,
-                            created_at: date,
-                            income_date: date,
-                        },
-                    });
                 }
             }
         });

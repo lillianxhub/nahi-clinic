@@ -78,10 +78,11 @@ model Visit {
 
   patient         Patient     @relation(fields: [patient_id], references: [patient_id])
   items           VisitItem[]
-  stockUsages     StockUsage[]
-  income          Income?
+  // income          Income?
 
   @@map("visits")
+  @@index([patient_id])
+  @@index([visit_date])
 }
 
 model VisitItem {
@@ -90,7 +91,6 @@ model VisitItem {
 
   service_id    String?       @db.Char(36)
   product_id    String?       @db.Char(36)
-  lot_id        String?      @db.Char(36)
 
   quantity      Int
   unit_price    Decimal      @db.Decimal(10, 2)
@@ -106,7 +106,8 @@ model VisitItem {
   visit         Visit        @relation(fields: [visit_id], references: [visit_id])
   service       Service?      @relation(fields: [service_id], references: [service_id])
   product       Product?      @relation(fields: [product_id], references: [product_id])
-  lot           InventoryLot? @relation(fields: [lot_id], references: [lot_id])
+  income        Income?
+  stockUsage    StockUsage[]
 
   @@map("visit_items")
 }
@@ -199,12 +200,13 @@ model InventoryLot {
   deleted_at    DateTime?
 
   product           Product   @relation(fields: [product_id], references: [product_id])
-  visitItems        VisitItem[]
   usages            StockUsage[]
   adjustments       StockAdjustment[]
   expenseLots       ExpenseInventoryLot[]
   supplier          Supplier @relation(fields: [supplier_id], references: [supplier_id])
 
+  @@index([product_id])
+  @@index([expire_date])
   @@map("inventory_lots")
 }
 
@@ -225,7 +227,7 @@ model StockAdjustment {
 
 model StockUsage {
   usage_id String       @id @default(uuid()) @db.Char(36)
-  visit_id String       @db.Char(36)
+  visit_item_id String  @db.Char(36)
   lot_id   String       @db.Char(36)
   quantity Int
   used_at  DateTime
@@ -235,7 +237,7 @@ model StockUsage {
   deleted_at    DateTime?
 
   lot      InventoryLot @relation(fields: [lot_id], references: [lot_id])
-  visit    Visit        @relation(fields: [visit_id], references: [visit_id])
+  visitItem    VisitItem        @relation(fields: [visit_item_id], references: [visit_item_id])
 
   @@map("stock_usages")
 }
@@ -244,7 +246,7 @@ model StockUsage {
 model Income {
   income_id      String        @id @default(uuid()) @db.Char(36)
   income_type    IncomeType
-  visit_id       String?        @unique @db.Char(36)
+  visit_item_id  String        @unique @db.Char(36)
   amount         Decimal       @db.Decimal(10, 2)
   payment_method PaymentMethod
   receipt_no     String?       @db.VarChar(100)
@@ -254,7 +256,7 @@ model Income {
   updated_at    DateTime?
   deleted_at    DateTime?
 
-  visit          Visit?         @relation(fields: [visit_id], references: [visit_id])
+  visitItem      VisitItem      @relation(fields: [visit_item_id], references: [visit_item_id])
 
   @@map("incomes")
 }
