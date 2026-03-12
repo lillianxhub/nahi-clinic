@@ -88,8 +88,8 @@ model VisitItem {
   visit_item_id String       @id @default(uuid()) @db.Char(36)
   visit_id      String       @db.Char(36)
 
-  service_id    String       @db.Char(36)
-  product_id    String       @db.Char(36)
+  service_id    String?       @db.Char(36)
+  product_id    String?       @db.Char(36)
   lot_id        String?      @db.Char(36)
 
   quantity      Int
@@ -104,8 +104,8 @@ model VisitItem {
   deleted_at    DateTime?
 
   visit         Visit        @relation(fields: [visit_id], references: [visit_id])
-  service       Service      @relation(fields: [service_id], references: [service_id])
-  product       Product      @relation(fields: [product_id], references: [product_id])
+  service       Service?      @relation(fields: [service_id], references: [service_id])
+  product       Product?      @relation(fields: [product_id], references: [product_id])
   lot           InventoryLot? @relation(fields: [lot_id], references: [lot_id])
 
   @@map("visit_items")
