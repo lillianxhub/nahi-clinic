@@ -54,8 +54,12 @@ export default function ViewTreatmentModal({
             if (data && data.items) {
                 data.items = data.items.map((item: any) => ({
                     ...item,
-                    item_type: item.service ? "service" : (item.product?.product_type || "service"),
-                    item_name: item.service ? item.service.service_name : (item.product?.product_name || "ไม่มีชื่อรายการ"),
+                    item_type: item.service
+                        ? "service"
+                        : item.product?.product_type || "service",
+                    item_name: item.service
+                        ? item.service.service_name
+                        : item.product?.product_name || "ไม่มีชื่อรายการ",
                     description: item.description || "",
                 }));
             }
@@ -73,17 +77,7 @@ export default function ViewTreatmentModal({
 
         const result = await Swal.fire({
             title: "ยืนยันการชำระเงิน?",
-            html: `
-                <div class="text-left space-y-4">
-                    <p class="text-sm text-gray-600 mb-4">คุณต้องการยืนยันการชำระเงินใช่หรือไม่? ระบบจะทำการตัดสต็อกและบันทึกรายรับทันที</p>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">เลือกวิธีชำระเงิน</label>
-                    <select id="payment-method-select" class="swal2-select w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none m-0">
-                        <option value="cash">เงินสด (Cash)</option>
-                        <option value="transfer">เงินโอน (Transfer)</option>
-                        <option value="credit">บัตรเครดิต (Credit)</option>
-                    </select>
-                </div>
-            `,
+            text: "คุณต้องการยืนยันการชำระเงินใช่หรือไม่? ระบบจะทำการตัดสต็อกและบันทึกรายรับทันที",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#10b981",
@@ -91,19 +85,13 @@ export default function ViewTreatmentModal({
             confirmButtonText: "ยืนยันการชำระเงิน",
             cancelButtonText: "ยกเลิก",
             reverseButtons: true,
-            preConfirm: () => {
-                const select = document.getElementById('payment-method-select') as HTMLSelectElement;
-                return select.value;
-            }
         });
 
         if (result.isConfirmed) {
-            const selectedPaymentMethod = result.value;
             try {
                 setLoading(true);
                 await treatmentService.updateTreatment(treatmentId, {
                     status: "completed" as any,
-                    payment_method: selectedPaymentMethod,
                 } as any);
 
                 await Swal.fire({
@@ -322,8 +310,7 @@ export default function ViewTreatmentModal({
                                     <div className="space-y-6">
                                         {/* Section A: Services */}
                                         {treatment?.items?.some(
-                                            (i) =>
-                                                i.item_type === "service",
+                                            (i) => i.item_type === "service",
                                         ) && (
                                             <div className="space-y-3">
                                                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
@@ -345,8 +332,8 @@ export default function ViewTreatmentModal({
                                                         <tbody className="divide-y divide-gray-100 bg-white">
                                                             {treatment.items.map(
                                                                 (item, idx) =>
-                                                                    (item.item_type ===
-                                                                        "service") && (
+                                                                    item.item_type ===
+                                                                        "service" && (
                                                                         <tr
                                                                             key={
                                                                                 idx

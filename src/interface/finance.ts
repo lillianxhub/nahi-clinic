@@ -112,9 +112,12 @@ export interface TransactionItem {
         note?: string;
         items?: {
             item_type?: "drug" | "service";
+            product_type?: string;
+            product_name?: string;
             description: string;
             quantity: number;
             unit_price: number;
+            total_price?: number;
         }[];
     };
 }

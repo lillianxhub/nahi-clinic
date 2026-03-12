@@ -86,12 +86,12 @@ export default function EditTransactionModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
-    // Procedure Search States
-    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
-    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
-    const [procedures, setProcedures] = useState<any[]>([]);
-    const [searchingProcedures, setSearchingProcedures] = useState(false);
-    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+    // Service Search States
+    const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+    const debouncedServiceSearch = useDebounce(serviceSearchTerm, 500);
+    const [services, setServices] = useState<any[]>([]);
+    const [searchingServices, setSearchingServices] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
 
     // Selected Items for "ค่ายา"
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
@@ -186,32 +186,29 @@ export default function EditTransactionModal({
     }, [debouncedDrugSearch]);
 
     useEffect(() => {
-        const fetchProcedures = async () => {
-            if (
-                !debouncedProcedureSearch ||
-                debouncedProcedureSearch.length < 2
-            ) {
-                setProcedures([]);
+        const fetchServices = async () => {
+            if (!debouncedServiceSearch || debouncedServiceSearch.length < 2) {
+                setServices([]);
                 return;
             }
 
             try {
-                setSearchingProcedures(true);
+                setSearchingServices(true);
                 const res = await fetch(
-                    `/api/procedures?q=${debouncedProcedureSearch}&pageSize=5`,
+                    `/api/services?q=${debouncedServiceSearch}&pageSize=5`,
                 );
-                if (!res.ok) throw new Error("Failed to fetch procedures");
+                if (!res.ok) throw new Error("Failed to fetch services");
                 const data = await res.json();
-                setProcedures(data.data);
+                setServices(data.data);
             } catch (error) {
-                console.error("ค้นหาหัตถการล้มเหลว", error);
+                console.error("ค้นหาบริการล้มเหลว", error);
             } finally {
-                setSearchingProcedures(false);
+                setSearchingServices(false);
             }
         };
 
-        fetchProcedures();
-    }, [debouncedProcedureSearch]);
+        fetchServices();
+    }, [debouncedServiceSearch]);
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingIndex = selectedItems.findIndex(
@@ -237,9 +234,9 @@ export default function EditTransactionModal({
         setShowDrugDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: any) => {
+    const handleSelectService = (service: any) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.product_id === procedure.product_id,
+            (item) => item.product_id === service.service_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -250,15 +247,15 @@ export default function EditTransactionModal({
                 ...selectedItems,
                 {
                     item_type: "service",
-                    product_id: procedure.product_id,
-                    description: procedure.product_name,
+                    product_id: service.service_id,
+                    description: service.service_name,
                     quantity: 1,
-                    unit_price: Number(procedure.price),
+                    unit_price: Number(service.price),
                 },
             ]);
         }
-        setProcedureSearchTerm("");
-        setShowProcedureDropdown(false);
+        setServiceSearchTerm("");
+        setShowServiceDropdown(false);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -341,7 +338,6 @@ export default function EditTransactionModal({
             setSelectedVisitId("");
             setSelectedItems([]);
             setDrugSearchTerm("");
-            setProcedureSearchTerm("");
         }
     }, [isOpen, transaction]);
 
@@ -1016,20 +1012,20 @@ export default function EditTransactionModal({
                                                     />
                                                     <input
                                                         type="text"
-                                                        placeholder="ค้นหาหัตถการ..."
+                                                        placeholder="ค้นหาบริการ..."
                                                         value={
-                                                            procedureSearchTerm
+                                                            serviceSearchTerm
                                                         }
                                                         onChange={(e) => {
-                                                            setProcedureSearchTerm(
+                                                            setServiceSearchTerm(
                                                                 e.target.value,
                                                             );
-                                                            setShowProcedureDropdown(
+                                                            setShowServiceDropdown(
                                                                 true,
                                                             );
                                                         }}
                                                         onFocus={() =>
-                                                            setShowProcedureDropdown(
+                                                            setShowServiceDropdown(
                                                                 true,
                                                             )
                                                         }
@@ -1037,27 +1033,27 @@ export default function EditTransactionModal({
                                                     />
                                                 </div>
 
-                                                {showProcedureDropdown &&
-                                                    procedureSearchTerm && (
+                                                {showServiceDropdown &&
+                                                    serviceSearchTerm && (
                                                         <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
-                                                            {searchingProcedures ? (
+                                                            {searchingServices ? (
                                                                 <div className="p-4 text-center text-gray-500 text-sm">
                                                                     กำลังค้นหา...
                                                                 </div>
-                                                            ) : procedures.length >
+                                                            ) : services.length >
                                                               0 ? (
-                                                                procedures.map(
+                                                                services.map(
                                                                     (
-                                                                        procedure,
+                                                                        service,
                                                                     ) => (
                                                                         <button
                                                                             key={
-                                                                                procedure.product_id
+                                                                                service.service_id
                                                                             }
                                                                             type="button"
                                                                             onClick={() =>
-                                                                                handleSelectProcedure(
-                                                                                    procedure,
+                                                                                handleSelectService(
+                                                                                    service,
                                                                                 )
                                                                             }
                                                                             className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors"
@@ -1065,14 +1061,14 @@ export default function EditTransactionModal({
                                                                             <div>
                                                                                 <p className="font-medium text-gray-800">
                                                                                     {
-                                                                                        procedure.product_name
+                                                                                        service.service_name
                                                                                     }
                                                                                 </p>
                                                                             </div>
                                                                             <span className="text-sm font-semibold text-primary tabular-nums shrink-0">
                                                                                 ฿
                                                                                 {Number(
-                                                                                    procedure.price,
+                                                                                    service.price,
                                                                                 ).toLocaleString()}
                                                                             </span>
                                                                         </button>
@@ -1080,14 +1076,14 @@ export default function EditTransactionModal({
                                                                 )
                                                             ) : (
                                                                 <div className="p-4 text-center text-gray-500 text-sm">
-                                                                    ไม่พบข้อมูลหัตถการ
+                                                                    ไม่พบข้อมูลบริการ
                                                                 </div>
                                                             )}
                                                         </div>
                                                     )}
                                             </div>
 
-                                            {/* Service/Procedure Table */}
+                                            {/* Service Table */}
                                             <div className="overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm">
                                                 <table className="w-full text-sm">
                                                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -1328,7 +1324,7 @@ export default function EditTransactionModal({
                                         * คำนวณอัตโนมัติจากรายการ
                                         {formData?.category === "ค่ายา"
                                             ? "ยาและเวชภัณฑ์"
-                                            : "หัตถการ"}
+                                            : "บริการ"}
                                     </p>
                                 )}
                             </div>

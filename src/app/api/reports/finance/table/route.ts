@@ -109,17 +109,30 @@ export async function GET(request: Request) {
             });
         }
 
-        const formattedIncomes = incomes.map((item) => {
+        const incomeGroups: Record<string, any> = {};
+
+        incomes.forEach((item) => {
             const visit = item.visitItem?.visit;
-            const product = item.visitItem?.product;
-            
-            return {
-                id: item.income_id,
-                receipt_no: item.receipt_no,
-                timestamp: item.income_date.getTime(),
-                date: item.income_date.toLocaleString(
-                    "th-TH",
-                    {
+            if (!visit) return;
+
+            const visitId = visit.visit_id;
+            const visitItem = item.visitItem;
+            const product = visitItem?.product;
+
+            const formattedItem = {
+                product_name: product?.product_name || visitItem.description,
+                product_type: product?.product_type || (visitItem.item_type === 'service' ? 'service' : 'other'),
+                quantity: Number(visitItem.quantity),
+                unit_price: Number(visitItem.unit_price),
+                total_price: Number(visitItem.quantity) * Number(visitItem.unit_price),
+            };
+
+            if (!incomeGroups[visitId]) {
+                incomeGroups[visitId] = {
+                    id: item.income_id, // Use the first income_id as reference
+                    receipt_no: item.receipt_no || visitId.substring(0, 8).toUpperCase(),
+                    timestamp: item.income_date.getTime(),
+                    date: item.income_date.toLocaleString("th-TH", {
                         timeZone: "Asia/Bangkok",
                         year: "numeric",
                         month: "short",
@@ -127,33 +140,42 @@ export async function GET(request: Request) {
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: false,
-                    },
-                ),
-                type: "income",
-                category: "ค่าตรวจรักษา",
-                description: visit?.patient
-                    ? `ผู้ป่วย: ${visit.patient.first_name} ${visit.patient.last_name}`
-                    : "รายรับอื่นๆ",
-                amount: Number(item.amount),
-                status: "เสร็จสิ้น",
-                visit: visit
-                    ? {
+                    }),
+                    type: "income",
+                    category: "ค่าตรวจรักษา",
+                    description: visit.patient
+                        ? `ผู้ป่วย: ${visit.patient.first_name} ${visit.patient.last_name}`
+                        : "รายรับจากการรักษา",
+                    amount: 0,
+                    status: "เสร็จสิ้น",
+                    visit: {
                         symptom: visit.symptom,
                         diagnosis: visit.diagnosis,
                         note: visit.note,
-                        items: [
-                            {
-                                product_name: product?.product_name,
-                                product_type: product?.product_type,
-                                quantity: Number(item.visitItem.quantity),
-                                unit_price: Number(item.visitItem.unit_price),
-                                total_price: Number(item.visitItem.quantity) * Number(item.visitItem.unit_price),
-                            }
-                        ],
-                    }
-                    : undefined,
-            };
+                        items: [],
+                    },
+                };
+            }
+
+            incomeGroups[visitId].amount += Number(item.amount);
+            incomeGroups[visitId].visit.items.push(formattedItem);
+            
+            // Update timestamp/date if this income is newer
+            if (item.income_date.getTime() > incomeGroups[visitId].timestamp) {
+                incomeGroups[visitId].timestamp = item.income_date.getTime();
+                incomeGroups[visitId].date = item.income_date.toLocaleString("th-TH", {
+                    timeZone: "Asia/Bangkok",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                });
+            }
         });
+
+        const formattedIncomes = Object.values(incomeGroups);
 
         const formattedExpenses = expenses.map((item) => {
             let categoryTH = "ค่าใช้จ่ายทั่วไป";
