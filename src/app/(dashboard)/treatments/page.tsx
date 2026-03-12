@@ -100,6 +100,22 @@ export default function TreatmentsPage() {
             header: "การวินิจฉัย",
         },
         {
+            key: "status",
+            header: "สถานะ",
+            align: "center",
+            render: (row) => (
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        row.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                    }`}
+                >
+                    {row.status === "completed" ? "เสร็จสิ้น" : "ร่าง"}
+                </span>
+            ),
+        },
+        {
             key: "action",
             header: "จัดการ",
             align: "center",
@@ -115,23 +131,27 @@ export default function TreatmentsPage() {
                     >
                         <Eye size={18} />
                     </button>
-                    <button
-                        onClick={() => {
-                            setSelectedTreatment(row);
-                            setOpenEdit(true);
-                        }}
-                        className="text-blue-600 hover:opacity-70"
-                        title="แก้ไข"
-                    >
-                        <Pencil size={18} />
-                    </button>
-                    <button
-                        onClick={() => handleDelete(row)}
-                        className="text-red-600 hover:opacity-70"
-                        title="ลบ"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => {
+                                setSelectedTreatment(row);
+                                setOpenEdit(true);
+                            }}
+                            className="text-blue-600 hover:opacity-70"
+                            title="แก้ไข"
+                        >
+                            <Pencil size={18} />
+                        </button>
+                    )}
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => handleDelete(row)}
+                            className="text-red-600 hover:opacity-70"
+                            title="ลบ"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -228,6 +248,9 @@ export default function TreatmentsPage() {
                     setOpenView(false);
                     setSelectedTreatment(treatment);
                     setOpenEdit(true);
+                }}
+                onSuccess={() => {
+                    fetchTreatments();
                 }}
             />
 

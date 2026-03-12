@@ -14,6 +14,7 @@ import {
     Trash2,
     Edit3,
     AlertCircle,
+    Package,
 } from "lucide-react";
 import { medicineService } from "@/services/medicine";
 import { Medicine } from "@/interface/medicine";
@@ -26,6 +27,7 @@ import AddPatientModal from "../patient/AddPatientModal";
 import { procedureService } from "@/services/procedure";
 import { Procedure } from "@/interface/procedure";
 import AddProcedureModal from "./AddProcedureModal";
+import Swal from "sweetalert2";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
@@ -86,6 +88,13 @@ export default function AddTreatmentModal({
     const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
     const [openAddProcedure, setOpenAddProcedure] = useState(false);
 
+    // Supply Search States
+    const [supplySearchTerm, setSupplySearchTerm] = useState("");
+    const debouncedSupplySearch = useDebounce(supplySearchTerm, 500);
+    const [supplies, setSupplies] = useState<Medicine[]>([]);
+    const [searchingSupplies, setSearchingSupplies] = useState(false);
+    const [showSupplyDropdown, setShowSupplyDropdown] = useState(false);
+
     const totalAmount = selectedItems.reduce(
         (sum, item) => sum + item.quantity * item.unit_price,
         0,
@@ -122,7 +131,7 @@ export default function AddTreatmentModal({
                     setSearchingMedicines(true);
                     const res = await medicineService.getMedicines({
                         pageSize: 10,
-                        status: "active",
+                        activeStatus: "active",
                     });
                     setMedicines(res.data);
                 } catch (error) {
@@ -138,7 +147,7 @@ export default function AddTreatmentModal({
                 const res = await medicineService.getMedicines({
                     q: debouncedDrugSearch,
                     pageSize: 5,
-                    status: "active",
+                    activeStatus: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
@@ -188,6 +197,42 @@ export default function AddTreatmentModal({
         fetchProcedures();
     }, [debouncedProcedureSearch]);
 
+    useEffect(() => {
+        const fetchSupplies = async () => {
+            if (debouncedSupplySearch.length < 2) {
+                try {
+                    setSearchingSupplies(true);
+                    const res = await medicineService.getSupplies({
+                        pageSize: 10,
+                        activeStatus: "active",
+                    });
+                    setSupplies(res.data);
+                } catch (error) {
+                    console.error("ดึงข้อมูลเวชภัณฑ์ล้มเหลว", error);
+                } finally {
+                    setSearchingSupplies(false);
+                }
+                return;
+            }
+
+            try {
+                setSearchingSupplies(true);
+                const res = await medicineService.getSupplies({
+                    q: debouncedSupplySearch,
+                    pageSize: 5,
+                    activeStatus: "active",
+                });
+                setSupplies(res.data);
+            } catch (error) {
+                console.error("ค้นหาเวชภัณฑ์ล้มเหลว", error);
+            } finally {
+                setSearchingSupplies(false);
+            }
+        };
+
+        fetchSupplies();
+    }, [debouncedSupplySearch]);
+
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
@@ -207,13 +252,13 @@ export default function AddTreatmentModal({
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingItem = selectedItems.find(
-            (item) => item.drug_id === medicine.drug_id,
+            (item) => item.product_id === medicine.product_id,
         );
 
         if (existingItem) {
             setSelectedItems(
                 selectedItems.map((item) =>
-                    item.drug_id === medicine.drug_id
+                    item.product_id === medicine.product_id
                         ? { ...item, quantity: item.quantity + 1 }
                         : item,
                 ),
@@ -223,8 +268,9 @@ export default function AddTreatmentModal({
                 ...selectedItems,
                 {
                     item_type: "drug",
-                    drug_id: medicine.drug_id,
-                    description: medicine.drug_name,
+                    product_id: medicine.product_id,
+                    name: medicine.product_name,
+                    description: medicine.product_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
                     instruction: "",
@@ -235,14 +281,14 @@ export default function AddTreatmentModal({
         setShowDrugDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: Procedure) => {
+    const handleSelectProcedure = (procedure: any) => {
         setSelectedItems([
             ...selectedItems,
             {
                 item_type: "service",
-                procedure_id: procedure.procedure_id,
-                name: procedure.procedure_name,
-                description: procedure.procedure_name,
+                product_id: procedure.product_id,
+                name: procedure.product_name,
+                description: procedure.product_name,
                 quantity: 1,
                 unit_price: Number(procedure.price),
                 instruction: "",
@@ -250,6 +296,37 @@ export default function AddTreatmentModal({
         ]);
         setProcedureSearchTerm("");
         setShowProcedureDropdown(false);
+    };
+
+    const handleSelectSupply = (supply: Medicine) => {
+        const existingItem = selectedItems.find(
+            (item) => item.product_id === supply.product_id,
+        );
+
+        if (existingItem) {
+            setSelectedItems(
+                selectedItems.map((item) =>
+                    item.product_id === supply.product_id
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item,
+                ),
+            );
+        } else {
+            setSelectedItems([
+                ...selectedItems,
+                {
+                    item_type: "supply",
+                    product_id: supply.product_id,
+                    name: supply.product_name,
+                    description: supply.product_name,
+                    quantity: 1,
+                    unit_price: Number(supply.sell_price),
+                    instruction: "",
+                },
+            ]);
+        }
+        setSupplySearchTerm("");
+        setShowSupplyDropdown(false);
     };
 
     const handleAddService = (
@@ -322,12 +399,8 @@ export default function AddTreatmentModal({
                 payment_method: paymentMethod,
                 items: selectedItems.map((item) => ({
                     ...item,
-                    description:
-                        (item.item_type === "drug" ||
-                            item.item_type === "service") &&
-                        item.instruction
-                            ? `${item.description} : ${item.instruction}`
-                            : item.description,
+                    product_id: item.product_id,
+                    description: item.instruction || "",
                 })),
                 heart_rate: formData.heart_rate
                     ? Number(formData.heart_rate)
@@ -360,7 +433,11 @@ export default function AddTreatmentModal({
             onClose();
         } catch (error) {
             console.error("สร้างการรักษาไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาด: " + String(error));
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด",
+                text: "ไม่สามารถบันทึกการรักษาได้: " + String(error),
+                icon: "error",
+            });
         } finally {
             setLoading(false);
         }
@@ -368,11 +445,14 @@ export default function AddTreatmentModal({
 
     if (!open) return null;
 
+    const isBpValid = (bp: string) => !bp || /^\d+\/\d+$/.test(bp);
+
     const isFormValid =
         formData.patient_id.trim() &&
         formData.visit_date &&
         formData.symptom.trim() &&
-        formData.diagnosis.trim();
+        formData.diagnosis.trim() &&
+        isBpValid(formData.blood_pressure);
 
     return (
         <>
@@ -610,10 +690,21 @@ export default function AddTreatmentModal({
                                         type="text"
                                         name="blood_pressure"
                                         placeholder="เช่น 120/80"
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                            formData.blood_pressure &&
+                                            !isBpValid(formData.blood_pressure)
+                                                ? "border-danger focus:ring-danger/20"
+                                                : "border-gray-300 focus:ring-primary focus:border-transparent"
+                                        }`}
                                         value={formData.blood_pressure}
                                         onChange={handleChange}
                                     />
+                                    {formData.blood_pressure &&
+                                        !isBpValid(formData.blood_pressure) && (
+                                            <p className="text-[10px] text-danger mt-1">
+                                                รูปแบบไม่ถูกต้อง (เช่น 120/80)
+                                            </p>
+                                        )}
                                 </div>
 
                                 {/* Heart Rate */}
@@ -767,36 +858,40 @@ export default function AddTreatmentModal({
                                                 </div>
                                             ) : procedures.length > 0 ? (
                                                 <div className="py-1">
-                                                    {procedures.map((p) => (
-                                                        <button
-                                                            key={p.procedure_id}
-                                                            type="button"
-                                                            className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                            onClick={() =>
-                                                                handleSelectProcedure(
-                                                                    p,
-                                                                )
-                                                            }
-                                                        >
-                                                            <div>
-                                                                <div className="font-medium text-foreground group-hover:text-primary">
-                                                                    {
-                                                                        p.procedure_name
-                                                                    }
+                                                    {procedures.map(
+                                                        (p: any) => (
+                                                            <button
+                                                                key={
+                                                                    p.product_id
+                                                                }
+                                                                type="button"
+                                                                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                                onClick={() =>
+                                                                    handleSelectProcedure(
+                                                                        p,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <div>
+                                                                    <div className="font-medium text-foreground group-hover:text-primary">
+                                                                        {
+                                                                            p.product_name
+                                                                        }
+                                                                    </div>
+                                                                    <div className="text-xs text-muted">
+                                                                        ฿
+                                                                        {Number(
+                                                                            p.price,
+                                                                        ).toLocaleString()}
+                                                                    </div>
                                                                 </div>
-                                                                <div className="text-xs text-muted">
-                                                                    ฿
-                                                                    {Number(
-                                                                        p.price,
-                                                                    ).toLocaleString()}
-                                                                </div>
-                                                            </div>
-                                                            <Plus
-                                                                size={14}
-                                                                className="text-gray-300 group-hover:text-primary"
-                                                            />
-                                                        </button>
-                                                    ))}
+                                                                <Plus
+                                                                    size={14}
+                                                                    className="text-gray-300 group-hover:text-primary"
+                                                                />
+                                                            </button>
+                                                        ),
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="p-4 text-center text-muted text-sm">
@@ -939,7 +1034,139 @@ export default function AddTreatmentModal({
                                 )}
                             </div>
 
-                            {/* Section B: Medications */}
+                            {/* Section B: Supplies */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <Package
+                                        size={18}
+                                        className="text-primary"
+                                    />
+                                    รายการเวชภัณฑ์
+                                </h3>
+
+                                <div className="relative">
+                                    <Search
+                                        size={18}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหาเวชภัณฑ์..."
+                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 h-10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                                        value={supplySearchTerm}
+                                        onChange={(e) => {
+                                            setSupplySearchTerm(e.target.value);
+                                            setShowSupplyDropdown(true);
+                                        }}
+                                        onFocus={() =>
+                                            setShowSupplyDropdown(true)
+                                        }
+                                        onBlur={() =>
+                                            setTimeout(() => {
+                                                setShowSupplyDropdown(false);
+                                            }, 200)
+                                        }
+                                    />
+
+                                    <UnifiedDrugDropdown
+                                        isOpen={showSupplyDropdown}
+                                        searchTerm={supplySearchTerm}
+                                        items={supplies}
+                                        isSearching={searchingSupplies}
+                                        displayMode="inventory"
+                                        onSelect={handleSelectSupply}
+                                    />
+                                </div>
+
+                                {selectedItems.filter(
+                                    (i) => i.item_type === "supply",
+                                ).length > 0 && (
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 font-semibold">
+                                                        เวชภัณฑ์
+                                                    </th>
+                                                    <th className="text-center px-4 py-2 font-semibold w-24">
+                                                        จำนวน
+                                                    </th>
+                                                    <th className="text-right px-4 py-2 font-semibold w-24">
+                                                        ราคา
+                                                    </th>
+                                                    <th className="w-10"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedItems.map(
+                                                    (item, index) =>
+                                                        item.item_type ===
+                                                            "supply" && (
+                                                            <tr
+                                                                key={index}
+                                                                className="bg-white"
+                                                            >
+                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                    {item.name ||
+                                                                        item.description}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleUpdateQuantity(
+                                                                                index,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    1,
+                                                                            )
+                                                                        }
+                                                                        className="w-full text-center bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    ฿
+                                                                    {(
+                                                                        item.quantity *
+                                                                        item.unit_price
+                                                                    ).toLocaleString()}
+                                                                </td>
+                                                                <td className="px-2 py-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleRemoveItem(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section C: Medications */}
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
                                     <Pill size={18} className="text-primary" />

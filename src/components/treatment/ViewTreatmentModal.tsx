@@ -11,6 +11,7 @@ import {
     Clock,
     ClipboardList,
     Activity,
+    Package,
     Pill,
 } from "lucide-react";
 import { treatmentService } from "@/services/treatment";
@@ -18,12 +19,14 @@ import { Treatment } from "@/interface/treatment";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import { GenderLabelTH } from "@/constants/gender";
+import Swal from "sweetalert2";
 
 interface ViewTreatmentModalProps {
     open: boolean;
     onClose: () => void;
     treatmentId: string | null;
     onEdit: (treatment: Treatment) => void;
+    onSuccess?: () => void;
 }
 
 export default function ViewTreatmentModal({
@@ -31,6 +34,7 @@ export default function ViewTreatmentModal({
     onClose,
     treatmentId,
     onEdit,
+    onSuccess,
 }: ViewTreatmentModalProps) {
     const [treatment, setTreatment] = useState<Treatment | null>(null);
     const [loading, setLoading] = useState(false);
@@ -45,11 +49,69 @@ export default function ViewTreatmentModal({
         try {
             setLoading(true);
             const data = await treatmentService.getTreatmentById(treatmentId!);
+
+            // Map data for UI compatibility
+            if (data && data.items) {
+                data.items = data.items.map((item: any) => ({
+                    ...item,
+                    item_type: item.product?.product_type || "service",
+                    item_name: item.product?.product_name || "ไม่มีชื่อรายการ",
+                    description: item.description || "",
+                }));
+            }
+
             setTreatment(data);
         } catch (error) {
             console.error("โหลดข้อมูลการรักษาไม่สำเร็จ", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleComplete = async () => {
+        if (!treatmentId) return;
+
+        const result = await Swal.fire({
+            title: "ยืนยันการชำระเงิน?",
+            text: "คุณต้องการยืนยันการชำระเงินใช่หรือไม่? เมื่อยืนยันแล้วจะไม่สามารถแก้ไขหรือลบรายการนี้ได้อีก และระบบจะทำการตัดสต็อกและบันทึกรายรับทันที",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "ยืนยันการชำระเงิน",
+            cancelButtonText: "ยกเลิก",
+            reverseButtons: true,
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setLoading(true);
+                await treatmentService.updateTreatment(treatmentId, {
+                    status: "completed" as any,
+                } as any);
+
+                await Swal.fire({
+                    title: "สำเร็จ!",
+                    text: "ยืนยันการชำระเงินเรียบร้อยแล้ว",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+
+                if (onSuccess) {
+                    onSuccess();
+                }
+                onClose();
+            } catch (error) {
+                console.error("ยืนยันการชำระเงินล้มเหลว", error);
+                Swal.fire({
+                    title: "เกิดข้อผิดพลาด",
+                    text: "ไม่สามารถยืนยันการชำระเงินได้: " + String(error),
+                    icon: "error",
+                });
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -243,7 +305,7 @@ export default function ViewTreatmentModal({
                                     </h3>
                                     <div className="space-y-6">
                                         {/* Section A: Procedures */}
-                                        {treatment?.visitDetails?.some(
+                                        {treatment?.items?.some(
                                             (i) =>
                                                 i.item_type === "service" ||
                                                 i.item_type === "procedure",
@@ -266,7 +328,7 @@ export default function ViewTreatmentModal({
                                                             </tr>
                                                         </thead>
                                                         <tbody className="divide-y divide-gray-100 bg-white">
-                                                            {treatment.visitDetails.map(
+                                                            {treatment.items.map(
                                                                 (item, idx) =>
                                                                     (item.item_type ===
                                                                         "service" ||
@@ -280,8 +342,15 @@ export default function ViewTreatmentModal({
                                                                         >
                                                                             <td className="px-4 py-3 font-medium text-gray-800">
                                                                                 {
-                                                                                    item.description
+                                                                                    item.item_name
                                                                                 }
+                                                                                {item.description && (
+                                                                                    <div className="text-xs text-muted font-normal mt-0.5 whitespace-pre-wrap">
+                                                                                        {
+                                                                                            item.description
+                                                                                        }
+                                                                                    </div>
+                                                                                )}
                                                                             </td>
                                                                             <td className="px-4 py-3 text-right text-gray-600">
                                                                                 ฿
@@ -298,8 +367,73 @@ export default function ViewTreatmentModal({
                                             </div>
                                         )}
 
-                                        {/* Section B: Medications */}
-                                        {treatment?.visitDetails?.some(
+                                        {/* Section B: Supplies */}
+                                        {treatment?.items?.some(
+                                            (i) => i.item_type === "supply",
+                                        ) && (
+                                            <div className="space-y-3">
+                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                    <Package size={14} />{" "}
+                                                    รายการเวชภัณฑ์
+                                                </h4>
+                                                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
+                                                            <tr>
+                                                                <th className="px-4 py-2.5 text-left">
+                                                                    รายการเวชภัณฑ์
+                                                                </th>
+                                                                <th className="px-4 py-2.5 text-center w-24">
+                                                                    จำนวน
+                                                                </th>
+                                                                <th className="px-4 py-2.5 text-right w-24">
+                                                                    ราคา
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100 bg-white">
+                                                            {treatment.items.map(
+                                                                (item, idx) =>
+                                                                    item.item_type ===
+                                                                        "supply" && (
+                                                                        <tr
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                            className="hover:bg-gray-50/30 transition-colors"
+                                                                        >
+                                                                            <td className="px-4 py-3 font-medium text-gray-800">
+                                                                                {
+                                                                                    item.item_name
+                                                                                }
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                                                {
+                                                                                    item.quantity
+                                                                                }
+                                                                            </td>
+                                                                            <td className="px-4 py-3 text-right text-gray-600">
+                                                                                ฿
+                                                                                {(
+                                                                                    Number(
+                                                                                        item.quantity,
+                                                                                    ) *
+                                                                                    Number(
+                                                                                        item.unit_price,
+                                                                                    )
+                                                                                ).toLocaleString()}
+                                                                            </td>
+                                                                        </tr>
+                                                                    ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Section C: Medications */}
+                                        {treatment?.items?.some(
                                             (i) => i.item_type === "drug",
                                         ) && (
                                             <div className="space-y-3">
@@ -307,39 +441,13 @@ export default function ViewTreatmentModal({
                                                     <Pill size={14} /> รายการยา
                                                 </h4>
                                                 <div className="grid gap-3">
-                                                    {treatment.visitDetails.map(
+                                                    {treatment.items.map(
                                                         (item, idx) => {
                                                             if (
                                                                 item.item_type !==
                                                                 "drug"
                                                             )
                                                                 return null;
-
-                                                            let description =
-                                                                item.description ||
-                                                                "";
-                                                            let instruction =
-                                                                "";
-                                                            if (
-                                                                description.includes(
-                                                                    " : ",
-                                                                )
-                                                            ) {
-                                                                const parts =
-                                                                    description.split(
-                                                                        " : ",
-                                                                    );
-                                                                description =
-                                                                    parts[0];
-                                                                instruction =
-                                                                    parts
-                                                                        .slice(
-                                                                            1,
-                                                                        )
-                                                                        .join(
-                                                                            " : ",
-                                                                        );
-                                                            }
 
                                                             return (
                                                                 <div
@@ -349,18 +457,18 @@ export default function ViewTreatmentModal({
                                                                     <div className="space-y-1">
                                                                         <p className="font-bold text-gray-800">
                                                                             {
-                                                                                description
+                                                                                item.item_name
                                                                             }
                                                                         </p>
-                                                                        {instruction && (
+                                                                        {item.description && (
                                                                             <div className="inline-flex items-center gap-1.5 bg-primary/5 text-primary px-2.5 py-1 rounded-lg text-xs font-semibold border border-primary/10">
                                                                                 <FileText
                                                                                     size={
                                                                                         12
                                                                                     }
-                                                                                />{" "}
+                                                                                />
                                                                                 {
-                                                                                    instruction
+                                                                                    item.description
                                                                                 }
                                                                             </div>
                                                                         )}
@@ -409,7 +517,7 @@ export default function ViewTreatmentModal({
                                             <div className="text-right">
                                                 <p className="text-3xl font-black text-white">
                                                     ฿
-                                                    {treatment?.visitDetails
+                                                    {treatment?.items
                                                         ?.reduce(
                                                             (sum, item) =>
                                                                 sum +
@@ -442,6 +550,37 @@ export default function ViewTreatmentModal({
                                     </div>
                                 </div>
                             </div>
+
+                            {treatment?.status === "draft" && (
+                                <div className="mt-8 flex flex-col justify-center gap-4 w-full items-center">
+                                    <button
+                                        onClick={handleComplete}
+                                        disabled={loading}
+                                        className="w-full max-w-sm px-8 py-4 bg-success text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-success/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                    >
+                                        {loading ? (
+                                            <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        ) : (
+                                            <>
+                                                <Activity size={24} />
+                                                ยืนยันการชำระเงินและการรักษา
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (treatment) {
+                                                onEdit(treatment);
+                                            }
+                                        }}
+                                        className="w-full max-w-sm px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                        disabled={!treatment}
+                                    >
+                                        <Pencil size={18} />
+                                        แก้ไขข้อมูล
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -458,18 +597,6 @@ export default function ViewTreatmentModal({
                             className="px-6 py-2.5 rounded-xl font-medium text-foreground hover:bg-gray-100 transition-all border border-gray-200"
                         >
                             ปิดหน้าต่าง
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (treatment) {
-                                    onEdit(treatment);
-                                }
-                            }}
-                            className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2"
-                            disabled={!treatment}
-                        >
-                            <Pencil size={18} />
-                            แก้ไขข้อมูล
                         </button>
                     </div>
                 </div>

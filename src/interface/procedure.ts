@@ -1,6 +1,7 @@
 export interface Procedure {
-    procedure_id: string;
-    procedure_name: string;
+    product_id: string;
+    product_name: string;
+    product_type: "service";
     price: number;
     is_active: boolean;
     created_at?: string;
@@ -9,6 +10,7 @@ export interface Procedure {
 }
 
 export interface CreateProcedureDTO {
-    procedure_name: string;
+    product_name: string;
+    product_type: "service";
     price: number;
 }

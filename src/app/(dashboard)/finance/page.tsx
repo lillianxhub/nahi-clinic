@@ -147,7 +147,9 @@ export default function FinancePage() {
                 ? "จ่ายยา"
                 : item.type === "service"
                   ? "บริการ"
-                  : item.type,
+                  : item.type === "supply"
+                    ? "เวชภัณฑ์"
+                    : item.type,
         value: item.percentage,
         amount: item.amount,
         color: incomeColors[index % incomeColors.length],
@@ -158,6 +160,7 @@ export default function FinancePage() {
         drug: "ค่ายา",
         utility: "ค่าเช่า/สาธารณูปโภค",
         general: "ค่าใช้จ่ายอื่นๆ",
+        supply: "ค่าเวชภัณฑ์",
     };
     const formattedExpenseDistribution = expenseStats.map((item, index) => ({
         name:

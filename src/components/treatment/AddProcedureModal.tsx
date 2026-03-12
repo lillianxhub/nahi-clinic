@@ -18,7 +18,7 @@ export default function AddProcedureModal({
     onSuccess,
 }: AddProcedureModalProps) {
     const [formData, setFormData] = useState({
-        procedure_name: "",
+        product_name: "",
         price: "",
     });
     const [loading, setLoading] = useState(false);
@@ -27,7 +27,7 @@ export default function AddProcedureModal({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.procedure_name.trim() || !formData.price) {
+        if (!formData.product_name.trim() || !formData.price) {
             setError("กรุณากรอกข้อมูลให้ครบถ้วน");
             return;
         }
@@ -49,11 +49,12 @@ export default function AddProcedureModal({
             setError("");
 
             const procedure = await procedureService.createProcedure({
-                procedure_name: formData.procedure_name.trim(),
+                product_name: formData.product_name.trim(),
                 price: Number(formData.price),
+                product_type: "service",
             });
 
-            setFormData({ procedure_name: "", price: "" });
+            setFormData({ product_name: "", price: "" });
             onSuccess(procedure);
 
             await swal.fire({
@@ -84,7 +85,7 @@ export default function AddProcedureModal({
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-60 p-4 backdrop-blur-sm"
             onClick={onClose}
         >
             <div
@@ -119,11 +120,11 @@ export default function AddProcedureModal({
                             type="text"
                             placeholder="เช่น ล้างแผลเล็ก, เย็บแผล"
                             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.procedure_name}
+                            value={formData.product_name}
                             onChange={(e) =>
                                 setFormData({
                                     ...formData,
-                                    procedure_name: e.target.value,
+                                    product_name: e.target.value,
                                 })
                             }
                             autoFocus
@@ -168,7 +169,7 @@ export default function AddProcedureModal({
                             type="submit"
                             disabled={
                                 loading ||
-                                !formData.procedure_name.trim() ||
+                                !formData.product_name.trim() ||
                                 !formData.price
                             }
                             className="px-8 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/30 cursor-pointer"

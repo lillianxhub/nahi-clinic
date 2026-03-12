@@ -11,6 +11,7 @@ import ExpiringMedicineModal from "@/components/medicine/ExpiringMedicineModal";
 import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
 import AddMedicineModal from "@/components/medicine/AddMedicineModal";
+import AddProductModal from "@/components/medicine/AddProductModal";
 import EditMedicineModal from "@/components/medicine/EditMedicineModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function MedicinesPage() {
     const [search, setSearch] = useState("");
     const [debouncedSearch] = useDebounce(search, 500);
     const [status, setStatus] = useState<"all" | "normal" | "low">("all");
+    const [type, setType] = useState<"all" | "drug" | "supply">("all");
     const [openLot, setOpenLot] = useState(false);
     const [openExpiring, setOpenExpiring] = useState(false);
     const [selectedDrug, setSelectedDrug] = useState<Medicine | null>(null);
@@ -47,10 +49,11 @@ export default function MedicinesPage() {
             const res = await medicineService.getMedicines({
                 page,
                 pageSize: 6,
-                orderBy: "name",
+                orderBy: "product_name",
                 order: "asc",
                 ...(debouncedSearch && { q: debouncedSearch }),
                 ...(status !== "all" && { status }),
+                ...(type !== "all" && { type }),
             });
             // Map the quantities correctly from the backend since we removed client-side calculation
             const mappedMedicines = res.data.map((m) => {
@@ -86,9 +89,9 @@ export default function MedicinesPage() {
 
     // client-side filtering removed
 
-    const openLotModal = async (drug_id: string) => {
+    const openLotModal = async (product_id: string) => {
         try {
-            const res = await medicineService.getMedicineDetail(drug_id);
+            const res = await medicineService.getMedicineDetail(product_id);
             setSelectedDrug(res.data);
             setOpenLot(true);
         } catch (error) {
@@ -126,6 +129,17 @@ export default function MedicinesPage() {
                         className="pl-10 h-10 bg-card"
                     />
                 </div>
+                <select
+                    value={type}
+                    onChange={(e) =>
+                        setType(e.target.value as "all" | "drug" | "supply")
+                    }
+                    className="bg-card border border-border rounded-lg px-3 py-2 text-sm"
+                >
+                    <option value="all">ทั้งหมด</option>
+                    <option value="drug">ยา</option>
+                    <option value="supply">เวชภัณฑ์</option>
+                </select>
 
                 <select
                     value={status}
@@ -162,7 +176,7 @@ export default function MedicinesPage() {
             <div className="space-y-3">
                 {medicines.map((medicine) => (
                     <MedicineCard
-                        key={medicine.drug_id}
+                        key={medicine.product_id}
                         medicine={medicine}
                         onView={async (id) => {
                             await openLotModal(id);
@@ -174,7 +188,7 @@ export default function MedicinesPage() {
                         onDelete={async (id) => {
                             const result = await Swal.fire({
                                 title: "ยืนยันการลบ?",
-                                text: `คุณต้องการลบยา "${medicine.drug_name}" ใช่หรือไม่?`,
+                                text: `คุณต้องการลบยา "${medicine.product_name || (medicine as any).drug_name}" ใช่หรือไม่?`,
                                 icon: "warning",
                                 showCancelButton: true,
                                 confirmButtonColor: "#d33",
@@ -209,8 +223,8 @@ export default function MedicinesPage() {
                 <MedicineLotModal
                     open={openLot}
                     onClose={() => setOpenLot(false)}
-                    drugName={selectedDrug.drug_name}
-                    drugId={selectedDrug.drug_id}
+                    drugName={selectedDrug.product_name}
+                    productId={selectedDrug.product_id}
                     onRefresh={() => {
                         // We do not need to call openLotModal again since it refetches everything
                         // The modal refetches its own lots, but we should refetch medicines
@@ -238,7 +252,15 @@ export default function MedicinesPage() {
                 onChange={setPage}
             />
             {/* Add medicine Modal */}
-            <AddMedicineModal
+            {/* <AddMedicineModal
+                open={openAdd}
+                onClose={() => setOpenAdd(false)}
+                onSuccess={() => {
+                    setPage(1);
+                    fetchMedicines();
+                }}
+            /> */}
+            <AddProductModal
                 open={openAdd}
                 onClose={() => setOpenAdd(false)}
                 onSuccess={() => {

@@ -94,7 +94,7 @@ export default function MedicineCard({
                         </Badge>
 
                         <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {medicine.drug_name}
+                            {medicine.product_name}
                         </h3>
                     </div>
 
@@ -135,7 +135,7 @@ export default function MedicineCard({
                             size="icon"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onView?.(medicine.drug_id);
+                                onView?.(medicine.product_id);
                             }}
                             className="cursor-pointer text-primary hover:text-primary/70"
                             title="ดูรายการ Lot"
@@ -148,7 +148,7 @@ export default function MedicineCard({
                             size="icon"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onEdit?.(medicine.drug_id);
+                                onEdit?.(medicine.product_id);
                             }}
                             className="cursor-pointer text-blue-600 hover:text-blue-600/70"
                             title="แก้ไขข้อมูลยา"
@@ -161,7 +161,7 @@ export default function MedicineCard({
                             size="icon"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onDelete?.(medicine.drug_id);
+                                onDelete?.(medicine.product_id);
                             }}
                             className="cursor-pointer text-red-600 hover:text-red-600/70"
                             title="ลบยา"

@@ -33,12 +33,12 @@ export const financeService = {
     ): Promise<FinanceBarChartResponse> {
         const query = buildQuery(params);
         return apiClient.get<FinanceBarChartResponse>(
-            `/api/finance/bar-chart${query}`,
+            `/api/reports/finance/bar-chart${query}`,
         );
     },
 
     async getIncomeCategories(): Promise<{ category_id: string; category_name: string }[]> {
-        const res = await apiClient.get<any[]>(`/api/finance/categories`);
+        const res = await apiClient.get<any[]>(`/api/reports/finance/categories`);
         return res;
     },
 
@@ -47,13 +47,13 @@ export const financeService = {
     ): Promise<ExpenseStatsApiResponse> {
         const query = buildQuery(params);
         return apiClient.get<ExpenseStatsApiResponse>(
-            `/api/finance/expense${query}`,
+            `/api/reports/finance/expense${query}`,
         );
     },
 
     async createExpense(payload: CreateExpensePayload): Promise<Expense> {
         return apiClient.post<Expense, CreateExpensePayload>(
-            "/api/finance/expense",
+            "/api/reports/finance/expense",
             payload,
         );
     },
@@ -63,13 +63,13 @@ export const financeService = {
     ): Promise<IncomeStatsApiResponse> {
         const query = buildQuery(params);
         return apiClient.get<IncomeStatsApiResponse>(
-            `/api/finance/income${query}`,
+            `/api/reports/finance/income${query}`,
         );
     },
 
     async createIncome(payload: CreateIncomePayload): Promise<Income> {
         return apiClient.post<Income, CreateIncomePayload>(
-            "/api/finance/income",
+            "/api/reports/finance/income",
             payload,
         );
     },
@@ -79,7 +79,7 @@ export const financeService = {
     ): Promise<FinanceSummaryStatsApiResponse> {
         const query = buildQuery(params);
         return apiClient.get<FinanceSummaryStatsApiResponse>(
-            `/api/finance/stats${query}`,
+            `/api/reports/finance/stats${query}`,
         );
     },
 
@@ -88,7 +88,7 @@ export const financeService = {
     ): Promise<TransactionTableApiResponse> {
         const query = buildQuery(params);
         return apiClient.get<TransactionTableApiResponse>(
-            `/api/finance/table${query}`,
+            `/api/reports/finance/table${query}`,
         );
     },
 

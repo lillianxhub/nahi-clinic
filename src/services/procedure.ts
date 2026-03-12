@@ -7,30 +7,30 @@ export const procedureService = {
     async getProcedures(
         params?: QueryParams,
     ): Promise<ResponseData<Procedure[], any>> {
-        const query = buildQuery(params);
+        const query = buildQuery({ ...params, type: "service" });
         return apiClient.get<ResponseData<Procedure[], any>>(
-            `/api/procedures${query}`,
+            `/api/products${query}`,
         );
     },
 
     async createProcedure(payload: CreateProcedureDTO): Promise<Procedure> {
-        return apiClient.post<Procedure, CreateProcedureDTO>(
-            "/api/procedures",
-            payload,
-        );
+        return apiClient.post<Procedure, any>("/api/products", {
+            ...payload,
+            product_type: "service",
+        });
     },
 
     async updateProcedure(
-        procedure_id: string,
+        product_id: string,
         payload: Partial<CreateProcedureDTO>,
     ): Promise<Procedure> {
         return apiClient.patch<Procedure, Partial<CreateProcedureDTO>>(
-            `/api/procedures/${procedure_id}`,
+            `/api/products/${product_id}`,
             payload,
         );
     },
 
-    async deleteProcedure(procedure_id: string): Promise<void> {
-        return apiClient.delete(`/api/procedures/${procedure_id}`);
+    async deleteProcedure(product_id: string): Promise<void> {
+        return apiClient.delete(`/api/products/${product_id}`);
     },
 };
