@@ -70,6 +70,13 @@ export async function GET(req: Request) {
                                     unit: true,
                                 },
                             },
+                            service: {
+                                select: {
+                                    service_id: true,
+                                    service_name: true,
+                                    price: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -181,99 +188,116 @@ export async function POST(req: Request) {
                 const totalPrice = qty * price;
                 totalAmount += totalPrice;
 
-                // 2.1 Get product type to decide if stock deduction is needed
-                const product = await tx.product.findUnique({
-                    where: { product_id: item.product_id },
-                    select: { product_type: true },
-                });
+                if (!item.product_id && !item.service_id) {
+                    throw new Error("ต้องมี Product ID หรือ Service ID");
+                }
 
                 let usedLotId: string | null = null;
+                const stockUsages: any[] = [];
 
-                // 2.2 If drug or supply AND status is completed → FEFO stock deduction
-                if (
-                    isCompleted &&
-                    product &&
-                    (product.product_type === "drug" ||
-                        product.product_type === "supply")
-                ) {
-                    let remainingToDeduct = qty;
-
-                    const lots = await tx.inventoryLot.findMany({
-                        where: {
-                            product_id: item.product_id,
-                            qty_remaining: { gt: 0 },
-                            is_active: true,
-                            deleted_at: null,
-                        },
-                        orderBy: { expire_date: "asc" },
+                // 2.1 Decide if stock deduction is needed (only for products)
+                if (item.product_id) {
+                    const product = await tx.product.findUnique({
+                        where: { product_id: item.product_id },
+                        select: { product_type: true },
                     });
 
-                    for (const lot of lots) {
-                        if (remainingToDeduct === 0) break;
+                    // 2.2 If drug or supply AND status is completed → FEFO stock deduction
+                    if (
+                        isCompleted &&
+                        product &&
+                        (product.product_type === "drug" ||
+                            product.product_type === "supply")
+                    ) {
+                        let remainingToDeduct = qty;
 
-                        const deduction = Math.min(
-                            lot.qty_remaining,
-                            remainingToDeduct,
-                        );
-
-                        if (!usedLotId) usedLotId = lot.lot_id;
-
-                        await tx.inventoryLot.update({
-                            where: { lot_id: lot.lot_id },
-                            data: {
-                                qty_remaining: { decrement: deduction },
+                        const lots = await tx.inventoryLot.findMany({
+                            where: {
+                                product_id: item.product_id,
+                                qty_remaining: { gt: 0 },
+                                is_active: true,
+                                deleted_at: null,
                             },
+                            orderBy: { expire_date: "asc" },
                         });
 
-                        await tx.stockUsage.create({
-                            data: {
-                                visit: {
-                                    connect: { visit_id: visit.visit_id },
+                        for (const lot of lots) {
+                            if (remainingToDeduct === 0) break;
+
+                            const deduction = Math.min(
+                                lot.qty_remaining,
+                                remainingToDeduct,
+                            );
+
+                            if (!usedLotId) usedLotId = lot.lot_id;
+
+                            await tx.inventoryLot.update({
+                                where: { lot_id: lot.lot_id },
+                                data: {
+                                    qty_remaining: { decrement: deduction },
                                 },
-                                lot: { connect: { lot_id: lot.lot_id } },
+                            });
+
+                            stockUsages.push({
+                                lot_id: lot.lot_id,
                                 quantity: deduction,
                                 used_at: new Date(body.visit_date),
-                            },
-                        });
+                            });
 
-                        remainingToDeduct -= deduction;
-                    }
+                            remainingToDeduct -= deduction;
+                        }
 
-                    if (remainingToDeduct > 0) {
-                        throw new Error(
-                            `สินค้าในสต็อกไม่เพียงพอ (เหลือที่ต้องหักอีก ${remainingToDeduct} หน่วย)`,
-                        );
+                        if (remainingToDeduct > 0) {
+                            throw new Error(
+                                `สินค้าในสต็อกไม่เพียงพอ (เหลือที่ต้องหักอีก ${remainingToDeduct} หน่วย)`,
+                            );
+                        }
                     }
                 }
 
                 // 2.3 Create VisitItem
-                await tx.visitItem.create({
+                const visitItem = await tx.visitItem.create({
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
-                        product: { connect: { product_id: item.product_id } },
-                        lot: usedLotId
-                            ? { connect: { lot_id: usedLotId } }
-                            : undefined,
+                        item_type: item.item_type,
+                        product: item.product_id ? { connect: { product_id: item.product_id } } : undefined,
+                        service: item.service_id ? { connect: { service_id: item.service_id } } : undefined,
                         quantity: qty,
                         unit_price: price,
-                        total_price: totalPrice,
+                        description: item.description,
+                        stockUsage: {
+                            create: stockUsages,
+                        },
                     },
                 });
-            }
 
-            // 3. Create Income (1-1 with Visit) only if completed
-            if (isCompleted && totalAmount > 0) {
-                await tx.income.create({
-                    data: {
-                        visit: { connect: { visit_id: visit.visit_id } },
-                        income_type: "service", // Default for treatment
-                        amount: totalAmount,
-                        payment_method: body.payment_method as any,
-                        receipt_no:
-                            body.receipt_no || generateReceiptNo("รักษา"),
-                        income_date: new Date(body.visit_date),
-                    },
-                });
+                // 3. Create Income for each item (New Schema: Income links to VisitItem)
+                if (isCompleted && totalPrice > 0) {
+                    let incomeType: any = "other";
+                    if (item.item_type === "service") {
+                        incomeType = "service";
+                    } else if (item.product_id) {
+                        const product = await tx.product.findUnique({
+                            where: { product_id: item.product_id },
+                            select: { product_type: true },
+                        });
+                        incomeType = product?.product_type || "other";
+                    }
+
+                    await tx.income.create({
+                        data: {
+                            visitItem: {
+                                connect: { visit_item_id: visitItem.visit_item_id },
+                            },
+                            income_type: incomeType,
+                            amount: totalPrice,
+                            payment_method: body.payment_method as any,
+                            receipt_no:
+                                body.receipt_no || generateReceiptNo("รักษา"),
+                            income_date: new Date(body.visit_date),
+                        },
+                    });
+                }
             }
 
             return visit;

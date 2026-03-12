@@ -2,21 +2,26 @@ import { ProductType, VisitStatus } from "@/generated/prisma";
 
 export interface TreatmentItem {
     visit_item_id: string;
-    product_id: string;
+    product_id?: string | null;
+    service_id?: string | null;
     lot_id?: string | null;
     quantity: number;
     unit_price: number;
-    total_price: number;
+    description?: string | null;
     product?: {
         product_id: string;
         product_name: string;
         product_type: ProductType;
         unit: string;
     };
+    service?: {
+        service_id: string;
+        service_name: string;
+        price: number;
+    };
     // Derived or manually mapped fields for UI
     item_type?: string;
     item_name?: string;
-    description?: string;
 }
 
 export interface Treatment {
@@ -53,11 +58,13 @@ export interface Treatment {
 }
 
 export interface CreateTreatmentItemDTO {
-    product_id: string;
+    item_type: "product" | "service";
+    product_id?: string;
+    service_id?: string;
     lot_id?: string;
     quantity: number;
     unit_price: number;
-    instruction?: string;
+    description?: string;
 }
 
 export interface CreateTreatmentDTO {
