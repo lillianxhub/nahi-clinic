@@ -129,19 +129,12 @@ export async function POST(request: Request) {
                     const visitItem = await tx.visitItem.create({
                         data: {
                             visit_id: resolvedVisitId,
-                            item_type:
-                                item.item_type === "drug"
-                                    ? "product"
-                                    : item.item_type,
-                            product_id:
-                                item.item_type === "drug" ||
-                                item.item_type === "product"
-                                    ? item.product_id
-                                    : null,
-                            service_id:
-                                item.item_type === "service"
-                                    ? item.service_id
-                                    : null,
+                            item_type: "product",
+                            product_id: item.product_id,
+                            // service_id:
+                            //     item.item_type === "service"
+                            //         ? item.service_id
+                            //         : null,
                             quantity: qty,
                             unit_price: price,
                             description: item.description,
@@ -158,7 +151,9 @@ export async function POST(request: Request) {
                             const product = await tx.product.findUnique({
                                 where: { product_id: item.product_id },
                                 select: {
-                                    category: { select: { product_type: true } },
+                                    category: {
+                                        select: { product_type: true },
+                                    },
                                 },
                             });
                             if (product) {

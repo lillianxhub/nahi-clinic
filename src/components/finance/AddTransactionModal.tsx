@@ -17,16 +17,13 @@ import { Medicine } from "@/interface/medicine";
 import { Patient } from "@/interface/patient";
 import { PaymentMethod } from "@/interface/finance";
 import { medicineService } from "@/services/medicine";
-import { serviceService } from "@/services/service";
-import { Service } from "@/interface/service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDate, getLocalTime } from "@/utils/dateUtils";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
-import AddServiceModal from "../treatment/AddServiceModal";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface SelectedItem {
-    item_type: "drug" | "service";
+    item_type: "product";
     product_id?: string;
     description?: string;
     quantity: number;
@@ -84,12 +81,12 @@ export default function AddTransactionModal({
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
     // Service Search States
-    const [serviceSearchTerm, setServiceSearchTerm] = useState("");
-    const debouncedServiceSearch = useDebounce(serviceSearchTerm, 500);
-    const [services, setServices] = useState<Service[]>([]);
-    const [searchingServices, setSearchingServices] = useState(false);
-    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
-    const [openAddService, setOpenAddService] = useState(false);
+    const [supplySearchTerm, setSupplySearchTerm] = useState("");
+    const debouncedSupplySearch = useDebounce(supplySearchTerm, 500);
+    const [supplies, setSupplies] = useState<Medicine[]>([]);
+    const [searchingSupplies, setSearchingSupplies] = useState(false);
+    const [showSupplyDropdown, setShowSupplyDropdown] = useState(false);
+    const [openAddSupply, setOpenAddSupply] = useState(false);
 
     // Selected Items
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
@@ -110,7 +107,7 @@ export default function AddTransactionModal({
     useEffect(() => {
         if (
             formData.income_type === "drug" ||
-            formData.income_type === "service"
+            formData.income_type === "supply"
         ) {
             setFormData((prev) => ({
                 ...prev,
@@ -124,13 +121,13 @@ export default function AddTransactionModal({
         if (Number(formData.amount) <= 0) return false;
 
         if (transactionType === "income") {
-            const needsPatient = ["drug", "service", "supply", "other"].includes(
+            const needsPatient = ["drug", "supply"].includes(
                 formData.income_type,
             );
             if (needsPatient && !selectedPatient) return false;
 
             if (
-                ["drug", "service"].includes(formData.income_type) &&
+                ["drug", "supply"].includes(formData.income_type) &&
                 selectedItems.length === 0
             )
                 return false;
@@ -228,45 +225,43 @@ export default function AddTransactionModal({
     }, [debouncedDrugSearch]);
 
     useEffect(() => {
-        const fetchServices = async () => {
-            if (
-                !debouncedServiceSearch ||
-                debouncedServiceSearch.length < 2
-            ) {
+        const fetchSupplies = async () => {
+            if (!debouncedSupplySearch || debouncedSupplySearch.length < 2) {
                 try {
-                    setSearchingServices(true);
-                    const res = await serviceService.getServices({
+                    setSearchingSupplies(true);
+                    const res = await medicineService.getSupplies({
                         pageSize: 10,
+                        status: "active",
                     });
-                    setServices(res.data);
+                    setSupplies(res.data);
                 } catch (error) {
                     console.error("ดึงข้อมูลบริการล้มเหลว", error);
                 } finally {
-                    setSearchingServices(false);
+                    setSearchingSupplies(false);
                 }
                 return;
             }
 
             try {
-                setSearchingServices(true);
-                const res = await serviceService.getServices({
-                    q: debouncedServiceSearch,
+                setSearchingSupplies(true);
+                const res = await medicineService.getSupplies({
+                    q: debouncedSupplySearch,
                     pageSize: 10,
                 });
-                setServices(res.data);
+                setSupplies(res.data);
             } catch (error) {
                 console.error("ค้นหาบริการล้มเหลว", error);
             } finally {
-                setSearchingServices(false);
+                setSearchingSupplies(false);
             }
         };
 
-        fetchServices();
-    }, [debouncedServiceSearch]);
+        fetchSupplies();
+    }, [debouncedSupplySearch]);
 
-    const handleSelectService = (service: Service) => {
+    const handleSelectSupply = (supply: Medicine) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.product_id === service.service_id,
+            (item) => item.product_id === supply.product_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -276,16 +271,16 @@ export default function AddTransactionModal({
             setSelectedItems([
                 ...selectedItems,
                 {
-                    item_type: "service",
-                    product_id: service.service_id,
-                    description: service.service_name,
+                    item_type: "product",
+                    product_id: supply.product_id,
+                    description: supply.product_name,
                     quantity: 1,
-                    unit_price: Number(service.price),
+                    unit_price: supply.sell_price,
                 },
             ]);
         }
-        setServiceSearchTerm("");
-        setShowServiceDropdown(false);
+        setSupplySearchTerm("");
+        setShowSupplyDropdown(false);
     };
 
     const handleSelectMedicine = (medicine: Medicine) => {
@@ -300,7 +295,7 @@ export default function AddTransactionModal({
             setSelectedItems([
                 ...selectedItems,
                 {
-                    item_type: "drug",
+                    item_type: "product",
                     product_id: medicine.product_id,
                     description: medicine.product_name,
                     quantity: 1,
@@ -335,9 +330,7 @@ export default function AddTransactionModal({
             !selectedVisitId &&
             !selectedPatient &&
             (formData.income_type === "drug" ||
-                formData.income_type === "service" ||
-                formData.income_type === "supply" ||
-                formData.income_type === "other")
+                formData.income_type === "supply")
         ) {
             alert("กรุณาเลือกผู้ป่วยหรือการเข้าตรวจสำหรับรายรับประเภทนี้");
             return;
@@ -362,8 +355,7 @@ export default function AddTransactionModal({
                     income_type: formData.income_type,
                     description: formData.description || undefined,
                     items:
-                        formData.income_type === "drug" ||
-                        formData.income_type === "service"
+                        formData.income_type === "product"
                             ? selectedItems
                             : undefined,
                 });
@@ -736,16 +728,15 @@ export default function AddTransactionModal({
                                 <option value="">เลือกหมวดหมู่</option>
                                 {transactionType === "income" ? (
                                     <>
-                                        <option value="service">ค่าบริการ/หัตถการ</option>
+                                        {/* <option value="service">
+                                            ค่าบริการ/หัตถการ
+                                        </option> */}
                                         <option value="drug">ค่ายา</option>
                                         <option value="supply">เวชภัณฑ์</option>
-                                        <option value="other">รายได้อื่นๆ</option>
+                                        {/* <option value="other">รายได้อื่นๆ</option> */}
                                     </>
                                 ) : (
                                     <>
-                                        {/* <option value="ค่ายา">
-                                            ค่ายา
-                                        </option> */}
                                         <option value="เงินเดือนพนักงาน">
                                             เงินเดือนพนักงาน
                                         </option>
@@ -760,12 +751,11 @@ export default function AddTransactionModal({
                     </div>
 
                     {transactionType === "income" &&
-                        formData.income_type === "service" && (
+                        formData.income_type === "supply" && (
                             <div className="space-y-4 pt-4 border-t animate-in fade-in duration-300">
                                 <div className="space-y-1.5 relative">
                                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <Plus size={16} />{" "}
-                                        ค้นหาบริการ
+                                        <Plus size={16} /> ค้นหาเวชภัณฑ์
                                     </label>
                                     <div className="relative">
                                         <Search
@@ -774,92 +764,34 @@ export default function AddTransactionModal({
                                         />
                                         <input
                                             type="text"
-                                            placeholder="ค้นหาหรือเลือกบริการ..."
-                                            value={serviceSearchTerm}
+                                            placeholder="ค้นหาหรือเลือกเวชภัณฑ์..."
+                                            value={supplySearchTerm}
                                             onChange={(e) => {
-                                                setServiceSearchTerm(
+                                                setSupplySearchTerm(
                                                     e.target.value,
                                                 );
-                                                setShowServiceDropdown(true);
+                                                setShowSupplyDropdown(true);
                                             }}
                                             onFocus={() =>
-                                                setShowServiceDropdown(true)
+                                                setShowSupplyDropdown(true)
                                             }
                                             onBlur={() =>
                                                 setTimeout(() => {
-                                                    setShowServiceDropdown(
+                                                    setShowSupplyDropdown(
                                                         false,
                                                     );
                                                 }, 200)
                                             }
                                             className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                         />
-                                        {showServiceDropdown && (
-                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                                {searchingServices ? (
-                                                    <div className="p-4 text-center text-muted text-sm">
-                                                        กำลังค้นหา...
-                                                    </div>
-                                                ) : services.length > 0 ? (
-                                                    <div className="py-1">
-                                                        {services.map((s) => (
-                                                            <button
-                                                                key={
-                                                                    s.service_id
-                                                                }
-                                                                type="button"
-                                                                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                                onClick={() =>
-                                                                    handleSelectService(
-                                                                        s,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <div>
-                                                                    <div className="font-medium text-foreground group-hover:text-primary">
-                                                                        {
-                                                                            s.service_name
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs text-muted">
-                                                                        ฿
-                                                                        {Number(
-                                                                            s.price,
-                                                                        ).toLocaleString()}
-                                                                    </div>
-                                                                </div>
-                                                                <Plus
-                                                                    size={14}
-                                                                    className="text-gray-300 group-hover:text-primary"
-                                                                />
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-4 text-center text-muted text-sm">
-                                                        ไม่พบข้อมูลบริการ
-                                                    </div>
-                                                )}
-
-                                                <div className="border-t border-gray-100 p-1">
-                                                    <button
-                                                        type="button"
-                                                        className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
-                                                        onClick={() => {
-                                                            setOpenAddService(
-                                                                true,
-                                                            );
-                                                            setShowServiceDropdown(
-                                                                false,
-                                                            );
-                                                        }}
-                                                    >
-                                                        <Plus size={16} />
-                                                        สร้างบริการใหม่
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <UnifiedDrugDropdown
+                                            isOpen={showSupplyDropdown}
+                                            searchTerm={supplySearchTerm}
+                                            items={supplies}
+                                            isSearching={searchingSupplies}
+                                            displayMode="inventory"
+                                            onSelect={handleSelectSupply}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -870,7 +802,7 @@ export default function AddTransactionModal({
                             <div className="space-y-4 pt-4 border-t animate-in fade-in duration-300">
                                 <div className="space-y-1.5 relative">
                                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                                        <Plus size={16} /> ค้นหายาและเวชภัณฑ์
+                                        <Plus size={16} /> ค้นหายา
                                     </label>
                                     <div className="relative">
                                         <Search
@@ -890,6 +822,11 @@ export default function AddTransactionModal({
                                             onFocus={() =>
                                                 setShowDrugDropdown(true)
                                             }
+                                            onBlur={() => {
+                                                setTimeout(() => {
+                                                    setShowDrugDropdown(false);
+                                                }, 200);
+                                            }}
                                             className="w-full h-10 pl-10 pr-4 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-sm"
                                         />
                                     </div>
@@ -908,7 +845,7 @@ export default function AddTransactionModal({
 
                     {transactionType === "income" &&
                         (formData.income_type === "drug" ||
-                            formData.income_type === "service") && (
+                            formData.income_type === "supply") && (
                             <div className="space-y-4 pt-4 animate-in fade-in duration-300">
                                 {/* สรุปรายการ Table */}
                                 <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
@@ -1045,7 +982,7 @@ export default function AddTransactionModal({
                                 value={formData.amount}
                                 readOnly={
                                     formData.income_type === "drug" ||
-                                    formData.income_type === "service"
+                                    formData.income_type === "supply"
                                 }
                                 onChange={(e) =>
                                     setFormData({
@@ -1056,14 +993,14 @@ export default function AddTransactionModal({
                                 placeholder="0.00"
                                 className={`w-full pl-8 pr-4 h-10 border border-gray-200 rounded-lg outline-none transition-all ${
                                     formData.income_type === "drug" ||
-                                    formData.income_type === "service"
+                                    formData.income_type === "supply"
                                         ? "bg-gray-50 text-primary font-bold border-primary/20 shadow-inner cursor-not-allowed"
                                         : "focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                 }`}
                             />
                         </div>
                         {(formData.income_type === "drug" ||
-                            formData.income_type === "service") && (
+                            formData.income_type === "supply") && (
                             <p className="text-xs text-muted mt-1 px-1">
                                 * คำนวณอัตโนมัติจากรายการที่เลือก
                             </p>
@@ -1169,13 +1106,6 @@ export default function AddTransactionModal({
                     </div>
                 </div>
             </div>
-            <AddServiceModal
-                open={openAddService}
-                onClose={() => setOpenAddService(false)}
-                onSuccess={(newService: any) => {
-                    handleSelectService(newService);
-                }}
-            />
         </div>
     );
 }
