@@ -60,9 +60,6 @@ export default function EditTransactionModal({
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [formData, setFormData] = useState<any>(null);
-    const [categories, setCategories] = useState<
-        { category_id: string; category_name: string }[]
-    >([]);
 
     // Patient Search States
     const [searchTerm, setSearchTerm] = useState("");
@@ -107,28 +104,28 @@ export default function EditTransactionModal({
     // Update amount if category is "ค่ายา" or "ค่าบริการ"
     useEffect(() => {
         if (
-            formData?.category === "ค่ายา" ||
-            formData?.category === "ค่าบริการ"
+            formData?.income_type === "drug" ||
+            formData?.income_type === "service"
         ) {
             setFormData((prev: any) => ({
                 ...prev,
                 amount: totalFromItems.toFixed(2),
             }));
         }
-    }, [totalFromItems, formData?.category]);
+    }, [totalFromItems, formData?.income_type]);
 
     const isFormValid = useMemo(() => {
-        if (!formData?.category) return false;
+        if (!formData?.income_type) return false;
         if (Number(formData?.amount) <= 0) return false;
 
         if (transaction?.type === "income") {
-            const needsPatient = ["ค่ายา", "ค่าบริการ", "รายได้อื่นๆ"].includes(
-                formData.category,
+            const needsPatient = ["drug", "service", "supply", "other"].includes(
+                formData.income_type,
             );
             if (needsPatient && !selectedPatient) return false;
 
             if (
-                ["ค่ายา", "ค่าบริการ"].includes(formData.category) &&
+                ["drug", "service"].includes(formData.income_type) &&
                 selectedItems.length === 0
             )
                 return false;
@@ -136,18 +133,6 @@ export default function EditTransactionModal({
 
         return true;
     }, [formData, transaction, selectedPatient, selectedItems]);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const res = await financeService.getIncomeCategories();
-                setCategories(res);
-            } catch (error) {
-                console.error("Failed to fetch income categories:", error);
-            }
-        };
-        fetchCategories();
-    }, []);
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -354,11 +339,10 @@ export default function EditTransactionModal({
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
-                    category: res.category?.category_name,
+                    income_type: res.income_type,
                 });
                 setSelectedVisitId(res.visit_id);
 
-                // @ts-ignore - visit and patient are included now
                 if (res.visit?.patient) {
                     const p = res.visit.patient as any;
                     setSelectedPatient(p);
@@ -369,13 +353,13 @@ export default function EditTransactionModal({
                     );
 
                     // Set initial items from visit details (only show drugs or services depending on category)
-                    if (res.visit.visitDetails) {
+                    if (res.visit.visitItems) {
                         const targetItemType =
-                            res.category?.category_name === "ค่ายา"
-                                ? "drug"
+                            res.income_type === "drug"
+                                ? "product"
                                 : "service";
                         setSelectedItems(
-                            res.visit.visitDetails
+                            res.visit.visitItems
                                 .filter(
                                     (vd: any) =>
                                         vd.item_type === targetItemType,
@@ -416,8 +400,8 @@ export default function EditTransactionModal({
 
         if (
             transaction.type === "income" &&
-            (formData.category === "ค่าบริการ" ||
-                formData.category === "ค่ายา") &&
+            (formData.income_type === "service" ||
+                formData.income_type === "drug") &&
             !selectedPatient?.patient_id
         ) {
             alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
@@ -441,11 +425,11 @@ export default function EditTransactionModal({
                         !selectedVisitId && selectedPatient
                             ? selectedPatient.patient_id
                             : undefined,
-                    income_category: formData.category,
+                    income_type: formData.income_type,
                     description: formData.description || undefined,
                     items:
-                        formData.category === "ค่ายา" ||
-                        formData.category === "ค่าบริการ"
+                        formData.income_type === "drug" ||
+                        formData.income_type === "service"
                             ? selectedItems
                             : undefined,
                 };
@@ -790,11 +774,11 @@ export default function EditTransactionModal({
                                         </label>
                                         <select
                                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                            value={formData?.category || ""}
+                                            value={formData?.income_type || ""}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
-                                                    category: e.target.value,
+                                                    income_type: e.target.value,
                                                     description: "",
                                                 })
                                             }
@@ -803,18 +787,14 @@ export default function EditTransactionModal({
                                             <option value="">
                                                 เลือกหมวดหมู่
                                             </option>
-                                            {categories.map((cat) => (
-                                                <option
-                                                    key={cat.category_id}
-                                                    value={cat.category_name}
-                                                >
-                                                    {cat.category_name}
-                                                </option>
-                                            ))}
+                                            <option value="service" label="ค่าบริการ/หัตถการ">ค่าบริการ/หัตถการ</option>
+                                            <option value="drug" label="ค่ายา">ค่ายา</option>
+                                            <option value="supply" label="เวชภัณฑ์">เวชภัณฑ์</option>
+                                            <option value="other" label="รายได้อื่นๆ">รายได้อื่นๆ</option>
                                         </select>
                                     </div>
 
-                                    {formData?.category === "ค่ายา" && (
+                                    {formData?.income_type === "drug" && (
                                         <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="relative">
                                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
@@ -996,7 +976,7 @@ export default function EditTransactionModal({
                                         </div>
                                     )}
 
-                                    {formData?.category === "ค่าบริการ" && (
+                                    {formData?.income_type === "service" && (
                                         <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="relative">
                                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
@@ -1299,16 +1279,16 @@ export default function EditTransactionModal({
                                     type="number"
                                     step="0.01"
                                     className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                                        formData?.category === "ค่ายา" ||
-                                        formData?.category === "ค่าบริการ"
+                                        formData?.income_type === "drug" ||
+                                        formData?.income_type === "service"
                                             ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
                                             : "focus:border-primary"
                                     }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
                                     readOnly={
-                                        formData?.category === "ค่ายา" ||
-                                        formData?.category === "ค่าบริการ"
+                                        formData?.income_type === "drug" ||
+                                        formData?.income_type === "service"
                                     }
                                     onChange={(e) =>
                                         setFormData({
@@ -1318,11 +1298,11 @@ export default function EditTransactionModal({
                                     }
                                     required
                                 />
-                                {(formData?.category === "ค่ายา" ||
-                                    formData?.category === "ค่าบริการ") && (
+                                {(formData?.income_type === "drug" ||
+                                    formData?.income_type === "service") && (
                                     <p className="text-xs text-muted mt-1 px-1">
                                         * คำนวณอัตโนมัติจากรายการ
-                                        {formData?.category === "ค่ายา"
+                                        {formData?.income_type === "drug"
                                             ? "ยาและเวชภัณฑ์"
                                             : "บริการ"}
                                     </p>

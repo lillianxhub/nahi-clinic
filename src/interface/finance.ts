@@ -9,7 +9,7 @@ export interface Income {
     payment_method: PaymentMethod;
     receipt_no: string | null;
     description: string | null;
-    income_category?: string | null;
+    income_type?: string | null;
     category?: { category_name: string };
     is_active: boolean;
     created_at: string;
@@ -145,7 +145,7 @@ export interface CreateIncomePayload {
     payment_method: PaymentMethod;
     receipt_no?: string;
     description?: string;
-    income_category?: string;
+    income_type?: string;
     items?: {
         item_type: "drug" | "service";
         product_id?: string;

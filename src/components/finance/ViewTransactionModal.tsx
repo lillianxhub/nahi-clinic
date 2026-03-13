@@ -31,6 +31,17 @@ export default function ViewTransactionModal({
 
     const isIncome = transaction.type === "income";
 
+    const incomeTypeLabels: Record<string, string> = {
+        service: "ค่าบริการ/หัตถการ",
+        drug: "ค่ายา",
+        supply: "เวชภัณฑ์",
+        other: "รายได้อื่นๆ",
+    };
+
+    const displayCategory = isIncome
+        ? incomeTypeLabels[transaction.category] || transaction.category
+        : transaction.category;
+
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
@@ -109,7 +120,7 @@ export default function ViewTransactionModal({
                                 หมวดหมู่
                             </label>
                             <p className="text-foreground font-medium">
-                                {transaction.category}
+                                {displayCategory}
                             </p>
                         </div>
 

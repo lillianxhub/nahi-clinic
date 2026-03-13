@@ -37,14 +37,6 @@ export const financeService = {
         );
     },
 
-    async getIncomeCategories(): Promise<
-        { category_id: string; category_name: string }[]
-    > {
-        const res = await apiClient.get<any[]>(
-            `/api/reports/finance/categories`,
-        );
-        return res;
-    },
 
     async getExpenseStats(
         params?: QueryParams,

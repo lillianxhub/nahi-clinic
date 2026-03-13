@@ -129,8 +129,12 @@ export async function POST(request: Request) {
                     const visitItem = await tx.visitItem.create({
                         data: {
                             visit_id: resolvedVisitId,
-                            item_type: item.item_type, // 'product' or 'service'
+                            item_type:
+                                item.item_type === "drug"
+                                    ? "product"
+                                    : item.item_type,
                             product_id:
+                                item.item_type === "drug" ||
                                 item.item_type === "product"
                                     ? item.product_id
                                     : null,
@@ -148,14 +152,19 @@ export async function POST(request: Request) {
                     let incomeType: any = item.income_type || "other";
                     if (item.item_type === "service") {
                         incomeType = "service";
-                    } else if (item.product_id) {
-                        const product = await tx.product.findUnique({
-                            where: { product_id: item.product_id },
-                            select: {
-                                category: { select: { product_type: true } },
-                            },
-                        });
-                        incomeType = product?.category.product_type || "other";
+                    } else if (item.item_type === "drug" || item.product_id) {
+                        incomeType = "drug"; // Default for drug/product unless more specific info exists
+                        if (item.product_id) {
+                            const product = await tx.product.findUnique({
+                                where: { product_id: item.product_id },
+                                select: {
+                                    category: { select: { product_type: true } },
+                                },
+                            });
+                            if (product) {
+                                incomeType = product.category.product_type;
+                            }
+                        }
                     }
 
                     const income = await tx.income.create({
