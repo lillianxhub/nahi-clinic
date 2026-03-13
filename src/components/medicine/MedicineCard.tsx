@@ -46,7 +46,7 @@ export default function MedicineCard({
         nearestExpire <=
             new Date(new Date().setDate(new Date().getDate() + 30));
 
-    const isInactive = medicine.status === "inactive";
+    const isInactive = !medicine.is_active;
 
     const getBackgroundColor = () => {
         if (isInactive) return "bg-gray-100 border-gray-200";

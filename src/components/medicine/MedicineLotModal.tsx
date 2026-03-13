@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     X,
-    Pencil,
-    Check,
+    Eye,
     Search,
     Trash2,
     ArrowUp,
@@ -17,6 +16,7 @@ import { medicineService } from "@/services/medicine";
 import { DrugLot } from "@/interface/medicine";
 import Pagination from "../Pagination";
 import Swal from "sweetalert2";
+import LotModal from "./LotModal";
 
 type Props = {
     open: boolean;
@@ -74,13 +74,8 @@ export default function MedicineLotModal({
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    // Edit state
-    const [editingLotId, setEditingLotId] = useState<string | null>(null);
-    const [editForm, setEditForm] = useState<{
-        qty_remaining: string;
-        expire_date: string;
-    }>({ qty_remaining: "", expire_date: "" });
-    const [saving, setSaving] = useState(false);
+    // View logic
+    const [viewingLot, setViewingLot] = useState<DrugLot | null>(null);
 
     useEffect(() => {
         if (!open) return;
@@ -118,32 +113,6 @@ export default function MedicineLotModal({
     };
 
     if (!open) return null;
-
-    const handleStartEdit = (lot: DrugLot) => {
-        setEditingLotId(lot.lot_id);
-        setEditForm({
-            qty_remaining: String(lot.qty_remaining),
-            expire_date: new Date(lot.expire_date).toISOString().split("T")[0],
-        });
-    };
-
-    const handleSaveQty = async (lot_id: string) => {
-        try {
-            setSaving(true);
-            await medicineService.updateLotDetails(lot_id, {
-                qty_remaining: Number(editForm.qty_remaining),
-                expire_date: editForm.expire_date,
-            });
-            setEditingLotId(null);
-            fetchLots();
-            onRefresh?.();
-        } catch (error) {
-            console.error("บันทึกข้อมูลไม่สำเร็จ", error);
-            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล Lot ยา");
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const handleDeleteLot = async (lot_id: string, lot_no: string | null) => {
         const confirm = await Swal.fire({
@@ -354,58 +323,18 @@ export default function MedicineLotModal({
                                                 {lot.lot_no}
                                             </td>
                                             <td className="py-3">
-                                                {editingLotId === lot.lot_id ? (
-                                                    <input
-                                                        type="date"
-                                                        className="w-32 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                        value={
-                                                            editForm.expire_date
-                                                        }
-                                                        onChange={(e) =>
-                                                            setEditForm({
-                                                                ...editForm,
-                                                                expire_date:
-                                                                    e.target
-                                                                        .value,
-                                                            })
-                                                        }
-                                                    />
-                                                ) : (
-                                                    lot.expire_date
-                                                        .toString()
-                                                        .split("T")[0]
-                                                )}
+                                                {lot.expire_date.toString().split("T")[0]}
                                             </td>
                                             <td className="py-3">
-                                                {editingLotId === lot.lot_id ? (
-                                                    <input
-                                                        type="number"
-                                                        className="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                        value={
-                                                            editForm.qty_remaining
-                                                        }
-                                                        min="0"
-                                                        onChange={(e) =>
-                                                            setEditForm({
-                                                                ...editForm,
-                                                                qty_remaining:
-                                                                    e.target
-                                                                        .value,
-                                                            })
-                                                        }
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        className={
-                                                            lot.qty_remaining ===
-                                                            0
-                                                                ? "text-red-500 font-semibold"
-                                                                : ""
-                                                        }
-                                                    >
-                                                        {lot.qty_remaining}
-                                                    </span>
-                                                )}
+                                                <span
+                                                    className={
+                                                        lot.qty_remaining === 0
+                                                            ? "text-red-500 font-semibold"
+                                                            : ""
+                                                    }
+                                                >
+                                                    {lot.qty_remaining}
+                                                </span>
                                             </td>
                                             <td className="py-3">
                                                 {(() => {
@@ -430,33 +359,15 @@ export default function MedicineLotModal({
                                             </td>
                                             <td className="py-3 text-right pr-2">
                                                 <div className="flex justify-end gap-2">
-                                                    {editingLotId ===
-                                                    lot.lot_id ? (
-                                                        <button
-                                                            onClick={() =>
-                                                                handleSaveQty(
-                                                                    lot.lot_id,
-                                                                )
-                                                            }
-                                                            disabled={saving}
-                                                            className="cursor-pointer p-1.5 bg-primary text-white rounded hover:bg-primary-dark transition-colors disabled:opacity-50"
-                                                            title="บันทึก"
-                                                        >
-                                                            <Check size={16} />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() =>
-                                                                handleStartEdit(
-                                                                    lot,
-                                                                )
-                                                            }
-                                                            className="cursor-pointer p-1.5 hover:bg-gray-100 text-gray-600 rounded transition-colors"
-                                                            title="แก้ไขข้อมูล"
-                                                        >
-                                                            <Pencil size={16} />
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() =>
+                                                            setViewingLot(lot)
+                                                        }
+                                                        className="cursor-pointer p-1.5 hover:bg-gray-100 text-gray-600 rounded transition-colors"
+                                                        title="ดูรายละเอียด"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
                                                     <button
                                                         onClick={() =>
                                                             handleDeleteLot(
@@ -490,6 +401,13 @@ export default function MedicineLotModal({
                     </div>
                 )}
             </div>
+
+            <LotModal
+                open={!!viewingLot}
+                onClose={() => setViewingLot(null)}
+                lot={viewingLot}
+                drugName={drugName}
+            />
         </div>
     );
 }
