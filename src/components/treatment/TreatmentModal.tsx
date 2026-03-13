@@ -58,6 +58,7 @@ export default function TreatmentModal({
         symptom: "",
         diagnosis: "",
         blood_pressure: "",
+        temperature: "",
         heart_rate: "",
         weight: "",
         height: "",
@@ -81,7 +82,7 @@ export default function TreatmentModal({
     const [openAddPatient, setOpenAddPatient] = useState(false);
 
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+
 
     // Drug Search States
     const [drugSearchTerm, setDrugSearchTerm] = useState("");
@@ -150,12 +151,20 @@ export default function TreatmentModal({
                         patient_id: data.patient?.patient_id || "",
                         visit_date: formatLocalDate(dateObj),
                         hour: dateObj.getHours().toString().padStart(2, "0"),
-                        minute: dateObj.getMinutes().toString().padStart(2, "0"),
+                        minute: dateObj
+                            .getMinutes()
+                            .toString()
+                            .padStart(2, "0"),
                         symptom: data.symptom || "",
                         diagnosis: data.diagnosis || "",
                         note: data.note || "",
                         blood_pressure: data.blood_pressure || "",
-                        heart_rate: data.heart_rate ? String(data.heart_rate) : "",
+                        heart_rate: data.heart_rate
+                            ? String(data.heart_rate)
+                            : "",
+                        temperature: data.temperature
+                            ? String(data.temperature)
+                            : "",
                         weight: data.weight ? String(data.weight) : "",
                         height: data.height ? String(data.height) : "",
                         waistline: data.waistline ? String(data.waistline) : "",
@@ -173,12 +182,15 @@ export default function TreatmentModal({
                             ? detail.service.service_name
                             : detail.product?.product_name;
                         if (name && instruction.startsWith(`${name} : `)) {
-                            instruction = instruction.substring(name.length + 3);
+                            instruction = instruction.substring(
+                                name.length + 3,
+                            );
                         }
                         return {
                             item_type: detail.service
                                 ? "service"
-                                : detail.product?.category?.product_type || "product",
+                                : detail.product?.category?.product_type ||
+                                  "product",
                             product_id: detail.product_id,
                             service_id: detail.service_id,
                             name: name,
@@ -189,9 +201,7 @@ export default function TreatmentModal({
                         };
                     });
                     setSelectedItems(existingItems);
-                    if ((data as any).payment_method) {
-                        setPaymentMethod((data as any).payment_method);
-                    }
+
                 } catch (error) {
                     console.error("โหลดข้อมูลการรักษาล่าสุดล้มเหลว", error);
                     Swal.fire({
@@ -476,27 +486,44 @@ export default function TreatmentModal({
             const payload = {
                 ...formData,
                 visit_date: isoDateTime,
-                payment_method: paymentMethod,
+
                 items: selectedItems.map((item) => ({
                     ...item,
-                    item_type: item.item_type === "drug" || item.item_type === "supply" ? "product" : item.item_type,
+                    item_type:
+                        item.item_type === "drug" || item.item_type === "supply"
+                            ? "product"
+                            : item.item_type,
                     product_id: item.product_id,
                     description: item.instruction || "",
                 })),
                 heart_rate: formData.heart_rate
                     ? Number(formData.heart_rate)
                     : undefined,
+                temperature: formData.temperature
+                    ? Number(formData.temperature)
+                    : undefined,
                 weight: formData.weight ? Number(formData.weight) : undefined,
                 height: formData.height ? Number(formData.height) : undefined,
-                waistline: formData.waistline ? Number(formData.waistline) : undefined,
+                waistline: formData.waistline
+                    ? Number(formData.waistline)
+                    : undefined,
                 smoking_status: formData.smoking_status,
                 drinking_status: formData.drinking_status,
-                smoking_history: formData.smoking_status !== "none" ? formData.smoking_history : undefined,
-                drinking_history: formData.drinking_status !== "none" ? formData.drinking_history : undefined,
+                smoking_history:
+                    formData.smoking_status !== "none"
+                        ? formData.smoking_history
+                        : undefined,
+                drinking_history:
+                    formData.drinking_status !== "none"
+                        ? formData.drinking_history
+                        : undefined,
             } as CreateTreatmentDTO;
 
             if (isEditMode && treatment) {
-                await treatmentService.updateTreatment(treatment.visit_id, payload);
+                await treatmentService.updateTreatment(
+                    treatment.visit_id,
+                    payload,
+                );
                 onSuccess();
             } else {
                 const result = await treatmentService.createTreatment(payload);
@@ -511,6 +538,7 @@ export default function TreatmentModal({
                     symptom: "",
                     diagnosis: "",
                     blood_pressure: "",
+                    temperature: "",
                     heart_rate: "",
                     weight: "",
                     height: "",
@@ -524,14 +552,16 @@ export default function TreatmentModal({
                 setSelectedPatient(null);
                 setSearchTerm("");
                 setSelectedItems([]);
-                setPaymentMethod("cash");
+
 
                 onSuccess(result.visit_id);
             }
             onClose();
         } catch (error) {
             console.error(
-                isEditMode ? "แก้ไขการรักษาไม่สำเร็จ" : "สร้างการรักษาไม่สำเร็จ",
+                isEditMode
+                    ? "แก้ไขการรักษาไม่สำเร็จ"
+                    : "สร้างการรักษาไม่สำเร็จ",
                 error,
             );
             Swal.fire({
@@ -561,7 +591,7 @@ export default function TreatmentModal({
         <>
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div
-                    className="bg-card w-full max-w-4xl lg:max-w-5xl rounded-2xl shadow-2xl overflow-hidden"
+                    className="bg-card w-full max-w-4xl lg:max-w-7xl rounded-2xl shadow-2xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header with gradient */}
@@ -572,10 +602,14 @@ export default function TreatmentModal({
                             </div>
                             <div>
                                 <h2 className="text-xl font-semibold text-white">
-                                    {isEditMode ? "แก้ไขข้อมูลการรักษา" : "บันทึกการรักษา"}
+                                    {isEditMode
+                                        ? "แก้ไขข้อมูลการรักษา"
+                                        : "บันทึกการรักษา"}
                                 </h2>
                                 <p className="text-white/80 text-sm">
-                                    {isEditMode ? "แก้ไขรายละเอียดการเข้าใช้งานบริการ" : "กรอกข้อมูลการรักษาผู้ป่วย"}
+                                    {isEditMode
+                                        ? "แก้ไขรายละเอียดการเข้าใช้งานบริการ"
+                                        : "กรอกข้อมูลการรักษาผู้ป่วย"}
                                 </p>
                             </div>
                         </div>
@@ -599,20 +633,26 @@ export default function TreatmentModal({
                                 <>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                            <User size={16} className="text-primary" />
+                                            <User
+                                                size={16}
+                                                className="text-primary"
+                                            />
                                             ผู้ป่วย
                                         </label>
                                         <div className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3.5 py-2.5 text-foreground font-medium">
                                             {treatment?.patient.first_name}{" "}
                                             {treatment?.patient.last_name} (
-                                            {treatment?.patient.hospital_number})
+                                            {treatment?.patient.hospital_number}
+                                            )
                                         </div>
                                     </div>
 
                                     {/* Allergy Alert (Edit Mode) */}
                                     {treatment?.patient.allergy?.trim() &&
-                                        treatment?.patient.allergy.trim() !== "ไม่มี" &&
-                                        treatment?.patient.allergy.trim() !== "-" && (
+                                        treatment?.patient.allergy.trim() !==
+                                            "ไม่มี" &&
+                                        treatment?.patient.allergy.trim() !==
+                                            "-" && (
                                             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <AlertCircle
                                                     className="text-red-500 shrink-0 mt-0.5"
@@ -623,7 +663,10 @@ export default function TreatmentModal({
                                                         ประวัติการแพ้ยา/แพ้อื่นๆ
                                                     </p>
                                                     <p className="text-red-700 sm:text-sm text-xs font-medium">
-                                                        {treatment?.patient.allergy}
+                                                        {
+                                                            treatment?.patient
+                                                                .allergy
+                                                        }
                                                     </p>
                                                 </div>
                                             </div>
@@ -631,133 +674,159 @@ export default function TreatmentModal({
                                 </>
                             ) : (
                                 <>
-                            {/* Patient Name Search */}
-                            <div className="space-y-1.5 relative">
-                                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                                    <User size={16} className="text-primary" />
-                                    ชื่อผู้ป่วย{" "}
-                                    <span className="text-danger">*</span>
-                                </label>
-                                <div className="relative">
-                                    <Search
-                                        size={18}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="ค้นหาชื่อหรือรหัสผู้ป่วย..."
-                                        className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={searchTerm}
-                                        onChange={(e) => {
-                                            setSearchTerm(e.target.value);
-                                            setShowDropdown(true);
-                                            if (
-                                                selectedPatient &&
-                                                e.target.value !==
-                                                    selectedPatient.fullName
-                                            ) {
-                                                setSelectedPatient(null);
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    patient_id: "",
-                                                }));
-                                            }
-                                        }}
-                                        onFocus={() => setShowDropdown(true)}
-                                        onBlur={() =>
-                                            setTimeout(() => {
-                                                setShowDropdown(false);
-                                            }, 200)
-                                        }
-                                        required
-                                    />
-                                </div>
+                                    {/* Patient Name Search */}
+                                    <div className="space-y-1.5 relative">
+                                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                            <User
+                                                size={16}
+                                                className="text-primary"
+                                            />
+                                            ชื่อผู้ป่วย{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <div className="relative">
+                                            <Search
+                                                size={18}
+                                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="ค้นหาชื่อหรือรหัสผู้ป่วย..."
+                                                className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                                value={searchTerm}
+                                                onChange={(e) => {
+                                                    setSearchTerm(
+                                                        e.target.value,
+                                                    );
+                                                    setShowDropdown(true);
+                                                    if (
+                                                        selectedPatient &&
+                                                        e.target.value !==
+                                                            selectedPatient.fullName
+                                                    ) {
+                                                        setSelectedPatient(
+                                                            null,
+                                                        );
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            patient_id: "",
+                                                        }));
+                                                    }
+                                                }}
+                                                onFocus={() =>
+                                                    setShowDropdown(true)
+                                                }
+                                                onBlur={() =>
+                                                    setTimeout(() => {
+                                                        setShowDropdown(false);
+                                                    }, 200)
+                                                }
+                                                required
+                                            />
+                                        </div>
 
-                                {/* Patient Dropdown */}
-                                {showDropdown &&
-                                    (searchTerm.length >= 2 ||
-                                        patients.length > 0) && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                            {searching ? (
-                                                <div className="p-4 text-center text-muted text-sm">
-                                                    กำลังค้นหา...
-                                                </div>
-                                            ) : patients.length > 0 ? (
-                                                <div className="py-1">
-                                                    {patients.map((p) => (
+                                        {/* Patient Dropdown */}
+                                        {showDropdown &&
+                                            (searchTerm.length >= 2 ||
+                                                patients.length > 0) && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                                    {searching ? (
+                                                        <div className="p-4 text-center text-muted text-sm">
+                                                            กำลังค้นหา...
+                                                        </div>
+                                                    ) : patients.length > 0 ? (
+                                                        <div className="py-1">
+                                                            {patients.map(
+                                                                (p) => (
+                                                                    <button
+                                                                        key={
+                                                                            p.patient_id
+                                                                        }
+                                                                        type="button"
+                                                                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                                        onClick={() =>
+                                                                            handleSelectPatient(
+                                                                                p,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <div>
+                                                                            <div className="font-medium text-foreground group-hover:text-primary">
+                                                                                {
+                                                                                    p.fullName
+                                                                                }
+                                                                            </div>
+                                                                            <div className="text-xs text-muted">
+                                                                                HN:{" "}
+                                                                                {
+                                                                                    p.hospital_number
+                                                                                }{" "}
+                                                                                |
+                                                                                เลขบัตร:{" "}
+                                                                                {p.citizen_number ||
+                                                                                    "-"}{" "}
+                                                                                |{" "}
+                                                                                {p.phone ||
+                                                                                    "ไม่มีเบอร์โทร"}
+                                                                            </div>
+                                                                        </div>
+                                                                    </button>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 text-center text-muted text-sm">
+                                                            ไม่พบข้อมูลผู้ป่วย
+                                                        </div>
+                                                    )}
+
+                                                    {/* Add New Patient Option */}
+                                                    <div className="border-t border-gray-100 p-1">
                                                         <button
-                                                            key={p.patient_id}
                                                             type="button"
-                                                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                            onClick={() =>
-                                                                handleSelectPatient(
-                                                                    p,
-                                                                )
-                                                            }
+                                                            className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
+                                                            onClick={() => {
+                                                                setOpenAddPatient(
+                                                                    true,
+                                                                );
+                                                                setShowDropdown(
+                                                                    false,
+                                                                );
+                                                            }}
                                                         >
-                                                            <div>
-                                                                <div className="font-medium text-foreground group-hover:text-primary">
-                                                                    {p.fullName}
-                                                                </div>
-                                                                <div className="text-xs text-muted">
-                                                                    HN:{" "}
-                                                                    {
-                                                                        p.hospital_number
-                                                                    }{" "}
-                                                                    | เลขบัตร:{" "}
-                                                                    {p.citizen_number ||
-                                                                        "-"}{" "}
-                                                                    |{" "}
-                                                                    {p.phone ||
-                                                                        "ไม่มีเบอร์โทร"}
-                                                                </div>
-                                                            </div>
+                                                            <Plus size={16} />
+                                                            เพิ่มผู้ป่วยใหม่
                                                         </button>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="p-4 text-center text-muted text-sm">
-                                                    ไม่พบข้อมูลผู้ป่วย
+                                                    </div>
                                                 </div>
                                             )}
-
-                                            {/* Add New Patient Option */}
-                                            <div className="border-t border-gray-100 p-1">
-                                                <button
-                                                    type="button"
-                                                    className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
-                                                    onClick={() => {
-                                                        setOpenAddPatient(true);
-                                                        setShowDropdown(false);
-                                                    }}
-                                                >
-                                                    <Plus size={16} />
-                                                    เพิ่มผู้ป่วยใหม่
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                            </div>
-
-                            {/* Allergy Alert */}
-                            {selectedPatient?.allergy?.trim() &&
-                                selectedPatient.allergy.trim() !== "ไม่มี" &&
-                                selectedPatient.allergy.trim() !== "-" && (
-                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <AlertCircle
-                                            className="text-red-500 shrink-0 mt-0.5"
-                                            size={18}
-                                        />
-                                        <div>
-                                            <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
-                                                ประวัติการแพ้ยา/แพ้อื่นๆ
-                                            </p>
-                                            <p className="text-red-700 sm:text-sm text-xs font-medium">
-                                                {selectedPatient.allergy}
-                                            </p>
-                                        </div>
                                     </div>
-                                )}
+
+                                    {/* Allergy Alert */}
+                                    {selectedPatient?.allergy?.trim() &&
+                                        selectedPatient.allergy.trim() !==
+                                            "ไม่มี" &&
+                                        selectedPatient.allergy.trim() !==
+                                            "-" && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <AlertCircle
+                                                    className="text-red-500 shrink-0 mt-0.5"
+                                                    size={18}
+                                                />
+                                                <div>
+                                                    <p className="text-red-800 text-xs font-bold uppercase tracking-wider mb-0.5">
+                                                        ประวัติการแพ้ยา/แพ้อื่นๆ
+                                                    </p>
+                                                    <p className="text-red-700 sm:text-sm text-xs font-medium">
+                                                        {
+                                                            selectedPatient.allergy
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                 </>
                             )}
 
@@ -818,7 +887,7 @@ export default function TreatmentModal({
                             </div>
 
                             {/* Vital Signs Grid */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 {/* Blood Pressure */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -869,6 +938,25 @@ export default function TreatmentModal({
                                     />
                                 </div>
 
+                                {/* Temperature */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        อุณหภูมิ (°C)
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        name="temperature"
+                                        placeholder="เช่น 36.8"
+                                        step="0.1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+                                    />
+                                </div>
+
                                 {/* Weight */}
                                 <div className="space-y-1.5">
                                     <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -910,6 +998,165 @@ export default function TreatmentModal({
                                         onChange={handleChange}
                                     />
                                 </div>
+
+                                {/* Waistline */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        <FileText
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        รอบเอว (ซม.)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="waistline"
+                                        placeholder="เช่น 85"
+                                        min="0"
+                                        step="0.1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.waistline}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Health Behavior Section */}
+                            <div className="space-y-4 border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <Activity
+                                        size={18}
+                                        className="text-primary"
+                                    />
+                                    พฤติกรรมสุขภาพ
+                                </h3>
+
+                                {/* Smoking Status */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-foreground">
+                                        การสูบบุหรี่
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { value: "none", label: "ไม่สูบ" },
+                                            { value: "current", label: "สูบ" },
+                                            { value: "ex", label: "เคยสูบ" },
+                                            {
+                                                value: "occasional",
+                                                label: "นานๆครั้ง",
+                                            },
+                                        ].map((opt) => (
+                                            <label
+                                                key={opt.value}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.smoking_status ===
+                                                    opt.value
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-gray-200 hover:border-gray-300"
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="smoking_status"
+                                                    value={opt.value}
+                                                    checked={
+                                                        formData.smoking_status ===
+                                                        opt.value
+                                                    }
+                                                    onChange={handleChange}
+                                                    className="accent-primary"
+                                                />
+                                                <span className="text-sm">
+                                                    {opt.label}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Smoking History */}
+                                {formData.smoking_status !== "none" && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">
+                                            รายละเอียดการสูบ
+                                        </label>
+                                        <textarea
+                                            name="smoking_history"
+                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                            rows={2}
+                                            value={formData.smoking_history}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Drinking Status */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-foreground">
+                                        การดื่มแอลกอฮอล์
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { value: "none", label: "ไม่ดื่ม" },
+                                            {
+                                                value: "social",
+                                                label: "ดื่มตามสังคม",
+                                            },
+                                            {
+                                                value: "regular",
+                                                label: "ดื่มประจำ",
+                                            },
+                                            {
+                                                value: "heavy",
+                                                label: "ดื่มหนัก",
+                                            },
+                                            { value: "ex", label: "เคยดื่ม" },
+                                        ].map((opt) => (
+                                            <label
+                                                key={opt.value}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.drinking_status ===
+                                                    opt.value
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-gray-200 hover:border-gray-300"
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="drinking_status"
+                                                    value={opt.value}
+                                                    checked={
+                                                        formData.drinking_status ===
+                                                        opt.value
+                                                    }
+                                                    onChange={handleChange}
+                                                    className="accent-primary"
+                                                />
+                                                <span className="text-sm">
+                                                    {opt.label}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Drinking History */}
+                                {formData.drinking_status !== "none" && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">
+                                            รายละเอียดการดื่ม
+                                        </label>
+                                        <textarea
+                                            name="drinking_history"
+                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                            rows={2}
+                                            value={formData.drinking_history}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Diagnosis */}
@@ -951,134 +1198,6 @@ export default function TreatmentModal({
                                     onChange={handleChange}
                                     required
                                 />
-                            </div>
-
-                            {/* Health Behavior Section */}
-                            <div className="space-y-4 border border-gray-200 rounded-xl p-4 bg-gray-50/50">
-                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                                    <Activity size={18} className="text-primary" />
-                                    พฤติกรรมสุขภาพ
-                                </h3>
-
-                                {/* Waistline */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-foreground">
-                                        รอบเอว (ซม.)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="waistline"
-                                        placeholder="เช่น 85"
-                                        min="0"
-                                        step="0.1"
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                        value={formData.waistline}
-                                        onChange={handleChange}
-                                    />
-                                </div>
-
-                                {/* Smoking Status */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-foreground">
-                                        การสูบบุหรี่
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {[
-                                            { value: "none", label: "ไม่สูบ" },
-                                            { value: "current", label: "สูบ" },
-                                            { value: "ex", label: "เคยสูบ" },
-                                            { value: "occasional", label: "นานๆครั้ง" },
-                                        ].map((opt) => (
-                                            <label
-                                                key={opt.value}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                                                    formData.smoking_status === opt.value
-                                                        ? "border-primary bg-primary/5 text-primary"
-                                                        : "border-gray-200 hover:border-gray-300"
-                                                }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="smoking_status"
-                                                    value={opt.value}
-                                                    checked={formData.smoking_status === opt.value}
-                                                    onChange={handleChange}
-                                                    className="accent-primary"
-                                                />
-                                                <span className="text-sm">{opt.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Smoking History */}
-                                {formData.smoking_status !== "none" && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-foreground">
-                                            รายละเอียดการสูบ
-                                        </label>
-                                        <textarea
-                                            name="smoking_history"
-                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
-                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                                            rows={2}
-                                            value={formData.smoking_history}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                )}
-
-                                {/* Drinking Status */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-foreground">
-                                        การดื่มแอลกอฮอล์
-                                    </label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {[
-                                            { value: "none", label: "ไม่ดื่ม" },
-                                            { value: "social", label: "ดื่มตามสังคม" },
-                                            { value: "regular", label: "ดื่มประจำ" },
-                                            { value: "heavy", label: "ดื่มหนัก" },
-                                            { value: "ex", label: "เคยดื่ม" },
-                                        ].map((opt) => (
-                                            <label
-                                                key={opt.value}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                                                    formData.drinking_status === opt.value
-                                                        ? "border-primary bg-primary/5 text-primary"
-                                                        : "border-gray-200 hover:border-gray-300"
-                                                }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="drinking_status"
-                                                    value={opt.value}
-                                                    checked={formData.drinking_status === opt.value}
-                                                    onChange={handleChange}
-                                                    className="accent-primary"
-                                                />
-                                                <span className="text-sm">{opt.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Drinking History */}
-                                {formData.drinking_status !== "none" && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-medium text-foreground">
-                                            รายละเอียดการดื่ม
-                                        </label>
-                                        <textarea
-                                            name="drinking_history"
-                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
-                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
-                                            rows={2}
-                                            value={formData.drinking_history}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                )}
                             </div>
                         </div>
                         {/* Right Column: Treatment Items & Payment */}
@@ -1128,40 +1247,36 @@ export default function TreatmentModal({
                                                 </div>
                                             ) : services.length > 0 ? (
                                                 <div className="py-1">
-                                                    {services.map(
-                                                        (s: any) => (
-                                                            <button
-                                                                key={
-                                                                    s.service_id
-                                                                }
-                                                                type="button"
-                                                                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
-                                                                onClick={() =>
-                                                                    handleSelectService(
-                                                                        s,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <div>
-                                                                    <div className="font-medium text-foreground group-hover:text-primary">
-                                                                        {
-                                                                            s.service_name
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs text-muted">
-                                                                        ฿
-                                                                        {Number(
-                                                                            s.price,
-                                                                        ).toLocaleString()}
-                                                                    </div>
+                                                    {services.map((s: any) => (
+                                                        <button
+                                                            key={s.service_id}
+                                                            type="button"
+                                                            className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between group transition-colors"
+                                                            onClick={() =>
+                                                                handleSelectService(
+                                                                    s,
+                                                                )
+                                                            }
+                                                        >
+                                                            <div>
+                                                                <div className="font-medium text-foreground group-hover:text-primary">
+                                                                    {
+                                                                        s.service_name
+                                                                    }
                                                                 </div>
-                                                                <Plus
-                                                                    size={14}
-                                                                    className="text-gray-300 group-hover:text-primary"
-                                                                />
-                                                            </button>
-                                                        ),
-                                                    )}
+                                                                <div className="text-xs text-muted">
+                                                                    ฿
+                                                                    {Number(
+                                                                        s.price,
+                                                                    ).toLocaleString()}
+                                                                </div>
+                                                            </div>
+                                                            <Plus
+                                                                size={14}
+                                                                className="text-gray-300 group-hover:text-primary"
+                                                            />
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             ) : (
                                                 <div className="p-4 text-center text-muted text-sm">
@@ -1174,9 +1289,7 @@ export default function TreatmentModal({
                                                     type="button"
                                                     className="w-full flex items-center justify-center gap-2 py-2 text-primary hover:bg-primary/5 rounded-md font-medium text-sm transition-colors"
                                                     onClick={() => {
-                                                        setOpenAddService(
-                                                            true,
-                                                        );
+                                                        setOpenAddService(true);
                                                         setShowServiceDropdown(
                                                             false,
                                                         );
@@ -1594,32 +1707,10 @@ export default function TreatmentModal({
                                 )}
                             </div>
 
-                            {/* Payment Method Summary */}
+                            {/* Total Amount Summary */}
                             <div className="space-y-4 pt-4 border-t border-gray-100">
                                 <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-200/50">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">
-                                            วิธีชำระเงิน
-                                        </label>
-                                        <select
-                                            value={paymentMethod}
-                                            onChange={(e) =>
-                                                setPaymentMethod(e.target.value)
-                                            }
-                                            className="block w-full text-sm font-semibold text-gray-700 bg-transparent border-none focus:ring-0 p-0"
-                                        >
-                                            <option value="cash">
-                                                เงินสด (Cash)
-                                            </option>
-                                            <option value="transfer">
-                                                เงินโอน (Transfer)
-                                            </option>
-                                            <option value="credit">
-                                                บัตรเครดิต (Credit)
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div className="text-right">
+                                    <div className="text-left w-full flex justify-between items-center">
                                         <p className="text-xs font-bold text-gray-500 uppercase">
                                             ยอดรวมสุทธิ
                                         </p>

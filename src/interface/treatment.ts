@@ -86,7 +86,7 @@ export interface CreateTreatmentDTO {
     drinking_status?: string;
     smoking_history?: string;
     drinking_history?: string;
-    payment_method: string;
+    payment_method?: string;
     receipt_no?: string;
 
     items: CreateTreatmentItemDTO[];

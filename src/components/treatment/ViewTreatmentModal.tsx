@@ -13,6 +13,7 @@ import {
     Activity,
     Package,
     Pill,
+    CreditCard,
 } from "lucide-react";
 import { treatmentService } from "@/services/treatment";
 import { Treatment } from "@/interface/treatment";
@@ -38,6 +39,7 @@ export default function ViewTreatmentModal({
 }: ViewTreatmentModalProps) {
     const [treatment, setTreatment] = useState<Treatment | null>(null);
     const [loading, setLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<string>("cash");
 
     useEffect(() => {
         if (open && treatmentId) {
@@ -77,7 +79,15 @@ export default function ViewTreatmentModal({
 
         const result = await Swal.fire({
             title: "ยืนยันการชำระเงิน?",
-            text: "คุณต้องการยืนยันการชำระเงินใช่หรือไม่? ระบบจะทำการตัดสต็อกและบันทึกรายรับทันที",
+            html: `
+            <div class="text-center">
+            คุณต้องการยืนยันการชำระเงินใช่หรือไม่?<br/>
+            ระบบจะทำการตัดสต็อกและบันทึกรายรับทันที
+            <br/>
+            <p class="text-red-500">กรุณาตรวจสอบความถูกต้องอีกครั้ง</p>
+            <p class="text-red-500">หากทำรายการแล้วจะไม่สามารถย้อนกลับได้</p>
+            </div>
+            `,
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#10b981",
@@ -92,6 +102,7 @@ export default function ViewTreatmentModal({
                 setLoading(true);
                 await treatmentService.updateTreatment(treatmentId, {
                     status: "completed" as any,
+                    payment_method: paymentMethod,
                 } as any);
 
                 await Swal.fire({
@@ -300,13 +311,13 @@ export default function ViewTreatmentModal({
                                 </div>
 
                                 <div className="space-y-2">
-                                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    {/* <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                         <ClipboardList
                                             size={16}
                                             className="text-success"
                                         />
                                         รายการยาและค่าบริการ
-                                    </h3>
+                                    </h3> */}
                                     <div className="space-y-6">
                                         {/* Section A: Services */}
                                         {treatment?.items?.some(
@@ -536,6 +547,7 @@ export default function ViewTreatmentModal({
                                     </div>
                                 </div>
 
+                                {/* Note */}
                                 <div className="space-y-2">
                                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                                         <FileText
@@ -549,10 +561,59 @@ export default function ViewTreatmentModal({
                                             "ไม่มีบันทึกเพิ่มเติม"}
                                     </div>
                                 </div>
+
+                                {/* Payment Method Selection */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                        <CreditCard
+                                            size={16}
+                                            className="text-primary"
+                                        />
+                                        ช่องทางการชำระเงิน
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() =>
+                                                setPaymentMethod("cash")
+                                            }
+                                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${
+                                                paymentMethod === "cash"
+                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                    : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
+                                            }`}
+                                        >
+                                            เงินสด
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                setPaymentMethod("transfer")
+                                            }
+                                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${
+                                                paymentMethod === "transfer"
+                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                    : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
+                                            }`}
+                                        >
+                                            เงินโอน
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             {treatment?.status === "draft" && (
                                 <div className="mt-8 flex flex-col justify-center gap-4 w-full items-center">
+                                    <button
+                                        onClick={() => {
+                                            if (treatment) {
+                                                onEdit(treatment);
+                                            }
+                                        }}
+                                        className="w-full max-w-sm px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                        disabled={!treatment}
+                                    >
+                                        <Pencil size={18} />
+                                        แก้ไขข้อมูล
+                                    </button>
                                     <button
                                         onClick={handleComplete}
                                         disabled={loading}
@@ -566,18 +627,6 @@ export default function ViewTreatmentModal({
                                                 ยืนยันการชำระเงินและการรักษา
                                             </>
                                         )}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (treatment) {
-                                                onEdit(treatment);
-                                            }
-                                        }}
-                                        className="w-full max-w-sm px-8 py-4 bg-black text-white rounded-2xl font-bold text-lg hover:bg-success-dark transition-all shadow-xl shadow-black/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
-                                        disabled={!treatment}
-                                    >
-                                        <Pencil size={18} />
-                                        แก้ไขข้อมูล
                                     </button>
                                 </div>
                             )}

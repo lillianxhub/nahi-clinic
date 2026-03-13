@@ -35,6 +35,9 @@ export default function TreatmentsPage() {
     const [selectedTreatment, setSelectedTreatment] =
         useState<Treatment | null>(null);
 
+    const [modalMode, setModalMode] = useState<"add" | "edit">("add");
+    const [openModal, setOpenModal] = useState(false);
+
     const fetchTreatments = async () => {
         try {
             setLoading(true);
@@ -133,8 +136,10 @@ export default function TreatmentsPage() {
                     {row.status === "draft" && (
                         <button
                             onClick={() => {
+                                setModalMode("edit");
+                                setOpenModal(true);
                                 setSelectedTreatment(row);
-                                setOpenEdit(true);
+                                console.log(row.visit_id);
                             }}
                             className="text-blue-600 hover:opacity-70"
                             title="แก้ไข"
@@ -155,6 +160,14 @@ export default function TreatmentsPage() {
             ),
         },
     ];
+
+    const handleTreatmentSuccess = (visitId?: string) => {
+        if (visitId) {
+            setSelectedTreatmentId(visitId);
+            setOpenView(true);
+        }
+        fetchTreatments();
+    };
 
     const handleDelete = async (treatment: Treatment) => {
         const result = await Swal.fire({
@@ -206,28 +219,29 @@ export default function TreatmentsPage() {
 
                 {/* Add Button */}
                 <Button
-                    onClick={() => setOpenAdd(true)}
+                    onClick={() => {
+                        setModalMode("add");
+                        setOpenModal(true);
+                        setSelectedTreatment(null);
+                    }}
                     className="cursor-pointer"
                 >
                     <Plus size={18} />
                     บันทึกการรักษา
                 </Button>
             </div>
-
             {/* Table */}
             <DataTable
                 columns={columns}
                 data={treatments}
                 rowKey={(row) => row.visit_id}
             />
-
             {/* Pagination */}
             <Pagination
                 page={page}
                 totalPages={totalPages}
                 onChange={setPage}
             />
-
             {/* Add Treatment Modal */}
             <TreatmentModal
                 open={openAdd}
@@ -242,7 +256,6 @@ export default function TreatmentsPage() {
                     }
                 }}
             />
-
             {/* View Treatment Modal */}
             <ViewTreatmentModal
                 open={openView}
@@ -257,16 +270,27 @@ export default function TreatmentsPage() {
                     fetchTreatments();
                 }}
             />
-
             {/* Edit Treatment Modal */}
             <TreatmentModal
                 open={openEdit}
                 onClose={() => setOpenEdit(false)}
                 mode="edit"
                 treatment={selectedTreatment}
-                onSuccess={() => {
+                onSuccess={(visitId) => {
+                    setPage(1);
                     fetchTreatments();
+                    if (visitId) {
+                        setSelectedTreatmentId(visitId);
+                        setOpenView(true);
+                    }
                 }}
+            />
+            <TreatmentModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                mode={modalMode}
+                treatment={selectedTreatment}
+                onSuccess={handleTreatmentSuccess}
             />
         </div>
     );
