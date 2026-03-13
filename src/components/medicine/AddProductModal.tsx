@@ -15,7 +15,9 @@ import {
 import { medicineService } from "@/services/medicine";
 import { DrugCategory, Medicine } from "@/interface/medicine";
 import AddCategoryModal from "@/components/medicine/AddCategoryModal";
+import AddSupplierModal from "@/components/medicine/AddSupplierModal";
 import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
+import SupplierDropdown from "@/components/medicine/SupplierDropdown";
 import { Button } from "@/components/ui/button";
 import swal from "sweetalert2";
 import { formatLocalDate } from "@/utils/dateUtils";
@@ -40,6 +42,8 @@ interface ProductFormData {
     received_date: string;
     expiry_date: string;
     lot_no: string;
+    supplier_id: string;      // Added supplier fields
+    supplier_name: string;
     category_name?: string; // For display
 }
 
@@ -51,6 +55,12 @@ export default function AddProductModal({
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
+    const [showAddSupplier, setShowAddSupplier] = useState(false);
+    const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
+    const [suppliers, setSuppliers] = useState<any[]>([]);
+    const [searchingSuppliers, setSearchingSuppliers] = useState(false);
+    const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+    const supplierDropdownRef = useRef<HTMLDivElement>(null);
 
     const [products, setProducts] = useState<ProductFormData[]>([]);
 
@@ -83,11 +93,14 @@ export default function AddProductModal({
         received_date: getTodayStr(),
         expiry_date: "",
         lot_no: generateLotNo(getTodayStr()),
+        supplier_id: "",
+        supplier_name: "",
     };
 
     const [formData, setFormData] = useState<ProductFormData>(initialFormData);
 
     const debouncedMedicineSearch = useDebounce(formData.medicine_name, 500);
+    const debouncedSupplierSearch = useDebounce(supplierSearchTerm, 500);
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -131,12 +144,38 @@ export default function AddProductModal({
     }, [debouncedMedicineSearch, showMedicineDropdown]);
 
     useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                setSearchingSuppliers(true);
+                const res = await medicineService.getSuppliers({
+                    q: debouncedSupplierSearch,
+                });
+                setSuppliers(res.data);
+            } catch (error) {
+                console.error("ค้นหาซัพพลายเออร์ล้มเหลว", error);
+            } finally {
+                setSearchingSuppliers(false);
+            }
+        };
+
+        if (showSupplierDropdown) {
+            fetchSuppliers();
+        }
+    }, [debouncedSupplierSearch, showSupplierDropdown]);
+
+    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 dropdownRef.current &&
                 !dropdownRef.current.contains(event.target as Node)
             ) {
                 setShowMedicineDropdown(false);
+            }
+            if (
+                supplierDropdownRef.current &&
+                !supplierDropdownRef.current.contains(event.target as Node)
+            ) {
+                setShowSupplierDropdown(false);
             }
         };
 
@@ -158,14 +197,21 @@ export default function AddProductModal({
         }
     }, [open]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = async (type?: string) => {
         try {
-            const response = await medicineService.getCategories();
+            const response = await medicineService.getCategories(type);
             setCategories(response.data);
         } catch (error) {
             console.error("Failed to fetch categories", error);
         }
     };
+
+    // Auto-fetch categories when product type changes
+    useEffect(() => {
+        if (open) {
+            fetchCategories(formData.product_type);
+        }
+    }, [formData.product_type, open]);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -259,6 +305,7 @@ export default function AddProductModal({
                         received_date: item.received_date,
                         expiry_date: item.expiry_date,
                         lot_no: item.lot_no,
+                        supplier_id: item.supplier_id, // Important fix
                     }),
                 ),
             );
@@ -299,7 +346,8 @@ export default function AddProductModal({
         formData.quantity &&
         Number(formData.buy_price) > 0 &&
         Number(formData.sell_price) > 0 &&
-        formData.expiry_date;
+        formData.expiry_date &&
+        formData.supplier_name.trim(); // Changed from supplier_id to allow new suppliers implicitly or explicitly
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -344,6 +392,55 @@ export default function AddProductModal({
                                 className="space-y-1.5 relative"
                                 ref={dropdownRef}
                             >
+                                {/* Supplier Name */}
+                                <div
+                                    className="space-y-1.5 relative"
+                                    ref={supplierDropdownRef}
+                                >
+                                    <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                        ซัพพลายเออร์{" "}
+                                        <span className="text-danger">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            name="supplier_name"
+                                            placeholder="ค้นหาหรือกรอกชื่อซัพพลายเออร์"
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                            value={supplierSearchTerm}
+                                            onChange={(e) => {
+                                                setSupplierSearchTerm(e.target.value);
+                                                setFormData(prev => ({ ...prev, supplier_id: "", supplier_name: e.target.value }));
+                                                setShowSupplierDropdown(true);
+                                            }}
+                                            onFocus={() =>
+                                                setShowSupplierDropdown(true)
+                                            }
+                                            required
+                                        />
+
+                                        {/* Supplier Dropdown */}
+                                        <SupplierDropdown
+                                            isOpen={showSupplierDropdown}
+                                            searchTerm={supplierSearchTerm}
+                                            items={suppliers}
+                                            isSearching={searchingSuppliers}
+                                            onSelect={(s) => {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    supplier_id: s.supplier_id,
+                                                    supplier_name: s.supplier_name,
+                                                }));
+                                                setSupplierSearchTerm(s.supplier_name);
+                                                setShowSupplierDropdown(false);
+                                            }}
+                                            onAddNew={() => {
+                                                setShowSupplierDropdown(false);
+                                                setShowAddSupplier(true);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                     ชื่อสินค้า{" "}
                                     <span className="text-danger">*</span>
@@ -395,6 +492,7 @@ export default function AddProductModal({
                                     />
                                 </div>
                             </div>
+
 
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Product Type */}
@@ -643,97 +741,115 @@ export default function AddProductModal({
                                     </p>
                                 </div>
                             ) : (
-                                <ul className="divide-y divide-gray-100">
-                                    {products.map((item, index) => (
-                                        <li
-                                            key={index}
-                                            className="p-4 hover:bg-gray-50/50 transition-colors"
-                                        >
-                                            <div className="flex justify-between items-start gap-4">
-                                                <div className="space-y-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="font-medium text-gray-900 truncate">
-                                                            {item.medicine_name}
-                                                        </span>
-                                                        <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary whitespace-nowrap">
-                                                            {item.product_type ===
-                                                            "supply"
-                                                                ? "เวชภัณฑ์"
-                                                                : "ยา"}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500 whitespace-nowrap">
-                                                            {item.category_name}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex gap-4 text-sm flex-wrap text-gray-600 mt-1">
-                                                        <span>
-                                                            Lot:{" "}
-                                                            <span className="text-gray-800">
-                                                                {item.lot_no}
-                                                            </span>
-                                                        </span>
-                                                        <span>
-                                                            จำนวนที่ซื้อ:{" "}
-                                                            <span className="text-gray-800">
-                                                                {item.quantity}{" "}
-                                                                {item.buy_unit}
-                                                            </span>
-                                                        </span>
-                                                        <span>
-                                                            รวมทั้งสิ้น:{" "}
-                                                            <span className="text-gray-800">
-                                                                {Number(
-                                                                    item.quantity,
-                                                                ) *
-                                                                    Number(
-                                                                        item.conversion_factor,
-                                                                    )}{" "}
-                                                                {item.unit}
-                                                            </span>
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex gap-4 text-sm flex-wrap text-gray-600">
-                                                        <span>
-                                                            ทุน:{" "}
-                                                            <span className="text-gray-800">
-                                                                ฿
-                                                                {Number(
-                                                                    item.buy_price,
-                                                                ).toLocaleString()}
-                                                            </span>
-                                                        </span>
-                                                        <span>
-                                                            ขาย:{" "}
-                                                            <span className="text-gray-800">
-                                                                ฿
-                                                                {Number(
-                                                                    item.sell_price,
-                                                                ).toLocaleString()}
-                                                            </span>
-                                                        </span>
-                                                        <span className="text-orange-600">
-                                                            หมดอายุ:{" "}
-                                                            {new Date(
-                                                                item.expiry_date,
-                                                            ).toLocaleDateString(
-                                                                "th-TH",
-                                                            )}
-                                                        </span>
-                                                    </div>
+                                <div className="space-y-6">
+                                    {/* Group products by supplier */}
+                                    {Array.from(new Set(products.map((p) => p.supplier_name))).map(
+                                        (supplierName) => (
+                                            <div key={supplierName} className="mb-4 bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm">
+                                                <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 text-sm font-semibold text-gray-700 flex items-center justify-between">
+                                                    <span>ซัพพลายเออร์: {supplierName || "ไม่ระบุ"}</span>
+                                                    <span className="text-xs font-normal text-muted-foreground">
+                                                        {products.filter((p) => p.supplier_name === supplierName).length} รายการ
+                                                    </span>
                                                 </div>
-                                                <button
-                                                    onClick={() =>
-                                                        removeProduct(index)
-                                                    }
-                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
-                                                    title="ลบรายการ"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <ul className="divide-y divide-gray-100">
+                                                    {products
+                                                        .map((item, index) => ({ item, index }))
+                                                        .filter((data) => data.item.supplier_name === supplierName)
+                                                        .map(({ item, index }) => (
+                                                            <li
+                                                                key={index}
+                                                                className="p-4 hover:bg-gray-50/50 transition-colors"
+                                                            >
+                                                                <div className="flex justify-between items-start gap-4">
+                                                                    <div className="space-y-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className="font-medium text-gray-900 truncate">
+                                                                                {item.medicine_name}
+                                                                            </span>
+                                                                            <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                                                                {item.product_type ===
+                                                                                    "supply"
+                                                                                    ? "เวชภัณฑ์"
+                                                                                    : "ยา"}
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                                                                                {item.category_name}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex gap-4 text-sm flex-wrap text-gray-600 mt-1">
+                                                                            <span>
+                                                                                Lot:{" "}
+                                                                                <span className="text-gray-800">
+                                                                                    {item.lot_no}
+                                                                                </span>
+                                                                            </span>
+                                                                            <span>
+                                                                                จำนวนที่ซื้อ:{" "}
+                                                                                <span className="text-gray-800">
+                                                                                    {item.quantity}{" "}
+                                                                                    {item.buy_unit}
+                                                                                </span>
+                                                                            </span>
+                                                                            <span>
+                                                                                รวมทั้งสิ้น:{" "}
+                                                                                <span className="text-gray-800">
+                                                                                    {Number(
+                                                                                        item.quantity,
+                                                                                    ) *
+                                                                                        Number(
+                                                                                            item.conversion_factor,
+                                                                                        )}{" "}
+                                                                                    {item.unit}
+                                                                                </span>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex gap-4 text-sm flex-wrap text-gray-600">
+                                                                            <span>
+                                                                                ทุน:{" "}
+                                                                                <span className="text-gray-800">
+                                                                                    ฿
+                                                                                    {Number(
+                                                                                        item.buy_price,
+                                                                                    ).toLocaleString()}
+                                                                                </span>
+                                                                            </span>
+                                                                            <span>
+                                                                                ขาย:{" "}
+                                                                                <span className="text-gray-800">
+                                                                                    ฿
+                                                                                    {Number(
+                                                                                        item.sell_price,
+                                                                                    ).toLocaleString()}
+                                                                                </span>
+                                                                            </span>
+                                                                            <span className="text-orange-600">
+                                                                                หมดอายุ:{" "}
+                                                                                {new Date(
+                                                                                    item.expiry_date,
+                                                                                ).toLocaleDateString(
+                                                                                    "th-TH",
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() =>
+                                                                            removeProduct(index)
+                                                                        }
+                                                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                                                                        title="ลบรายการ"
+                                                                    >
+                                                                        <Trash2 size={18} />
+                                                                    </button>
+                                                                </div>
+                                                            </li>
+                                                        ))}
+                                                </ul>
                                             </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                        ),
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -789,7 +905,20 @@ export default function AddProductModal({
                     setShowAddCategory(false);
                     setFormData({ ...formData, category_id: "" });
                 }}
-                onSuccess={() => fetchCategories()}
+                onSuccess={() => fetchCategories(formData.product_type)}
+            />
+            <AddSupplierModal
+                open={showAddSupplier}
+                initialData={{ supplier_name: supplierSearchTerm }}
+                onClose={() => setShowAddSupplier(false)}
+                onSuccess={(newSupplier) => {
+                    setFormData((prev) => ({
+                        ...prev,
+                        supplier_id: newSupplier.supplier_id,
+                        supplier_name: newSupplier.supplier_name,
+                    }));
+                    setSupplierSearchTerm(newSupplier.supplier_name);
+                }}
             />
         </div>
     );

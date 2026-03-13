@@ -62,7 +62,16 @@ export async function GET(req: NextRequest, { params }: Params) {
         const orderBy = getOrderBy(searchParams, "expire_date");
 
         const [data, total] = await Promise.all([
-            prisma.inventoryLot.findMany({ skip, take, where, orderBy }),
+            prisma.inventoryLot.findMany({
+                skip, take, where, orderBy, include: {
+                    supplier: {
+                        select: {
+                            supplier_id: true,
+                            supplier_name: true,
+                        }
+                    }
+                }
+            }),
             prisma.inventoryLot.count({ where }),
         ]);
 

@@ -10,7 +10,6 @@ import MedicineLotModal from "@/components/medicine/MedicineLotModal";
 import ExpiringMedicineModal from "@/components/medicine/ExpiringMedicineModal";
 import Pagination from "@/components/Pagination";
 import usePageTitle from "@/hooks/usePageTitle";
-import AddMedicineModal from "@/components/medicine/AddMedicineModal";
 import AddProductModal from "@/components/medicine/AddProductModal";
 import EditMedicineModal from "@/components/medicine/EditMedicineModal";
 import { Input } from "@/components/ui/input";

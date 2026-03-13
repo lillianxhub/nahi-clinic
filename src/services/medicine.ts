@@ -39,9 +39,12 @@ export const medicineService = {
         );
     },
 
-    async getCategories(): Promise<{ data: DrugCategory[] }> {
+    async getCategories(
+        product_type?: string,
+    ): Promise<{ data: DrugCategory[] }> {
+        const query = product_type ? `?product_type=${product_type}` : "";
         return apiClient.get<{ data: DrugCategory[] }>(
-            "/api/products/categories",
+            `/api/products/categories${query}`,
         );
     },
 
@@ -102,6 +105,21 @@ export const medicineService = {
                 lot_id,
                 reason,
             },
+        );
+    },
+
+    async getSuppliers(params?: QueryParams): Promise<{ data: any[] }> {
+        const query = buildQuery(params);
+        return apiClient.get<{ data: any[] }>(`/api/suppliers${query}`);
+    },
+
+    async createSupplier(
+        supplier_name: string,
+        contact?: string,
+    ): Promise<{ data: any }> {
+        return apiClient.post<{ data: any }, { supplier_name: string; contact?: string }>(
+            "/api/suppliers",
+            { supplier_name, contact },
         );
     },
 };
