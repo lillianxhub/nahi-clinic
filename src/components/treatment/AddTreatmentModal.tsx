@@ -57,6 +57,11 @@ export default function AddTreatmentModal({
         weight: "",
         height: "",
         note: "",
+        waistline: "",
+        smoking_status: "none",
+        drinking_status: "none",
+        smoking_history: "",
+        drinking_history: "",
     });
 
     // Patient Search States
@@ -405,6 +410,11 @@ export default function AddTreatmentModal({
                     : undefined,
                 weight: formData.weight ? Number(formData.weight) : undefined,
                 height: formData.height ? Number(formData.height) : undefined,
+                waistline: formData.waistline ? Number(formData.waistline) : undefined,
+                smoking_status: formData.smoking_status,
+                drinking_status: formData.drinking_status,
+                smoking_history: formData.smoking_status !== "none" ? formData.smoking_history : undefined,
+                drinking_history: formData.drinking_status !== "none" ? formData.drinking_history : undefined,
             } as CreateTreatmentDTO);
 
             // Reset form
@@ -421,6 +431,11 @@ export default function AddTreatmentModal({
                 weight: "",
                 height: "",
                 note: "",
+                waistline: "",
+                smoking_status: "none",
+                drinking_status: "none",
+                smoking_history: "",
+                drinking_history: "",
             });
             setSelectedPatient(null);
             setSearchTerm("");
@@ -807,6 +822,134 @@ export default function AddTreatmentModal({
                                     onChange={handleChange}
                                     required
                                 />
+                            </div>
+
+                            {/* Health Behavior Section */}
+                            <div className="space-y-4 border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                                <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                                    <Activity size={18} className="text-primary" />
+                                    พฤติกรรมสุขภาพ
+                                </h3>
+
+                                {/* Waistline */}
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-foreground">
+                                        รอบเอว (ซม.)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="waistline"
+                                        placeholder="เช่น 85"
+                                        min="0"
+                                        step="0.1"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.waistline}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                {/* Smoking Status */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-foreground">
+                                        การสูบบุหรี่
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { value: "none", label: "ไม่สูบ" },
+                                            { value: "current", label: "สูบ" },
+                                            { value: "ex", label: "เคยสูบ" },
+                                            { value: "occasional", label: "นานๆครั้ง" },
+                                        ].map((opt) => (
+                                            <label
+                                                key={opt.value}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.smoking_status === opt.value
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-gray-200 hover:border-gray-300"
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="smoking_status"
+                                                    value={opt.value}
+                                                    checked={formData.smoking_status === opt.value}
+                                                    onChange={handleChange}
+                                                    className="accent-primary"
+                                                />
+                                                <span className="text-sm">{opt.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Smoking History */}
+                                {formData.smoking_status !== "none" && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">
+                                            รายละเอียดการสูบ
+                                        </label>
+                                        <textarea
+                                            name="smoking_history"
+                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                            rows={2}
+                                            value={formData.smoking_history}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Drinking Status */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-foreground">
+                                        การดื่มแอลกอฮอล์
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { value: "none", label: "ไม่ดื่ม" },
+                                            { value: "social", label: "ดื่มตามสังคม" },
+                                            { value: "regular", label: "ดื่มประจำ" },
+                                            { value: "heavy", label: "ดื่มหนัก" },
+                                            { value: "ex", label: "เคยดื่ม" },
+                                        ].map((opt) => (
+                                            <label
+                                                key={opt.value}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.drinking_status === opt.value
+                                                        ? "border-primary bg-primary/5 text-primary"
+                                                        : "border-gray-200 hover:border-gray-300"
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="drinking_status"
+                                                    value={opt.value}
+                                                    checked={formData.drinking_status === opt.value}
+                                                    onChange={handleChange}
+                                                    className="accent-primary"
+                                                />
+                                                <span className="text-sm">{opt.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Drinking History */}
+                                {formData.drinking_status !== "none" && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-foreground">
+                                            รายละเอียดการดื่ม
+                                        </label>
+                                        <textarea
+                                            name="drinking_history"
+                                            placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"
+                                            className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                                            rows={2}
+                                            value={formData.drinking_history}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                         {/* Right Column: Treatment Items & Payment */}

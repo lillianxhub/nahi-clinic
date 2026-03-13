@@ -39,6 +39,8 @@ export interface Treatment {
     weight?: number;
     height?: number;
     waistline?: number;
+    smoking_status?: string;
+    drinking_status?: string;
     smoking_history?: string;
     drinking_history?: string;
     age_years?: number;
@@ -80,6 +82,8 @@ export interface CreateTreatmentDTO {
     weight?: number;
     height?: number;
     waistline?: number;
+    smoking_status?: string;
+    drinking_status?: string;
     smoking_history?: string;
     drinking_history?: string;
     payment_method: string;

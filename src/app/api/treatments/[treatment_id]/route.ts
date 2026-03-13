@@ -82,6 +82,16 @@ export async function PATCH(req: Request, { params }: Params) {
         const { treatment_id } = await params;
         const body: CreateTreatmentDTO = await req.json();
 
+        const validSmokingStatuses = ["none", "current", "ex", "occasional"];
+        if (body.smoking_status && !validSmokingStatuses.includes(body.smoking_status)) {
+            throw new Error("สถานะการสูบบุหรี่ไม่ถูกต้อง");
+        }
+
+        const validDrinkingStatuses = ["none", "social", "regular", "heavy", "ex"];
+        if (body.drinking_status && !validDrinkingStatuses.includes(body.drinking_status)) {
+            throw new Error("สถานะการดื่มแอลกอฮอล์ไม่ถูกต้อง");
+        }
+
         const result = await prisma.$transaction(async (tx) => {
             const existing = await tx.visit.findFirst({
                 where: { visit_id: treatment_id, deleted_at: null },
@@ -211,8 +221,18 @@ export async function PATCH(req: Request, { params }: Params) {
                         body.waistline !== undefined
                             ? Number(body.waistline)
                             : undefined,
-                    smoking_history: body.smoking_history,
-                    drinking_history: body.drinking_history,
+                    smoking_status: body.smoking_status !== undefined
+                        ? (body.smoking_status as any)
+                        : undefined,
+                    drinking_status: body.drinking_status !== undefined
+                        ? (body.drinking_status as any)
+                        : undefined,
+                    smoking_history: body.smoking_history !== undefined
+                        ? (body.smoking_history || null)
+                        : undefined,
+                    drinking_history: body.drinking_history !== undefined
+                        ? (body.drinking_history || null)
+                        : undefined,
                     age_years,
                     age_months,
                     age_days,

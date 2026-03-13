@@ -56,7 +56,7 @@ export default function ViewTreatmentModal({
                     ...item,
                     item_type: item.service
                         ? "service"
-                        : item.product?.product_type || "service",
+                        : item.product?.category?.product_type || "product",
                     item_name: item.service
                         ? item.service.service_name
                         : item.product?.product_name || "ไม่มีชื่อรายการ",

@@ -137,6 +137,16 @@ export async function POST(req: Request) {
             throw new Error("ส่วนสูงไม่ถูกต้อง");
         }
 
+        const validSmokingStatuses = ["none", "current", "ex", "occasional"];
+        if (body.smoking_status && !validSmokingStatuses.includes(body.smoking_status)) {
+            throw new Error("สถานะการสูบบุหรี่ไม่ถูกต้อง");
+        }
+
+        const validDrinkingStatuses = ["none", "social", "regular", "heavy", "ex"];
+        if (body.drinking_status && !validDrinkingStatuses.includes(body.drinking_status)) {
+            throw new Error("สถานะการดื่มแอลกอฮอล์ไม่ถูกต้อง");
+        }
+
         const result = await prisma.$transaction(async (tx) => {
             const patient = await tx.patient.findUnique({
                 where: { patient_id: body.patient_id },
@@ -176,8 +186,10 @@ export async function POST(req: Request) {
                     weight: body.weight ? Number(body.weight) : null,
                     height: body.height ? Number(body.height) : null,
                     waistline: body.waistline ? Number(body.waistline) : null,
-                    smoking_history: body.smoking_history,
-                    drinking_history: body.drinking_history,
+                    smoking_status: (body.smoking_status as any) || "none",
+                    drinking_status: (body.drinking_status as any) || "none",
+                    smoking_history: body.smoking_history || null,
+                    drinking_history: body.drinking_history || null,
                     age_years: age_years,
                     age_months: age_months,
                     age_days: age_days,
