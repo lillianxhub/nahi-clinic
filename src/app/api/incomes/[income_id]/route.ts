@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { VisitStatus } from "@/generated/prisma";
 
 type Params = {
     params: Promise<{ income_id: string }>;
@@ -12,20 +13,24 @@ export async function GET(req: Request, { params }: Params) {
         const income = await prisma.income.findUnique({
             where: { income_id },
             include: {
-                visit: {
+                visitItem: {
                     include: {
-                        patient: true,
-                        items: {
-                            where: { is_active: true },
+                        visit: {
                             include: {
-                                product: {
-                                    select: {
-                                        product_id: true,
-                                        product_name: true,
-                                        unit: true,
-                                        category: {
+                                patient: true,
+                                items: {
+                                    where: { is_active: true },
+                                    include: {
+                                        product: {
                                             select: {
-                                                product_type: true,
+                                                product_id: true,
+                                                product_name: true,
+                                                unit: true,
+                                                category: {
+                                                    select: {
+                                                        product_type: true,
+                                                    },
+                                                },
                                             },
                                         },
                                     },
@@ -71,10 +76,30 @@ export async function PATCH(req: Request, { params }: Params) {
                 updated_at: new Date(),
             },
             include: {
-                visit: {
+                visitItem: {
                     include: {
-                        patient: true,
-                        items: { where: { is_active: true } },
+                        visit: {
+                            include: {
+                                patient: true,
+                                items: {
+                                    where: { is_active: true },
+                                    include: {
+                                        product: {
+                                            select: {
+                                                product_id: true,
+                                                product_name: true,
+                                                unit: true,
+                                                category: {
+                                                    select: {
+                                                        product_type: true,
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
                     },
                 },
             },
@@ -97,43 +122,74 @@ export async function DELETE(req: Request, { params }: Params) {
         const result = await prisma.$transaction(async (tx) => {
             const current = await tx.income.findUnique({
                 where: { income_id },
-                include: { visit: true },
+                include: {
+                    visitItem: {
+                        include: { visit: true },
+                    },
+                },
             });
 
             if (!current) throw new Error("ไม่พบข้อมูลรายได้");
 
             const now = new Date();
+            const visitId = current.visitItem?.visit?.visit_id;
 
-            // 1. If linked to a visit, revert stock and soft-delete related records
-            if (current.visit_id) {
-                const usages = await tx.stockUsage.findMany({
-                    where: { visit_id: current.visit_id, deleted_at: null },
+            // 1. If linked to a visit
+            if (visitId) {
+                const visitItems = await tx.visitItem.findMany({
+                    where: {
+                        visit_id: visitId,
+                        deleted_at: null,
+                    },
+                    select: {
+                        visit_item_id: true,
+                    },
                 });
 
+                const visitItemIds = visitItems.map((v) => v.visit_item_id);
+
+                const usages = await tx.stockUsage.findMany({
+                    where: {
+                        visit_item_id: { in: visitItemIds },
+                        deleted_at: null,
+                    },
+                });
+
+                // คืน stock
                 for (const usage of usages) {
                     await tx.inventoryLot.update({
                         where: { lot_id: usage.lot_id },
-                        data: { qty_remaining: { increment: usage.quantity } },
+                        data: {
+                            qty_remaining: { increment: usage.quantity },
+                        },
                     });
                 }
 
                 await tx.stockUsage.updateMany({
-                    where: { visit_id: current.visit_id },
+                    where: {
+                        visit_item_id: { in: visitItemIds },
+                    },
                     data: { deleted_at: now },
                 });
 
                 await tx.visitItem.updateMany({
-                    where: { visit_id: current.visit_id },
-                    data: { deleted_at: now, is_active: false },
+                    where: { visit_id: visitId },
+                    data: {
+                        deleted_at: now,
+                        is_active: false,
+                    },
                 });
 
                 await tx.visit.update({
-                    where: { visit_id: current.visit_id },
-                    data: { deleted_at: now, is_active: false },
+                    where: { visit_id: visitId },
+                    data: {
+                        deleted_at: now,
+                        is_active: false,
+                        status: VisitStatus.cancelled,
+                    },
                 });
             }
-
-            // 2. Soft delete Income
+            // 2. Soft delete income
             await tx.income.update({
                 where: { income_id },
                 data: { deleted_at: now },
@@ -143,13 +199,16 @@ export async function DELETE(req: Request, { params }: Params) {
         });
 
         return NextResponse.json({
-            message: "ลบข้อมูลรายได้สำเร็จ",
+            message: "ยกเลิกรายการรายได้สำเร็จ",
             data: result,
         });
     } catch (error: any) {
         console.error("Delete income error:", error);
         return NextResponse.json(
-            { message: "ไม่สามารถลบข้อมูลรายได้ได้", error: error.message },
+            {
+                message: "ไม่สามารถยกเลิกรายการรายได้ได้",
+                error: error.message,
+            },
             { status: 500 },
         );
     }

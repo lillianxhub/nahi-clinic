@@ -37,8 +37,12 @@ export const financeService = {
         );
     },
 
-    async getIncomeCategories(): Promise<{ category_id: string; category_name: string }[]> {
-        const res = await apiClient.get<any[]>(`/api/reports/finance/categories`);
+    async getIncomeCategories(): Promise<
+        { category_id: string; category_name: string }[]
+    > {
+        const res = await apiClient.get<any[]>(
+            `/api/reports/finance/categories`,
+        );
         return res;
     },
 
@@ -53,7 +57,7 @@ export const financeService = {
 
     async createExpense(payload: CreateExpensePayload): Promise<Expense> {
         return apiClient.post<Expense, CreateExpensePayload>(
-            "/api/reports/finance/expense",
+            "/api/expenses",
             payload,
         );
     },
@@ -69,7 +73,7 @@ export const financeService = {
 
     async createIncome(payload: CreateIncomePayload): Promise<Income> {
         return apiClient.post<Income, CreateIncomePayload>(
-            "/api/reports/finance/income",
+            "/api/incomes",
             payload,
         );
     },
