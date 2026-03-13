@@ -22,8 +22,12 @@ export async function GET(req: Request, { params }: Params) {
                                     select: {
                                         product_id: true,
                                         product_name: true,
-                                        product_type: true,
                                         unit: true,
+                                        category: {
+                                            select: {
+                                                product_type: true,
+                                            },
+                                        },
                                     },
                                 },
                             },

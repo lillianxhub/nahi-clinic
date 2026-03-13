@@ -58,7 +58,6 @@ export async function PATCH(req: Request, { params }: Params) {
                 category_id: body.category_id,
                 unit: body.unit,
                 min_stock: body.min_stock,
-                product_type: body.product_type,
                 is_active: body.is_active,
                 updated_at: new Date(),
             },

@@ -31,10 +31,10 @@ export async function GET(req: NextRequest) {
         };
 
         if (type && ["drug", "supply"].includes(type)) {
-            where.product_type = type;
+            where.category = { product_type: type };
         } else {
             // Default to drugs and supplies
-            where.product_type = { in: ["drug", "supply"] };
+            where.category = { product_type: { in: ["drug", "supply"] } };
         }
 
         if (q) {
@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
                 where: {
                     is_active: true,
                     deleted_at: null,
-                    product_type: where.product_type,
+                    category: where.category,
                 },
             });
 
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
                     where: {
                         is_active: true,
                         deleted_at: null,
-                        product_type: where.product_type,
+                        category: where.category,
                     },
                 });
 
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest) {
                 ? Number(p.lots[0].sell_price)
                 : 0,
             status: p.is_active ? "active" : "inactive",
-            product_type: p.product_type,
+            product_type: p.category.product_type,
         }));
 
         return NextResponse.json({
@@ -208,7 +208,7 @@ export async function POST(req: Request) {
             let product = await tx.product.findFirst({
                 where: {
                     product_name,
-                    product_type: effectiveProductType,
+                    category: { product_type: effectiveProductType },
                     is_active: true,
                     deleted_at: null,
                 },
@@ -240,7 +240,6 @@ export async function POST(req: Request) {
                 product = await tx.product.create({
                     data: {
                         product_name,
-                        product_type: effectiveProductType,
                         category_id,
                         unit,
                         min_stock: 0,

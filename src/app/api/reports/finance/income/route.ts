@@ -52,7 +52,9 @@ export async function GET(request: Request) {
                 item_type: true,
                 quantity: true,
                 unit_price: true,
-                product: { select: { product_type: true } },
+                product: {
+                    select: { category: { select: { product_type: true } } },
+                },
             },
         });
 
@@ -63,7 +65,7 @@ export async function GET(request: Request) {
             if (item.item_type === "service") {
                 summary.service += amount;
             } else {
-                const type = item.product?.product_type;
+                const type = item.product?.category.product_type;
                 if (type === "drug") summary.drug += amount;
                 else if (type === "supply") summary.supply += amount;
                 else summary.service += amount; // Fallback if somehow it's a product but typed as service
@@ -101,9 +103,9 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("Finance income GET API Error", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal Server Error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );
@@ -170,7 +172,9 @@ export async function POST(request: Request) {
             }
 
             if (!resolvedVisitId) {
-                throw new Error("Visit ID or Patient ID is required to create income items");
+                throw new Error(
+                    "Visit ID or Patient ID is required to create income items",
+                );
             }
 
             const createdIncomes = [];
@@ -180,14 +184,20 @@ export async function POST(request: Request) {
                 for (const item of body.items) {
                     const qty = Number(item.quantity);
                     const price = Number(item.unit_price);
-                    
+
                     // 1. Create VisitItem
                     const visitItem = await tx.visitItem.create({
                         data: {
                             visit_id: resolvedVisitId,
                             item_type: item.item_type, // 'product' or 'service'
-                            product_id: item.item_type === 'product' ? item.product_id : null,
-                            service_id: item.item_type === 'service' ? item.service_id : null,
+                            product_id:
+                                item.item_type === "product"
+                                    ? item.product_id
+                                    : null,
+                            service_id:
+                                item.item_type === "service"
+                                    ? item.service_id
+                                    : null,
                             quantity: qty,
                             unit_price: price,
                             description: item.description,
@@ -201,9 +211,11 @@ export async function POST(request: Request) {
                     } else if (item.product_id) {
                         const product = await tx.product.findUnique({
                             where: { product_id: item.product_id },
-                            select: { product_type: true },
+                            select: {
+                                category: { select: { product_type: true } },
+                            },
                         });
-                        incomeType = product?.product_type || "other";
+                        incomeType = product?.category.product_type || "other";
                     }
 
                     const income = await tx.income.create({
@@ -212,7 +224,8 @@ export async function POST(request: Request) {
                             income_type: incomeType,
                             amount: qty * price,
                             payment_method: body.payment_method,
-                            receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                            receipt_no:
+                                body.receipt_no || generateReceiptNo("รายรับ"),
                             income_date: body.income_date
                                 ? new Date(body.income_date)
                                 : new Date(),
@@ -221,7 +234,7 @@ export async function POST(request: Request) {
                     createdIncomes.push(income);
 
                     // 3. Handle Stock Deduction if it's a product
-                    if (item.item_type === 'product' && item.product_id) {
+                    if (item.item_type === "product" && item.product_id) {
                         let remainingToDeduct = qty;
                         const lots = await tx.inventoryLot.findMany({
                             where: {
@@ -272,20 +285,21 @@ export async function POST(request: Request) {
                 const visitItem = await tx.visitItem.create({
                     data: {
                         visit_id: resolvedVisitId,
-                        item_type: 'service', // Default to service for generic income
+                        item_type: "service", // Default to service for generic income
                         quantity: 1,
                         unit_price: Number(body.amount),
-                        description: 'รายรับอื่นๆ/เหมาจ่าย',
+                        description: "รายรับอื่นๆ/เหมาจ่าย",
                     },
                 });
 
                 const income = await tx.income.create({
                     data: {
                         visit_item_id: visitItem.visit_item_id,
-                        income_type: body.income_type || 'other',
+                        income_type: body.income_type || "other",
                         amount: Number(body.amount),
                         payment_method: body.payment_method,
-                        receipt_no: body.receipt_no || generateReceiptNo("รายรับ"),
+                        receipt_no:
+                            body.receipt_no || generateReceiptNo("รายรับ"),
                         income_date: body.income_date
                             ? new Date(body.income_date)
                             : new Date(),
@@ -301,9 +315,9 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("Create income API Error:", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal Server Error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );

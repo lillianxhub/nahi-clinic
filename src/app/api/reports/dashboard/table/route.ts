@@ -4,9 +4,18 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
     try {
         const products = await prisma.product.findMany({
-            where: { is_active: true, product_type: "drug" },
-            include: {
-                lots: { where: { is_active: true, deleted_at: null } },
+            where: {
+                is_active: true,
+                category: { is: { product_type: "drug" } },
+            },
+            select: {
+                product_id: true,
+                product_name: true,
+                min_stock: true,
+                lots: {
+                    where: { is_active: true, deleted_at: null },
+                    select: { qty_remaining: true },
+                },
             },
         });
 
@@ -32,9 +41,9 @@ export async function GET() {
     } catch (error: any) {
         console.error("Low Stock Table API Error", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal Server Error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );

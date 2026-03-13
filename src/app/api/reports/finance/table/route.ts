@@ -56,7 +56,10 @@ export async function GET(request: Request) {
         }
         if (end) {
             incomeWhere.income_date = { ...incomeWhere.income_date, lte: end };
-            expenseWhere.expense_date = { ...expenseWhere.expense_date, lte: end };
+            expenseWhere.expense_date = {
+                ...expenseWhere.expense_date,
+                lte: end,
+            };
         }
 
         if (search) {
@@ -90,7 +93,9 @@ export async function GET(request: Request) {
                             product: {
                                 select: {
                                     product_name: true,
-                                    product_type: true,
+                                    category: {
+                                        select: { product_type: true },
+                                    },
                                 },
                             },
                         },
@@ -121,16 +126,21 @@ export async function GET(request: Request) {
 
             const formattedItem = {
                 product_name: product?.product_name || visitItem.description,
-                product_type: product?.product_type || (visitItem.item_type === 'service' ? 'service' : 'other'),
+                product_type:
+                    product?.category.product_type ||
+                    (visitItem.item_type === "service" ? "service" : "other"),
                 quantity: Number(visitItem.quantity),
                 unit_price: Number(visitItem.unit_price),
-                total_price: Number(visitItem.quantity) * Number(visitItem.unit_price),
+                total_price:
+                    Number(visitItem.quantity) * Number(visitItem.unit_price),
             };
 
             if (!incomeGroups[visitId]) {
                 incomeGroups[visitId] = {
                     id: item.income_id, // Use the first income_id as reference
-                    receipt_no: item.receipt_no || visitId.substring(0, 8).toUpperCase(),
+                    receipt_no:
+                        item.receipt_no ||
+                        visitId.substring(0, 8).toUpperCase(),
                     timestamp: item.income_date.getTime(),
                     date: item.income_date.toLocaleString("th-TH", {
                         timeZone: "Asia/Bangkok",
@@ -159,19 +169,22 @@ export async function GET(request: Request) {
 
             incomeGroups[visitId].amount += Number(item.amount);
             incomeGroups[visitId].visit.items.push(formattedItem);
-            
+
             // Update timestamp/date if this income is newer
             if (item.income_date.getTime() > incomeGroups[visitId].timestamp) {
                 incomeGroups[visitId].timestamp = item.income_date.getTime();
-                incomeGroups[visitId].date = item.income_date.toLocaleString("th-TH", {
-                    timeZone: "Asia/Bangkok",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                });
+                incomeGroups[visitId].date = item.income_date.toLocaleString(
+                    "th-TH",
+                    {
+                        timeZone: "Asia/Bangkok",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                    },
+                );
             }
         });
 
@@ -224,9 +237,9 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("Error fetching transactions:", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal Server Error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );

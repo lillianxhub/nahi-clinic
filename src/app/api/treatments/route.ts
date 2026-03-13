@@ -66,7 +66,9 @@ export async function GET(req: Request) {
                                 select: {
                                     product_id: true,
                                     product_name: true,
-                                    product_type: true,
+                                    category: {
+                                        select: { product_type: true },
+                                    },
                                     unit: true,
                                 },
                             },
@@ -109,10 +111,10 @@ export async function GET(req: Request) {
     } catch (error: any) {
         console.error("Get treatments error:", error);
         return NextResponse.json(
-            { 
+            {
                 message: "Internal server error",
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );
@@ -203,15 +205,17 @@ export async function POST(req: Request) {
                 if (item.product_id) {
                     const product = await tx.product.findUnique({
                         where: { product_id: item.product_id },
-                        select: { product_type: true },
+                        select: {
+                            category: { select: { product_type: true } },
+                        },
                     });
 
                     // 2.2 If drug or supply AND status is completed → FEFO stock deduction
                     if (
                         isCompleted &&
                         product &&
-                        (product.product_type === "drug" ||
-                            product.product_type === "supply")
+                        (product.category.product_type === "drug" ||
+                            product.category.product_type === "supply")
                     ) {
                         let remainingToDeduct = qty;
 
@@ -264,8 +268,12 @@ export async function POST(req: Request) {
                     data: {
                         visit: { connect: { visit_id: visit.visit_id } },
                         item_type: item.item_type,
-                        product: item.product_id ? { connect: { product_id: item.product_id } } : undefined,
-                        service: item.service_id ? { connect: { service_id: item.service_id } } : undefined,
+                        product: item.product_id
+                            ? { connect: { product_id: item.product_id } }
+                            : undefined,
+                        service: item.service_id
+                            ? { connect: { service_id: item.service_id } }
+                            : undefined,
                         quantity: qty,
                         unit_price: price,
                         description: item.description,
@@ -283,15 +291,19 @@ export async function POST(req: Request) {
                     } else if (item.product_id) {
                         const product = await tx.product.findUnique({
                             where: { product_id: item.product_id },
-                            select: { product_type: true },
+                            select: {
+                                category: { select: { product_type: true } },
+                            },
                         });
-                        incomeType = product?.product_type || "other";
+                        incomeType = product?.category.product_type || "other";
                     }
 
                     await tx.income.create({
                         data: {
                             visitItem: {
-                                connect: { visit_item_id: visitItem.visit_item_id },
+                                connect: {
+                                    visit_item_id: visitItem.visit_item_id,
+                                },
                             },
                             income_type: incomeType,
                             amount: totalPrice,
@@ -311,9 +323,9 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Create treatment error:", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal server error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );

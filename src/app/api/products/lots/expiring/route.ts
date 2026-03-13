@@ -35,8 +35,12 @@ export async function GET(req: NextRequest) {
                         product_id: true,
                         product_name: true,
                         unit: true,
-                        category_id: true,
-                        product_type: true,
+                        category: {
+                            select: {
+                                category_id: true,
+                                product_type: true,
+                            },
+                        },
                     },
                 },
             },

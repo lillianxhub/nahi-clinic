@@ -26,11 +26,17 @@ export async function GET() {
 
         // Products with product_type = drug
         const totalDrugStock = await prisma.product.count({
-            where: { is_active: true, product_type: "drug" },
+            where: {
+                is_active: true,
+                category: { is: { product_type: "drug" } },
+            },
         });
 
         const products = await prisma.product.findMany({
-            where: { is_active: true, product_type: "drug" },
+            where: {
+                is_active: true,
+                category: { is: { product_type: "drug" } },
+            },
             include: {
                 lots: { where: { is_active: true } },
             },
@@ -55,9 +61,9 @@ export async function GET() {
     } catch (error: any) {
         console.error("Dashboard stat API Error", error);
         return NextResponse.json(
-            { 
+            {
                 message: error.message || "Internal Server Error",
-                stack: error.stack
+                stack: error.stack,
             },
             { status: 500 },
         );
