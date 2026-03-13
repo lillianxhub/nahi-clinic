@@ -280,7 +280,8 @@ export async function POST(req: Request) {
             });
 
             // 3. Create Expense for Finance
-            const totalAmount = Number(quantity) * Number(buy_price);
+            const totalAmount =
+                Number(lot.qty_received) * Number(lot.buy_price);
             const expense = await tx.expense.create({
                 data: {
                     expense_type:
@@ -288,6 +289,7 @@ export async function POST(req: Request) {
                     description: `ซื้อ${effectiveProductType === "drug" ? "ยา" : "เวชภัณฑ์"}: ${product_name} (${quantity} ${buy_unit})`,
                     amount: totalAmount,
                     expense_date: dateForLot,
+                    receipt_no: `EXP-${dateForLot.getTime()}`,
                 },
             });
 
@@ -310,7 +312,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json(response, { status: 201 });
     } catch (error: any) {
-        console.error("Create medicine error:", error);
+        console.error("Create product error:", error);
         return NextResponse.json(
             {
                 message: "เกิดข้อผิดพลาดในการเพิ่มยาหรือสต็อก",

@@ -12,7 +12,7 @@ export const medicineService = {
     async getMedicines(
         params?: QueryParams,
     ): Promise<ResponseData<Medicine[], MedicineSummary>> {
-        const query = buildQuery({ ...params, type: "drug" });
+        const query = buildQuery({ type: "drug", ...params });
 
         return apiClient.get<ResponseData<Medicine[], MedicineSummary>>(
             `/api/products${query}`,

@@ -38,11 +38,11 @@ export default function MedicinesPage() {
 
     useEffect(() => {
         setPage(1); // Reset page on filter change
-    }, [debouncedSearch, status]);
+    }, [debouncedSearch, status, type]);
 
     useEffect(() => {
         fetchMedicines();
-    }, [page, debouncedSearch, status]);
+    }, [page, debouncedSearch, status, type]);
 
     const fetchMedicines = async () => {
         try {
@@ -53,7 +53,7 @@ export default function MedicinesPage() {
                 order: "asc",
                 ...(debouncedSearch && { q: debouncedSearch }),
                 ...(status !== "all" && { status }),
-                ...(type !== "all" && { type }),
+                type,
             });
             // Map the quantities correctly from the backend since we removed client-side calculation
             const mappedMedicines = res.data.map((m) => {

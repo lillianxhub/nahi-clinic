@@ -95,18 +95,18 @@ async function main() {
 
     // 2. Categories
     const categoriesNames = [
-        { name: "ยาปฏิชีวนะ" },
-        { name: "ยาแก้ปวด" },
-        { name: "ยาแก้อักเสบ" },
-        { name: "ยาแก้แพ้" },
-        { name: "วิตามิน" },
-        { name: "ยาระบบทางเดินอาหาร" },
-        { name: "วัสดุสิ้นเปลือง" },
-        { name: "ทั่วไป" },
+        { name: "ยาปฏิชีวนะ", type: ProductType.drug },
+        { name: "ยาแก้ปวด", type: ProductType.drug },
+        { name: "ยาแก้อักเสบ", type: ProductType.drug },
+        { name: "ยาแก้แพ้", type: ProductType.drug },
+        { name: "วิตามิน", type: ProductType.drug },
+        { name: "ยาระบบทางเดินอาหาร", type: ProductType.drug },
+        { name: "วัสดุสิ้นเปลือง", type: ProductType.supply },
+        { name: "ทั่วไป", type: ProductType.supply },
     ];
     for (const cat of categoriesNames) {
         await prisma.category.create({
-            data: { category_name: cat.name },
+            data: { category_name: cat.name, product_type: cat.type },
         });
     }
     const categories = await prisma.category.findMany();
@@ -217,11 +217,15 @@ async function main() {
         await prisma.product.create({
             data: {
                 product_name: p.name,
-                product_type: p.type,
                 unit: p.unit,
                 min_stock: 50,
-                category_id: categories.find((c) => c.category_name === p.cat)!
-                    .category_id,
+                category: {
+                    connect: {
+                        category_id: categories.find(
+                            (c) => c.category_name === p.cat,
+                        )!.category_id,
+                    },
+                },
                 lots: {
                     create: {
                         supplier_id: supplier.supplier_id,
@@ -239,7 +243,9 @@ async function main() {
         });
     }
 
-    const allProducts = await prisma.product.findMany();
+    const allProducts = await prisma.product.findMany({
+        include: { category: true },
+    });
 
     // 5. Patients
     const maleFirstNames = [
@@ -385,10 +391,10 @@ async function main() {
                         data: {
                             created_at: date,
                             expense_type:
-                                item.product_type === ProductType.drug
+                                item.category.product_type === ProductType.drug
                                     ? ExpenseType.drug
                                     : ExpenseType.supply,
-                            description: `เติม: ${item.product_name} (สต็อกเหลือ ${currentQty})`,
+                            description: `ซื้อ${item.category.product_type === ProductType.drug ? "ยา" : "เวชภัณฑ์"}: ${item.product_name} (${buyQty} ${item.unit})`,
                             amount: buyPrice * buyQty,
                             receipt_no: `EXP-${date.getTime()}`,
                             expense_date: date,
@@ -399,7 +405,7 @@ async function main() {
                         data: {
                             supplier_id: supplier.supplier_id,
                             product_id: item.product_id,
-                            lot_no: `LOT-${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${randomInt(10, 99)}`,
+                            lot_no: `LOT-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, "0")}-${randomInt(10, 99)}`,
                             received_date: date,
                             expire_date: new Date(
                                 date.getFullYear() + 2,
@@ -487,12 +493,13 @@ async function main() {
                 const itemsToSell = [
                     ...shuffle(
                         allProducts.filter(
-                            (p) => p.product_type === ProductType.supply,
+                            (p) =>
+                                p.category.product_type === ProductType.supply,
                         ),
                     ).slice(0, 1),
                     ...shuffle(
                         allProducts.filter(
-                            (p) => p.product_type === ProductType.drug,
+                            (p) => p.category.product_type === ProductType.drug,
                         ),
                     ).slice(0, randomInt(1, 2)),
                 ];
@@ -531,14 +538,6 @@ async function main() {
                                 },
                             },
                         });
-                        await tx.stockUsage.create({
-                            data: {
-                                visit_item_id: item.visit_item_id,
-                                lot_id: lot.lot_id,
-                                quantity: finalQty,
-                                used_at: date,
-                            },
-                        });
                         await tx.inventoryLot.update({
                             where: { lot_id: lot.lot_id },
                             data: {
@@ -549,7 +548,7 @@ async function main() {
                             data: {
                                 visit_item_id: item.visit_item_id,
                                 income_type:
-                                    p.product_type === ProductType.drug
+                                    p.category.product_type === ProductType.drug
                                         ? IncomeType.drug
                                         : IncomeType.supply,
                                 amount: new Prisma.Decimal(lineTotal),
