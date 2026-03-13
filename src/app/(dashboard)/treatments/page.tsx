@@ -10,9 +10,8 @@ import { treatmentService } from "@/services/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import AddTreatmentModal from "@/components/treatment/AddTreatmentModal";
+import TreatmentModal from "@/components/treatment/TreatmentModal";
 import ViewTreatmentModal from "@/components/treatment/ViewTreatmentModal";
-import EditTreatmentModal from "@/components/treatment/EditTreatmentModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -230,9 +229,10 @@ export default function TreatmentsPage() {
             />
 
             {/* Add Treatment Modal */}
-            <AddTreatmentModal
+            <TreatmentModal
                 open={openAdd}
                 onClose={() => setOpenAdd(false)}
+                mode="add"
                 onSuccess={(visitId) => {
                     setPage(1);
                     fetchTreatments();
@@ -259,9 +259,10 @@ export default function TreatmentsPage() {
             />
 
             {/* Edit Treatment Modal */}
-            <EditTreatmentModal
+            <TreatmentModal
                 open={openEdit}
                 onClose={() => setOpenEdit(false)}
+                mode="edit"
                 treatment={selectedTreatment}
                 onSuccess={() => {
                     fetchTreatments();
