@@ -168,7 +168,7 @@ export async function GET(request: Request) {
                     }),
                     type: "income",
                     payment_method: translatePaymentMethod(item.payment_method),
-                    category: "ค่าตรวจรักษา",
+                    category: null,
                     description: visit.patient
                         ? `ผู้ป่วย: ${visit.patient.first_name} ${visit.patient.last_name}`
                         : "รายรับจากการรักษา",
@@ -185,6 +185,19 @@ export async function GET(request: Request) {
 
             incomeGroups[visitId].amount += Number(item.amount);
             incomeGroups[visitId].visit.items.push(formattedItem);
+
+            // Update category based on item type
+            const itemType = visitItem.item_type;
+            const productType = product?.category?.product_type;
+
+            if (itemType === "service") {
+                incomeGroups[visitId].category = "การตรวจรักษา";
+            } else if (
+                !incomeGroups[visitId].category &&
+                (productType === "drug" || productType === "supply")
+            ) {
+                incomeGroups[visitId].category = "ค่ายา/เวชภัณฑ์";
+            }
 
             // Update timestamp/date if this income is newer
             if (item.income_date.getTime() > incomeGroups[visitId].timestamp) {
