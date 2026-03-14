@@ -143,10 +143,13 @@ export async function POST(request: Request) {
 
                     // 2. Create Income linked 1-1 with VisitItem
                     let incomeType: any = item.income_type || "other";
+
                     if (item.item_type === "service") {
                         incomeType = "service";
-                    } else if (item.item_type === "drug" || item.product_id) {
-                        incomeType = "drug"; // Default for drug/product unless more specific info exists
+                    } else if (
+                        item.item_type === "product" ||
+                        item.product_id
+                    ) {
                         if (item.product_id) {
                             const product = await tx.product.findUnique({
                                 where: { product_id: item.product_id },

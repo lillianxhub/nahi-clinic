@@ -1044,7 +1044,7 @@ export default function AddTransactionModal({
                             </div>
                         )}
 
-                    <div className="space-y-1.5">
+                    {/* <div className="space-y-1.5">
                         <label className="block text-sm font-semibold text-gray-700">
                             สถานะ
                         </label>
@@ -1061,7 +1061,7 @@ export default function AddTransactionModal({
                             <option value="completed">เสร็จสิ้น</option>
                             <option value="pending">รอดำเนินการ</option>
                         </select>
-                    </div>
+                    </div> */}
 
                     {transactionType === "income" && (
                         <div className="space-y-1.5">
