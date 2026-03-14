@@ -236,7 +236,7 @@ export default function ViewTreatmentModal({
                             </div>
 
                             {/* Vital Signs Section */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 -mt-9 border-b border-gray-100">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4 -mt-9 border-b border-gray-100">
                                 <div className="space-y-1">
                                     <label className="text-s text-muted font-medium uppercase">
                                         ความดันโลหิต
@@ -259,6 +259,17 @@ export default function ViewTreatmentModal({
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-s text-muted font-medium uppercase">
+                                        อุณหภูมิ
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.temperature
+                                            ? `${treatment.temperature} °C`
+                                            : "-"}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
                                         น้ำหนัก
                                     </label>
                                     <p className="text-foreground font-medium text-sm">
@@ -274,6 +285,16 @@ export default function ViewTreatmentModal({
                                     <p className="text-foreground font-medium text-sm">
                                         {treatment?.height
                                             ? `${treatment.height} cm`
+                                            : "-"}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-s text-muted font-medium uppercase">
+                                        รอบเอว
+                                    </label>
+                                    <p className="text-foreground font-medium text-sm">
+                                        {treatment?.waistline
+                                            ? `${treatment.waistline} cm`
                                             : "-"}
                                     </p>
                                 </div>

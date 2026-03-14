@@ -37,7 +37,7 @@ import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface SelectedItem {
-    item_type: "drug" | "service";
+    item_type: "product" | "service";
     product_id?: string;
     description?: string;
     quantity: number;
@@ -207,7 +207,7 @@ export default function EditTransactionModal({
             setSelectedItems([
                 ...selectedItems,
                 {
-                    item_type: "drug",
+                    item_type: "product",
                     product_id: medicine.product_id,
                     description: medicine.product_name,
                     quantity: 1,

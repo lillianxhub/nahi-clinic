@@ -83,7 +83,6 @@ export default function TreatmentModal({
 
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
 
-
     // Drug Search States
     const [drugSearchTerm, setDrugSearchTerm] = useState("");
     const debouncedDrugSearch = useDebounce(drugSearchTerm, 500);
@@ -110,6 +109,42 @@ export default function TreatmentModal({
         (sum, item) => sum + item.quantity * item.unit_price,
         0,
     );
+
+    const resetForm = () => {
+        const resetNow = new Date();
+        setFormData({
+            patient_id: "",
+            visit_date: formatLocalDate(resetNow),
+            hour: getLocalTime(resetNow).hour,
+            minute: getLocalTime(resetNow).minute,
+            symptom: "",
+            diagnosis: "",
+            blood_pressure: "",
+            temperature: "",
+            heart_rate: "",
+            weight: "",
+            height: "",
+            note: "",
+            waistline: "",
+            smoking_status: "none",
+            drinking_status: "none",
+            smoking_history: "",
+            drinking_history: "",
+        });
+        setSelectedPatient(null);
+        setSearchTerm("");
+        setSelectedItems([]);
+        setDrugSearchTerm("");
+        setServiceSearchTerm("");
+        setSupplySearchTerm("");
+    };
+
+    // Reset form when opening in "add" mode
+    useEffect(() => {
+        if (open && mode === "add") {
+            resetForm();
+        }
+    }, [open, mode]);
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -194,14 +229,12 @@ export default function TreatmentModal({
                             product_id: detail.product_id,
                             service_id: detail.service_id,
                             name: name,
-                            description: name,
-                            instruction: instruction,
+                            description: instruction,
                             quantity: Number(detail.quantity),
                             unit_price: Number(detail.unit_price),
                         };
                     });
                     setSelectedItems(existingItems);
-
                 } catch (error) {
                     console.error("โหลดข้อมูลการรักษาล่าสุดล้มเหลว", error);
                     Swal.fire({
@@ -360,10 +393,9 @@ export default function TreatmentModal({
                     item_type: "drug",
                     product_id: medicine.product_id,
                     name: medicine.product_name,
-                    description: medicine.product_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
-                    instruction: "",
+                    description: "",
                 },
             ]);
         }
@@ -378,10 +410,9 @@ export default function TreatmentModal({
                 item_type: "service",
                 service_id: service.service_id,
                 name: service.service_name,
-                description: service.service_name,
                 quantity: 1,
                 unit_price: Number(service.price),
-                instruction: "",
+                description: "",
             },
         ]);
         setServiceSearchTerm("");
@@ -408,10 +439,9 @@ export default function TreatmentModal({
                     item_type: "supply",
                     product_id: supply.product_id,
                     name: supply.product_name,
-                    description: supply.product_name,
                     quantity: 1,
                     unit_price: Number(supply.sell_price),
-                    instruction: "",
+                    description: "",
                 },
             ]);
         }
@@ -430,10 +460,9 @@ export default function TreatmentModal({
             {
                 item_type: type,
                 name: name,
-                description: name,
                 quantity: 1,
                 unit_price: price,
-                instruction: instruction || "",
+                description: instruction || "",
             },
         ]);
     };
@@ -450,12 +479,6 @@ export default function TreatmentModal({
                 idx === index ? { ...item, unit_price: price } : item,
             ),
         );
-    };
-
-    const handleUpdateInstruction = (index: number, instruction: string) => {
-        const newItems = [...selectedItems];
-        newItems[index].instruction = instruction;
-        setSelectedItems(newItems);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -494,7 +517,7 @@ export default function TreatmentModal({
                             ? "product"
                             : item.item_type,
                     product_id: item.product_id,
-                    description: item.instruction || "",
+                    description: item.description || "",
                 })),
                 heart_rate: formData.heart_rate
                     ? Number(formData.heart_rate)
@@ -529,30 +552,7 @@ export default function TreatmentModal({
                 const result = await treatmentService.createTreatment(payload);
 
                 // Reset form
-                const resetNow = new Date();
-                setFormData({
-                    patient_id: "",
-                    visit_date: formatLocalDate(resetNow),
-                    hour: getLocalTime(resetNow).hour,
-                    minute: getLocalTime(resetNow).minute,
-                    symptom: "",
-                    diagnosis: "",
-                    blood_pressure: "",
-                    temperature: "",
-                    heart_rate: "",
-                    weight: "",
-                    height: "",
-                    note: "",
-                    waistline: "",
-                    smoking_status: "none",
-                    drinking_status: "none",
-                    smoking_history: "",
-                    drinking_history: "",
-                });
-                setSelectedPatient(null);
-                setSearchTerm("");
-                setSelectedItems([]);
-
+                resetForm();
 
                 onSuccess(result.visit_id);
             }
@@ -1331,8 +1331,7 @@ export default function TreatmentModal({
                                                                 <td className="px-4 py-3 font-medium text-gray-800">
                                                                     <div className="space-y-1">
                                                                         <div className="font-bold text-gray-800">
-                                                                            {item.name ||
-                                                                                item.description}
+                                                                            {item.name}
                                                                         </div>
                                                                         <div className="flex items-center gap-1">
                                                                             <Edit3
@@ -1345,13 +1344,13 @@ export default function TreatmentModal({
                                                                                 type="text"
                                                                                 placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
                                                                                 value={
-                                                                                    item.instruction ||
+                                                                                    item.description ||
                                                                                     ""
                                                                                 }
                                                                                 onChange={(
                                                                                     e,
                                                                                 ) =>
-                                                                                    handleUpdateInstruction(
+                                                                                    handleUpdateDescription(
                                                                                         index,
                                                                                         e
                                                                                             .target
@@ -1490,8 +1489,7 @@ export default function TreatmentModal({
                                                                 className="bg-white"
                                                             >
                                                                 <td className="px-4 py-3 font-medium text-gray-800">
-                                                                    {item.name ||
-                                                                        item.description}
+                                                                    {item.name}
                                                                 </td>
                                                                 <td className="px-4 py-3">
                                                                     <input
@@ -1604,9 +1602,7 @@ export default function TreatmentModal({
                                                         <div className="flex items-start justify-between">
                                                             <div>
                                                                 <p className="font-bold text-gray-800">
-                                                                    {
-                                                                        item.description
-                                                                    }
+                                                                    {item.name}
                                                                 </p>
                                                                 <p className="text-xs text-muted">
                                                                     ราคาต่อหน่วย:
@@ -1673,13 +1669,13 @@ export default function TreatmentModal({
                                                                     type="text"
                                                                     placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
                                                                     value={
-                                                                        item.instruction ||
+                                                                        item.description ||
                                                                         ""
                                                                     }
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
-                                                                        handleUpdateInstruction(
+                                                                        handleUpdateDescription(
                                                                             index,
                                                                             e
                                                                                 .target

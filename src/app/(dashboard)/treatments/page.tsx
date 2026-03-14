@@ -26,9 +26,10 @@ export default function TreatmentsPage() {
     const [treatments, setTreatments] = useState<Treatment[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [openAdd, setOpenAdd] = useState(false);
     const [openView, setOpenView] = useState(false);
-    const [openEdit, setOpenEdit] = useState(false);
+    // const [openAdd, setOpenAdd] = useState(false);
+    // const [openEdit, setOpenEdit] = useState(false);
+
     const [selectedTreatmentId, setSelectedTreatmentId] = useState<
         string | null
     >(null);
@@ -242,8 +243,23 @@ export default function TreatmentsPage() {
                 totalPages={totalPages}
                 onChange={setPage}
             />
+            {/* View Treatment Modal */}
+            <ViewTreatmentModal
+                open={openView}
+                onClose={() => setOpenView(false)}
+                treatmentId={selectedTreatmentId}
+                onEdit={(treatment) => {
+                    setOpenView(false);
+                    setSelectedTreatment(treatment);
+                    setOpenModal(true);
+                    setModalMode("edit");
+                }}
+                onSuccess={() => {
+                    fetchTreatments();
+                }}
+            />
             {/* Add Treatment Modal */}
-            <TreatmentModal
+            {/* <TreatmentModal
                 open={openAdd}
                 onClose={() => setOpenAdd(false)}
                 mode="add"
@@ -255,23 +271,9 @@ export default function TreatmentsPage() {
                         setOpenView(true);
                     }
                 }}
-            />
-            {/* View Treatment Modal */}
-            <ViewTreatmentModal
-                open={openView}
-                onClose={() => setOpenView(false)}
-                treatmentId={selectedTreatmentId}
-                onEdit={(treatment) => {
-                    setOpenView(false);
-                    setSelectedTreatment(treatment);
-                    setOpenEdit(true);
-                }}
-                onSuccess={() => {
-                    fetchTreatments();
-                }}
-            />
+            /> */}
             {/* Edit Treatment Modal */}
-            <TreatmentModal
+            {/* <TreatmentModal
                 open={openEdit}
                 onClose={() => setOpenEdit(false)}
                 mode="edit"
@@ -284,7 +286,7 @@ export default function TreatmentsPage() {
                         setOpenView(true);
                     }
                 }}
-            />
+            /> */}
             <TreatmentModal
                 open={openModal}
                 onClose={() => setOpenModal(false)}

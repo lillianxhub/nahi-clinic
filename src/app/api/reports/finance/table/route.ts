@@ -98,6 +98,11 @@ export async function GET(request: Request) {
                                     },
                                 },
                             },
+                            service: {
+                                select: {
+                                    service_name: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -123,9 +128,10 @@ export async function GET(request: Request) {
             const visitId = visit.visit_id;
             const visitItem = item.visitItem;
             const product = visitItem?.product;
+            const service = visitItem?.service;
 
             const formattedItem = {
-                product_name: product?.product_name || visitItem.description,
+                product_name: product?.product_name || service?.service_name,
                 product_type:
                     product?.category.product_type ||
                     (visitItem.item_type === "service" ? "service" : "other"),

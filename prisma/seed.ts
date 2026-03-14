@@ -474,7 +474,7 @@ async function main() {
                             quantity: 1,
                             unit_price: sPrice,
                             item_type: VisitItemType.service,
-                            description: s.service_name,
+                            description: "ให้บริการตามมาตรฐาน",
                         },
                     });
 
@@ -528,7 +528,10 @@ async function main() {
                                 quantity: finalQty,
                                 unit_price: price,
                                 item_type: VisitItemType.product,
-                                description: p.product_name,
+                                description:
+                                    p.category.product_type === ProductType.drug
+                                        ? `รับประทานครั้งละ 1 ${p.unit} หลังอาหาร เช้า-เย็น`
+                                        : `ใช้งานตามคำแนะนำของแพทย์อย่างเคร่งครัด`,
                                 stockUsage: {
                                     create: {
                                         lot_id: lot.lot_id,
