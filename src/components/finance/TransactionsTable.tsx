@@ -4,11 +4,11 @@ import { useState } from "react";
 import DataTable, { Column } from "@/components/table/Table";
 import Pagination from "@/components/Pagination";
 import Badge from "@/components/Badge";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye /*, Edit, Trash2 */ } from "lucide-react";
 import ViewTransactionModal from "./ViewTransactionModal";
-import EditTransactionModal from "./EditTransactionModal";
-import Swal from "sweetalert2";
-import { financeService } from "@/services/finance";
+// import EditTransactionModal from "./EditTransactionModal";
+// import Swal from "sweetalert2";
+// import { financeService } from "@/services/finance";
 import { TransactionItem } from "@/interface/finance";
 
 interface TransactionsTableProps {
@@ -30,49 +30,49 @@ export default function TransactionsTable({
 }: TransactionsTableProps) {
     const [viewTransaction, setViewTransaction] =
         useState<TransactionItem | null>(null);
-    const [editTransaction, setEditTransaction] =
-        useState<TransactionItem | null>(null);
+    // const [editTransaction, setEditTransaction] =
+    //     useState<TransactionItem | null>(null);
 
-    const handleDelete = async (transaction: TransactionItem) => {
-        const result = await Swal.fire({
-            title: "ยืนยันการลบ?",
-            text: `คุณต้องการลบรายการธุกรรม "${transaction.category}" จำนวน ฿${Math.abs(transaction.amount).toLocaleString()} ใช่หรือไม่?`,
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3F7C87",
-            cancelButtonColor: "#EF4444",
-            confirmButtonText: "ยืนยันการลบ",
-            cancelButtonText: "ยกเลิก",
-            reverseButtons: true,
-        });
-
-        if (result.isConfirmed) {
-            try {
-                if (transaction.type === "income") {
-                    await financeService.deleteIncome(transaction.id);
-                } else {
-                    await financeService.deleteExpense(transaction.id);
-                }
-
-                await Swal.fire({
-                    title: "ลบสำเร็จ!",
-                    text: "ลบข้อมูลธุรกรรมเรียบร้อยแล้ว",
-                    icon: "success",
-                    confirmButtonColor: "#3F7C87",
-                });
-
-                onRefresh();
-            } catch (error) {
-                console.error("Failed to delete transaction:", error);
-                await Swal.fire({
-                    title: "เกิดข้อผิดพลาด!",
-                    text: "ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
-                    icon: "error",
-                    confirmButtonColor: "#3F7C87",
-                });
-            }
-        }
-    };
+    // const handleDelete = async (transaction: TransactionItem) => {
+    //     const result = await Swal.fire({
+    //         title: "ยืนยันการลบ?",
+    //         text: `คุณต้องการลบรายการธุกรรม "${transaction.category}" จำนวน ฿${Math.abs(transaction.amount).toLocaleString()} ใช่หรือไม่?`,
+    //         icon: "warning",
+    //         showCancelButton: true,
+    //         confirmButtonColor: "#3F7C87",
+    //         cancelButtonColor: "#EF4444",
+    //         confirmButtonText: "ยืนยันการลบ",
+    //         cancelButtonText: "ยกเลิก",
+    //         reverseButtons: true,
+    //     });
+    //
+    //     if (result.isConfirmed) {
+    //         try {
+    //             if (transaction.type === "income") {
+    //                 await financeService.deleteIncome(transaction.id);
+    //             } else {
+    //                 await financeService.deleteExpense(transaction.id);
+    //             }
+    //
+    //             await Swal.fire({
+    //                 title: "ลบสำเร็จ!",
+    //                 text: "ลบข้อมูลธุรกรรมเรียบร้อยแล้ว",
+    //                 icon: "success",
+    //                 confirmButtonColor: "#3F7C87",
+    //             });
+    //
+    //             onRefresh();
+    //         } catch (error) {
+    //             console.error("Failed to delete transaction:", error);
+    //             await Swal.fire({
+    //                 title: "เกิดข้อผิดพลาด!",
+    //                 text: "ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+    //                 icon: "error",
+    //                 confirmButtonColor: "#3F7C87",
+    //             });
+    //         }
+    //     }
+    // };
 
     const columns: Column<TransactionItem>[] = [
         { key: "date", header: "วันที่" },
@@ -112,7 +112,7 @@ export default function TransactionsTable({
                             className="text-primary group-hover:scale-110 transition-transform"
                         />
                     </button>
-                    <button
+                    {/* <button
                         onClick={() => setEditTransaction(row)}
                         className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group"
                         title="แก้ไข"
@@ -131,7 +131,7 @@ export default function TransactionsTable({
                             size={16}
                             className="text-red-600 group-hover:scale-110 transition-transform"
                         />
-                    </button>
+                    </button> */}
                 </div>
             ),
         },
@@ -156,18 +156,18 @@ export default function TransactionsTable({
                 isOpen={!!viewTransaction}
                 onClose={() => setViewTransaction(null)}
                 transaction={viewTransaction}
-                onEdit={(t) => {
-                    setViewTransaction(null);
-                    setEditTransaction(t);
-                }}
+                // onEdit={(t) => {
+                //     setViewTransaction(null);
+                //     setEditTransaction(t);
+                // }}
             />
 
-            <EditTransactionModal
+            {/* <EditTransactionModal
                 isOpen={!!editTransaction}
                 onClose={() => setEditTransaction(null)}
                 transaction={editTransaction}
                 onSuccess={onRefresh}
-            />
+            /> */}
         </>
     );
 }
