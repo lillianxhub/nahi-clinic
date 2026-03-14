@@ -225,7 +225,7 @@ export default function TreatmentModal({
                             item_type: detail.service
                                 ? "service"
                                 : detail.product?.category?.product_type ||
-                                "product",
+                                  "product",
                             product_id: detail.product_id,
                             service_id: detail.service_id,
                             name: name,
@@ -650,9 +650,9 @@ export default function TreatmentModal({
                                     {/* Allergy Alert (Edit Mode) */}
                                     {treatment?.patient.allergy?.trim() &&
                                         treatment?.patient.allergy.trim() !==
-                                        "ไม่มี" &&
+                                            "ไม่มี" &&
                                         treatment?.patient.allergy.trim() !==
-                                        "-" && (
+                                            "-" && (
                                             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <AlertCircle
                                                     className="text-red-500 shrink-0 mt-0.5"
@@ -704,7 +704,7 @@ export default function TreatmentModal({
                                                     if (
                                                         selectedPatient &&
                                                         e.target.value !==
-                                                        selectedPatient.fullName
+                                                            selectedPatient.fullName
                                                     ) {
                                                         setSelectedPatient(
                                                             null,
@@ -807,9 +807,9 @@ export default function TreatmentModal({
                                     {/* Allergy Alert */}
                                     {selectedPatient?.allergy?.trim() &&
                                         selectedPatient.allergy.trim() !==
-                                        "ไม่มี" &&
+                                            "ไม่มี" &&
                                         selectedPatient.allergy.trim() !==
-                                        "-" && (
+                                            "-" && (
                                             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <AlertCircle
                                                     className="text-red-500 shrink-0 mt-0.5"
@@ -838,7 +838,7 @@ export default function TreatmentModal({
                                         className="text-primary"
                                     />
                                     วันที่และเวลา{" "}
-                                    <span className="text-danger">*</span>
+                                    {/* <span className="text-danger">*</span> */}
                                 </label>
                                 <DateTimePicker24hour
                                     disabled={true}
@@ -902,11 +902,12 @@ export default function TreatmentModal({
                                         type="text"
                                         name="blood_pressure"
                                         placeholder="เช่น 120/80"
-                                        className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${formData.blood_pressure &&
-                                                !isBpValid(formData.blood_pressure)
+                                        className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                            formData.blood_pressure &&
+                                            !isBpValid(formData.blood_pressure)
                                                 ? "border-danger focus:ring-danger/20"
                                                 : "border-gray-300 focus:ring-primary focus:border-transparent"
-                                            }`}
+                                        }`}
                                         value={formData.blood_pressure}
                                         onChange={handleChange}
                                     />
@@ -1048,11 +1049,12 @@ export default function TreatmentModal({
                                         ].map((opt) => (
                                             <label
                                                 key={opt.value}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${formData.smoking_status ===
-                                                        opt.value
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.smoking_status ===
+                                                    opt.value
                                                         ? "border-primary bg-primary/5 text-primary"
                                                         : "border-gray-200 hover:border-gray-300"
-                                                    }`}
+                                                }`}
                                             >
                                                 <input
                                                     type="radio"
@@ -1114,11 +1116,12 @@ export default function TreatmentModal({
                                         ].map((opt) => (
                                             <label
                                                 key={opt.value}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${formData.drinking_status ===
-                                                        opt.value
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                                                    formData.drinking_status ===
+                                                    opt.value
                                                         ? "border-primary bg-primary/5 text-primary"
                                                         : "border-gray-200 hover:border-gray-300"
-                                                    }`}
+                                                }`}
                                             >
                                                 <input
                                                     type="radio"
@@ -1304,114 +1307,116 @@ export default function TreatmentModal({
                                 {selectedItems.filter(
                                     (i) => i.item_type === "service",
                                 ).length > 0 && (
-                                        <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-gray-50/50 text-gray-500 text-xs">
-                                                    <tr>
-                                                        <th className="text-left px-4 py-2 font-semibold">
-                                                            บริการ
-                                                        </th>
-                                                        <th className="text-right px-4 py-2 font-semibold w-24">
-                                                            ราคา
-                                                        </th>
-                                                        <th className="w-10"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {selectedItems.map(
-                                                        (item, index) =>
-                                                            item.item_type ===
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 font-semibold">
+                                                        บริการ
+                                                    </th>
+                                                    <th className="text-right px-4 py-2 font-semibold w-24">
+                                                        ราคา
+                                                    </th>
+                                                    <th className="w-10"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedItems.map(
+                                                    (item, index) =>
+                                                        item.item_type ===
                                                             "service" && (
-                                                                <tr
-                                                                    key={index}
-                                                                    className="bg-white"
-                                                                >
-                                                                    <td className="px-4 py-3 font-medium text-gray-800">
-                                                                        <div className="space-y-1">
-                                                                            <div className="font-bold text-gray-800">
-                                                                                {item.name}
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1">
-                                                                                <Edit3
-                                                                                    size={
-                                                                                        12
-                                                                                    }
-                                                                                    className="text-gray-400"
-                                                                                />
-                                                                                <input
-                                                                                    type="text"
-                                                                                    placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
-                                                                                    value={
-                                                                                        item.description ||
-                                                                                        ""
-                                                                                    }
-                                                                                    onChange={(
-                                                                                        e,
-                                                                                    ) =>
-                                                                                        handleUpdateDescription(
-                                                                                            index,
-                                                                                            e
-                                                                                                .target
-                                                                                                .value,
-                                                                                        )
-                                                                                    }
-                                                                                    className="w-full bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none text-xs text-gray-600 transition-all p-0"
-                                                                                />
-                                                                            </div>
+                                                            <tr
+                                                                key={index}
+                                                                className="bg-white"
+                                                            >
+                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                    <div className="space-y-1">
+                                                                        <div className="font-bold text-gray-800">
+                                                                            {
+                                                                                item.name
+                                                                            }
                                                                         </div>
-                                                                    </td>
-                                                                    <td className="px-4 py-3 text-right">
-                                                                        <div className="flex items-center justify-end gap-1">
-                                                                            <span className="text-gray-400 text-xs">
-                                                                                ฿
-                                                                            </span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Edit3
+                                                                                size={
+                                                                                    12
+                                                                                }
+                                                                                className="text-gray-400"
+                                                                            />
                                                                             <input
-                                                                                type="number"
-                                                                                min="0"
+                                                                                type="text"
+                                                                                placeholder="รายละเอียดเพิ่มเติม (เช่น ตำแหน่ง)"
                                                                                 value={
-                                                                                    item.unit_price
+                                                                                    item.description ||
+                                                                                    ""
                                                                                 }
                                                                                 onChange={(
                                                                                     e,
                                                                                 ) =>
-                                                                                    handleUpdatePrice(
+                                                                                    handleUpdateDescription(
                                                                                         index,
-                                                                                        parseInt(
-                                                                                            e
-                                                                                                .target
-                                                                                                .value,
-                                                                                        ) ||
-                                                                                        0,
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
                                                                                     )
                                                                                 }
-                                                                                className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none font-medium text-gray-800 transition-all p-0"
+                                                                                className="w-full bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none text-xs text-gray-600 transition-all p-0"
                                                                             />
                                                                         </div>
-                                                                    </td>
-                                                                    <td className="px-2 py-3 text-center">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handleRemoveItem(
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <div className="flex items-center justify-end gap-1">
+                                                                        <span className="text-gray-400 text-xs">
+                                                                            ฿
+                                                                        </span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={
+                                                                                item.unit_price
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) =>
+                                                                                handleUpdatePrice(
                                                                                     index,
+                                                                                    parseInt(
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    ) ||
+                                                                                        0,
                                                                                 )
                                                                             }
-                                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                                        >
-                                                                            <Trash2
-                                                                                size={
-                                                                                    14
-                                                                                }
-                                                                            />
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ),
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
+                                                                            className="w-20 text-right bg-transparent border-b border-transparent hover:border-gray-200 focus:border-primary focus:outline-none font-medium text-gray-800 transition-all p-0"
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-2 py-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleRemoveItem(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2
+                                                                            size={
+                                                                                14
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Section B: Supplies */}
@@ -1461,88 +1466,88 @@ export default function TreatmentModal({
                                 {selectedItems.filter(
                                     (i) => i.item_type === "supply",
                                 ).length > 0 && (
-                                        <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-gray-50/50 text-gray-500 text-xs">
-                                                    <tr>
-                                                        <th className="text-left px-4 py-2 font-semibold">
-                                                            เวชภัณฑ์
-                                                        </th>
-                                                        <th className="text-center px-4 py-2 font-semibold w-24">
-                                                            จำนวน
-                                                        </th>
-                                                        <th className="text-right px-4 py-2 font-semibold w-24">
-                                                            ราคา
-                                                        </th>
-                                                        <th className="w-10"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {selectedItems.map(
-                                                        (item, index) =>
-                                                            item.item_type ===
+                                    <div className="border border-gray-100 rounded-xl overflow-hidden bg-gray-50/30">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50/50 text-gray-500 text-xs">
+                                                <tr>
+                                                    <th className="text-left px-4 py-2 font-semibold">
+                                                        เวชภัณฑ์
+                                                    </th>
+                                                    <th className="text-center px-4 py-2 font-semibold w-24">
+                                                        จำนวน
+                                                    </th>
+                                                    <th className="text-right px-4 py-2 font-semibold w-24">
+                                                        ราคา
+                                                    </th>
+                                                    <th className="w-10"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedItems.map(
+                                                    (item, index) =>
+                                                        item.item_type ===
                                                             "supply" && (
-                                                                <tr
-                                                                    key={index}
-                                                                    className="bg-white"
-                                                                >
-                                                                    <td className="px-4 py-3 font-medium text-gray-800">
-                                                                        {item.name}
-                                                                    </td>
-                                                                    <td className="px-4 py-3">
-                                                                        <input
-                                                                            type="number"
-                                                                            min="1"
-                                                                            value={
-                                                                                item.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleUpdateQuantity(
-                                                                                    index,
-                                                                                    parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
+                                                            <tr
+                                                                key={index}
+                                                                className="bg-white"
+                                                            >
+                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                    {item.name}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            handleUpdateQuantity(
+                                                                                index,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
                                                                                     1,
-                                                                                )
+                                                                            )
+                                                                        }
+                                                                        className="w-full text-center bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
+                                                                    />
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    ฿
+                                                                    {(
+                                                                        item.quantity *
+                                                                        item.unit_price
+                                                                    ).toLocaleString()}
+                                                                </td>
+                                                                <td className="px-2 py-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleRemoveItem(
+                                                                                index,
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2
+                                                                            size={
+                                                                                14
                                                                             }
-                                                                            className="w-full text-center bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
                                                                         />
-                                                                    </td>
-                                                                    <td className="px-4 py-3 text-right">
-                                                                        ฿
-                                                                        {(
-                                                                            item.quantity *
-                                                                            item.unit_price
-                                                                        ).toLocaleString()}
-                                                                    </td>
-                                                                    <td className="px-2 py-3 text-center">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handleRemoveItem(
-                                                                                    index,
-                                                                                )
-                                                                            }
-                                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                                        >
-                                                                            <Trash2
-                                                                                size={
-                                                                                    14
-                                                                                }
-                                                                            />
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            ),
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Section C: Medications */}
@@ -1589,116 +1594,116 @@ export default function TreatmentModal({
                                 {selectedItems.filter(
                                     (i) => i.item_type === "drug",
                                 ).length > 0 && (
-                                        <div className="space-y-3">
-                                            {selectedItems.map(
-                                                (item, index) =>
-                                                    item.item_type === "drug" && (
-                                                        <div
-                                                            key={index}
-                                                            className="p-4 border border-gray-200 rounded-xl bg-white space-y-3 shadow-sm hover:shadow-md transition-shadow"
-                                                        >
-                                                            <div className="flex items-start justify-between">
-                                                                <div>
-                                                                    <p className="font-bold text-gray-800">
-                                                                        {item.name}
-                                                                    </p>
-                                                                    <p className="text-xs text-muted">
-                                                                        ราคาต่อหน่วย:
-                                                                        ฿
-                                                                        {Number(
-                                                                            item.unit_price,
-                                                                        ).toLocaleString()}
-                                                                    </p>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleRemoveItem(
-                                                                            index,
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                                >
-                                                                    <Trash2
-                                                                        size={16}
-                                                                    />
-                                                                </button>
+                                    <div className="space-y-3">
+                                        {selectedItems.map(
+                                            (item, index) =>
+                                                item.item_type === "drug" && (
+                                                    <div
+                                                        key={index}
+                                                        className="p-4 border border-gray-200 rounded-xl bg-white space-y-3 shadow-sm hover:shadow-md transition-shadow"
+                                                    >
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <p className="font-bold text-gray-800">
+                                                                    {item.name}
+                                                                </p>
+                                                                <p className="text-xs text-muted">
+                                                                    ราคาต่อหน่วย:
+                                                                    ฿
+                                                                    {Number(
+                                                                        item.unit_price,
+                                                                    ).toLocaleString()}
+                                                                </p>
                                                             </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleRemoveItem(
+                                                                        index,
+                                                                    )
+                                                                }
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            >
+                                                                <Trash2
+                                                                    size={16}
+                                                                />
+                                                            </button>
+                                                        </div>
 
-                                                            <div className="grid grid-cols-12 gap-4 items-end">
-                                                                <div className="col-span-4 space-y-1">
-                                                                    <label className="text-[10px] font-bold text-gray-500 uppercase">
-                                                                        จำนวน
-                                                                    </label>
-                                                                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
-                                                                        <input
-                                                                            type="number"
-                                                                            value={
-                                                                                item.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleUpdateQuantity(
-                                                                                    index,
-                                                                                    parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
-                                                                                    1,
-                                                                                )
-                                                                            }
-                                                                            className="w-full text-center text-sm font-semibold focus:outline-none bg-transparent"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-span-8 space-y-1">
-                                                                    <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                                                                        <Edit3
-                                                                            size={
-                                                                                10
-                                                                            }
-                                                                        />{" "}
-                                                                        วิธีใช้ /
-                                                                        หมายเหตุ
-                                                                    </label>
+                                                        <div className="grid grid-cols-12 gap-4 items-end">
+                                                            <div className="col-span-4 space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase">
+                                                                    จำนวน
+                                                                </label>
+                                                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden h-9">
                                                                     <input
-                                                                        type="text"
-                                                                        placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
+                                                                        type="number"
                                                                         value={
-                                                                            item.description ||
-                                                                            ""
+                                                                            item.quantity
                                                                         }
                                                                         onChange={(
                                                                             e,
                                                                         ) =>
-                                                                            handleUpdateDescription(
+                                                                            handleUpdateQuantity(
                                                                                 index,
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                    1,
                                                                             )
                                                                         }
-                                                                        className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all font-medium"
+                                                                        className="w-full text-center text-sm font-semibold focus:outline-none bg-transparent"
                                                                     />
                                                                 </div>
                                                             </div>
-
-                                                            <div className="flex justify-end pt-1">
-                                                                <p className="text-sm font-bold text-primary">
-                                                                    รวม: ฿
-                                                                    {(
-                                                                        item.quantity *
-                                                                        item.unit_price
-                                                                    ).toLocaleString()}
-                                                                </p>
+                                                            <div className="col-span-8 space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                                                                    <Edit3
+                                                                        size={
+                                                                            10
+                                                                        }
+                                                                    />{" "}
+                                                                    วิธีใช้ /
+                                                                    หมายเหตุ
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="เช่น 1x3 หลังอาหาร, ทาบริเวณแผล"
+                                                                    value={
+                                                                        item.description ||
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        handleUpdateDescription(
+                                                                            index,
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                    className="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all font-medium"
+                                                                />
                                                             </div>
                                                         </div>
-                                                    ),
-                                            )}
-                                        </div>
-                                    )}
+
+                                                        <div className="flex justify-end pt-1">
+                                                            <p className="text-sm font-bold text-primary">
+                                                                รวม: ฿
+                                                                {(
+                                                                    item.quantity *
+                                                                    item.unit_price
+                                                                ).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ),
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Total Amount Summary */}
