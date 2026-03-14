@@ -37,9 +37,8 @@ import UnifiedDrugDropdown from "../UnifiedDrugDropdown";
 import { DateTimePicker24hour } from "@/components/ui/datetime-picker";
 
 interface SelectedItem {
-    item_type: "drug" | "service";
-    drug_id?: string;
-    procedure_id?: string;
+    item_type: "product" | "service";
+    product_id?: string;
     description?: string;
     quantity: number;
     unit_price: number;
@@ -61,9 +60,6 @@ export default function EditTransactionModal({
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
     const [formData, setFormData] = useState<any>(null);
-    const [categories, setCategories] = useState<
-        { category_id: string; category_name: string }[]
-    >([]);
 
     // Patient Search States
     const [searchTerm, setSearchTerm] = useState("");
@@ -87,12 +83,12 @@ export default function EditTransactionModal({
     const [searchingMedicines, setSearchingMedicines] = useState(false);
     const [showDrugDropdown, setShowDrugDropdown] = useState(false);
 
-    // Procedure Search States
-    const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
-    const debouncedProcedureSearch = useDebounce(procedureSearchTerm, 500);
-    const [procedures, setProcedures] = useState<any[]>([]);
-    const [searchingProcedures, setSearchingProcedures] = useState(false);
-    const [showProcedureDropdown, setShowProcedureDropdown] = useState(false);
+    // Service Search States
+    const [serviceSearchTerm, setServiceSearchTerm] = useState("");
+    const debouncedServiceSearch = useDebounce(serviceSearchTerm, 500);
+    const [services, setServices] = useState<any[]>([]);
+    const [searchingServices, setSearchingServices] = useState(false);
+    const [showServiceDropdown, setShowServiceDropdown] = useState(false);
 
     // Selected Items for "ค่ายา"
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
@@ -108,27 +104,35 @@ export default function EditTransactionModal({
     // Update amount if category is "ค่ายา" or "ค่าบริการ"
     useEffect(() => {
         if (
-            formData?.category === "ค่ายา" ||
-            formData?.category === "ค่าบริการ"
+            formData?.income_type === "drug" ||
+            formData?.income_type === "service"
         ) {
             setFormData((prev: any) => ({
                 ...prev,
                 amount: totalFromItems.toFixed(2),
             }));
         }
-    }, [totalFromItems, formData?.category]);
+    }, [totalFromItems, formData?.income_type]);
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const res = await financeService.getIncomeCategories();
-                setCategories(res);
-            } catch (error) {
-                console.error("Failed to fetch income categories:", error);
-            }
-        };
-        fetchCategories();
-    }, []);
+    const isFormValid = useMemo(() => {
+        if (!formData?.income_type) return false;
+        if (Number(formData?.amount) <= 0) return false;
+
+        if (transaction?.type === "income") {
+            const needsPatient = ["drug", "service", "supply", "other"].includes(
+                formData.income_type,
+            );
+            if (needsPatient && !selectedPatient) return false;
+
+            if (
+                ["drug", "service"].includes(formData.income_type) &&
+                selectedItems.length === 0
+            )
+                return false;
+        }
+
+        return true;
+    }, [formData, transaction, selectedPatient, selectedItems]);
 
     useEffect(() => {
         const fetchMedicines = async () => {
@@ -167,36 +171,33 @@ export default function EditTransactionModal({
     }, [debouncedDrugSearch]);
 
     useEffect(() => {
-        const fetchProcedures = async () => {
-            if (
-                !debouncedProcedureSearch ||
-                debouncedProcedureSearch.length < 2
-            ) {
-                setProcedures([]);
+        const fetchServices = async () => {
+            if (!debouncedServiceSearch || debouncedServiceSearch.length < 2) {
+                setServices([]);
                 return;
             }
 
             try {
-                setSearchingProcedures(true);
+                setSearchingServices(true);
                 const res = await fetch(
-                    `/api/procedures?q=${debouncedProcedureSearch}&pageSize=5`,
+                    `/api/services?q=${debouncedServiceSearch}&pageSize=5`,
                 );
-                if (!res.ok) throw new Error("Failed to fetch procedures");
+                if (!res.ok) throw new Error("Failed to fetch services");
                 const data = await res.json();
-                setProcedures(data.data);
+                setServices(data.data);
             } catch (error) {
-                console.error("ค้นหาหัตถการล้มเหลว", error);
+                console.error("ค้นหาบริการล้มเหลว", error);
             } finally {
-                setSearchingProcedures(false);
+                setSearchingServices(false);
             }
         };
 
-        fetchProcedures();
-    }, [debouncedProcedureSearch]);
+        fetchServices();
+    }, [debouncedServiceSearch]);
 
     const handleSelectMedicine = (medicine: Medicine) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.drug_id === medicine.drug_id,
+            (item) => item.product_id === medicine.product_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -206,9 +207,9 @@ export default function EditTransactionModal({
             setSelectedItems([
                 ...selectedItems,
                 {
-                    item_type: "drug",
-                    drug_id: medicine.drug_id,
-                    description: medicine.drug_name,
+                    item_type: "product",
+                    product_id: medicine.product_id,
+                    description: medicine.product_name,
                     quantity: 1,
                     unit_price: Number(medicine.sell_price),
                 },
@@ -218,9 +219,9 @@ export default function EditTransactionModal({
         setShowDrugDropdown(false);
     };
 
-    const handleSelectProcedure = (procedure: any) => {
+    const handleSelectService = (service: any) => {
         const existingIndex = selectedItems.findIndex(
-            (item) => item.procedure_id === procedure.procedure_id,
+            (item) => item.product_id === service.service_id,
         );
         if (existingIndex > -1) {
             const newItems = [...selectedItems];
@@ -231,15 +232,15 @@ export default function EditTransactionModal({
                 ...selectedItems,
                 {
                     item_type: "service",
-                    procedure_id: procedure.procedure_id,
-                    description: procedure.procedure_name,
+                    product_id: service.service_id,
+                    description: service.service_name,
                     quantity: 1,
-                    unit_price: Number(procedure.price),
+                    unit_price: Number(service.price),
                 },
             ]);
         }
-        setProcedureSearchTerm("");
-        setShowProcedureDropdown(false);
+        setServiceSearchTerm("");
+        setShowServiceDropdown(false);
     };
 
     const handleRemoveItem = (index: number) => {
@@ -322,7 +323,6 @@ export default function EditTransactionModal({
             setSelectedVisitId("");
             setSelectedItems([]);
             setDrugSearchTerm("");
-            setProcedureSearchTerm("");
         }
     }, [isOpen, transaction]);
 
@@ -330,7 +330,7 @@ export default function EditTransactionModal({
         if (!transaction) return;
         setFetching(true);
         try {
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const res = await financeService.getIncomeById(transaction.id);
                 const dateObj = new Date(res.income_date);
                 setFormData({
@@ -339,11 +339,10 @@ export default function EditTransactionModal({
                     hour: dateObj.getHours().toString().padStart(2, "0"),
                     minute: dateObj.getMinutes().toString().padStart(2, "0"),
                     amount: Number(res.amount),
-                    category: res.category?.category_name,
+                    income_type: res.income_type,
                 });
                 setSelectedVisitId(res.visit_id);
 
-                // @ts-ignore - visit and patient are included now
                 if (res.visit?.patient) {
                     const p = res.visit.patient as any;
                     setSelectedPatient(p);
@@ -354,21 +353,20 @@ export default function EditTransactionModal({
                     );
 
                     // Set initial items from visit details (only show drugs or services depending on category)
-                    if (res.visit.visitDetails) {
+                    if (res.visit.visitItems) {
                         const targetItemType =
-                            res.category?.category_name === "ค่ายา"
-                                ? "drug"
+                            res.income_type === "drug"
+                                ? "product"
                                 : "service";
                         setSelectedItems(
-                            res.visit.visitDetails
+                            res.visit.visitItems
                                 .filter(
                                     (vd: any) =>
                                         vd.item_type === targetItemType,
                                 )
                                 .map((vd: any) => ({
                                     item_type: vd.item_type,
-                                    drug_id: vd.drug_id,
-                                    procedure_id: vd.procedure_id,
+                                    product_id: vd.product_id,
                                     description: vd.description,
                                     quantity: vd.quantity,
                                     unit_price: Number(vd.unit_price),
@@ -402,8 +400,8 @@ export default function EditTransactionModal({
 
         if (
             transaction.type === "income" &&
-            (formData.category === "ค่าบริการ" ||
-                formData.category === "ค่ายา") &&
+            (formData.income_type === "service" ||
+                formData.income_type === "drug") &&
             !selectedPatient?.patient_id
         ) {
             alert("กรุณาเลือกผู้ป่วยสำหรับรายรับประเภทนี้");
@@ -416,7 +414,7 @@ export default function EditTransactionModal({
                 `${formData.date}T${formData.hour}:${formData.minute}:00`,
             ).toISOString();
 
-            if (transaction.type === "income") {
+            if (transaction?.type === "income") {
                 const payload: Partial<CreateIncomePayload> = {
                     income_date: isoDateTime,
                     amount: Number(formData.amount),
@@ -427,11 +425,11 @@ export default function EditTransactionModal({
                         !selectedVisitId && selectedPatient
                             ? selectedPatient.patient_id
                             : undefined,
-                    income_category: formData.category,
+                    income_type: formData.income_type,
                     description: formData.description || undefined,
                     items:
-                        formData.category === "ค่ายา" ||
-                        formData.category === "ค่าบริการ"
+                        formData.income_type === "drug" ||
+                        formData.income_type === "service"
                             ? selectedItems
                             : undefined,
                 };
@@ -776,11 +774,11 @@ export default function EditTransactionModal({
                                         </label>
                                         <select
                                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                            value={formData?.category || ""}
+                                            value={formData?.income_type || ""}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
-                                                    category: e.target.value,
+                                                    income_type: e.target.value,
                                                     description: "",
                                                 })
                                             }
@@ -789,18 +787,14 @@ export default function EditTransactionModal({
                                             <option value="">
                                                 เลือกหมวดหมู่
                                             </option>
-                                            {categories.map((cat) => (
-                                                <option
-                                                    key={cat.category_id}
-                                                    value={cat.category_name}
-                                                >
-                                                    {cat.category_name}
-                                                </option>
-                                            ))}
+                                            <option value="service" label="ค่าบริการ/หัตถการ">ค่าบริการ/หัตถการ</option>
+                                            <option value="drug" label="ค่ายา">ค่ายา</option>
+                                            <option value="supply" label="เวชภัณฑ์">เวชภัณฑ์</option>
+                                            <option value="other" label="รายได้อื่นๆ">รายได้อื่นๆ</option>
                                         </select>
                                     </div>
 
-                                    {formData?.category === "ค่ายา" && (
+                                    {formData?.income_type === "drug" && (
                                         <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="relative">
                                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
@@ -982,7 +976,7 @@ export default function EditTransactionModal({
                                         </div>
                                     )}
 
-                                    {formData?.category === "ค่าบริการ" && (
+                                    {formData?.income_type === "service" && (
                                         <div className="space-y-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="relative">
                                                 <label className="block text-sm font-semibold mb-1.5 text-gray-700">
@@ -998,20 +992,20 @@ export default function EditTransactionModal({
                                                     />
                                                     <input
                                                         type="text"
-                                                        placeholder="ค้นหาหัตถการ..."
+                                                        placeholder="ค้นหาบริการ..."
                                                         value={
-                                                            procedureSearchTerm
+                                                            serviceSearchTerm
                                                         }
                                                         onChange={(e) => {
-                                                            setProcedureSearchTerm(
+                                                            setServiceSearchTerm(
                                                                 e.target.value,
                                                             );
-                                                            setShowProcedureDropdown(
+                                                            setShowServiceDropdown(
                                                                 true,
                                                             );
                                                         }}
                                                         onFocus={() =>
-                                                            setShowProcedureDropdown(
+                                                            setShowServiceDropdown(
                                                                 true,
                                                             )
                                                         }
@@ -1019,27 +1013,27 @@ export default function EditTransactionModal({
                                                     />
                                                 </div>
 
-                                                {showProcedureDropdown &&
-                                                    procedureSearchTerm && (
+                                                {showServiceDropdown &&
+                                                    serviceSearchTerm && (
                                                         <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden">
-                                                            {searchingProcedures ? (
+                                                            {searchingServices ? (
                                                                 <div className="p-4 text-center text-gray-500 text-sm">
                                                                     กำลังค้นหา...
                                                                 </div>
-                                                            ) : procedures.length >
+                                                            ) : services.length >
                                                               0 ? (
-                                                                procedures.map(
+                                                                services.map(
                                                                     (
-                                                                        procedure,
+                                                                        service,
                                                                     ) => (
                                                                         <button
                                                                             key={
-                                                                                procedure.procedure_id
+                                                                                service.service_id
                                                                             }
                                                                             type="button"
                                                                             onClick={() =>
-                                                                                handleSelectProcedure(
-                                                                                    procedure,
+                                                                                handleSelectService(
+                                                                                    service,
                                                                                 )
                                                                             }
                                                                             className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center transition-colors"
@@ -1047,14 +1041,14 @@ export default function EditTransactionModal({
                                                                             <div>
                                                                                 <p className="font-medium text-gray-800">
                                                                                     {
-                                                                                        procedure.procedure_name
+                                                                                        service.service_name
                                                                                     }
                                                                                 </p>
                                                                             </div>
                                                                             <span className="text-sm font-semibold text-primary tabular-nums shrink-0">
                                                                                 ฿
                                                                                 {Number(
-                                                                                    procedure.price,
+                                                                                    service.price,
                                                                                 ).toLocaleString()}
                                                                             </span>
                                                                         </button>
@@ -1062,14 +1056,14 @@ export default function EditTransactionModal({
                                                                 )
                                                             ) : (
                                                                 <div className="p-4 text-center text-gray-500 text-sm">
-                                                                    ไม่พบข้อมูลหัตถการ
+                                                                    ไม่พบข้อมูลบริการ
                                                                 </div>
                                                             )}
                                                         </div>
                                                     )}
                                             </div>
 
-                                            {/* Service/Procedure Table */}
+                                            {/* Service Table */}
                                             <div className="overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm">
                                                 <table className="w-full text-sm">
                                                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -1285,16 +1279,16 @@ export default function EditTransactionModal({
                                     type="number"
                                     step="0.01"
                                     className={`w-full h-10 border border-gray-300 rounded-lg px-3.5 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                                        formData?.category === "ค่ายา" ||
-                                        formData?.category === "ค่าบริการ"
+                                        formData?.income_type === "drug" ||
+                                        formData?.income_type === "service"
                                             ? "bg-gray-50 text-primary font-bold cursor-not-allowed border-primary/20"
                                             : "focus:border-primary"
                                     }`}
                                     placeholder="0.00"
                                     value={formData?.amount || ""}
                                     readOnly={
-                                        formData?.category === "ค่ายา" ||
-                                        formData?.category === "ค่าบริการ"
+                                        formData?.income_type === "drug" ||
+                                        formData?.income_type === "service"
                                     }
                                     onChange={(e) =>
                                         setFormData({
@@ -1304,13 +1298,13 @@ export default function EditTransactionModal({
                                     }
                                     required
                                 />
-                                {(formData?.category === "ค่ายา" ||
-                                    formData?.category === "ค่าบริการ") && (
+                                {(formData?.income_type === "drug" ||
+                                    formData?.income_type === "service") && (
                                     <p className="text-xs text-muted mt-1 px-1">
                                         * คำนวณอัตโนมัติจากรายการ
-                                        {formData?.category === "ค่ายา"
+                                        {formData?.income_type === "drug"
                                             ? "ยาและเวชภัณฑ์"
-                                            : "หัตถการ"}
+                                            : "บริการ"}
                                     </p>
                                 )}
                             </div>
@@ -1374,31 +1368,31 @@ export default function EditTransactionModal({
                         </div>
 
                         {/* Footer */}
-                        <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-end gap-3">
+                        <div className="p-8 bg-light flex justify-end gap-3 border-t border-gray-200">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-5 h-10 text-gray-600 font-semibold hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                                className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-foreground hover:bg-gray-50 transition-colors"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 type="submit"
-                                disabled={loading}
-                                className="px-6 h-10 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={loading || !isFormValid}
+                                className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/30"
                             >
                                 {loading ? (
                                     <>
                                         <Loader2
                                             className="animate-spin"
-                                            size={18}
+                                            size={20}
                                         />
-                                        กำลังบันทึก...
+                                        <span>กำลังบันทึก...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Save size={18} />
-                                        บันทึกการแก้ไข
+                                        <Save size={20} />
+                                        <span>บันทึกการแก้ไข</span>
                                     </>
                                 )}
                             </button>

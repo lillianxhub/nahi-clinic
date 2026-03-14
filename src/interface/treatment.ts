@@ -1,17 +1,52 @@
-import { ItemType } from "@/generated/prisma/enums";
+import { ProductType, VisitStatus } from "@/generated/prisma";
+
+export interface TreatmentItem {
+    visit_item_id: string;
+    product_id?: string | null;
+    service_id?: string | null;
+    lot_id?: string | null;
+    quantity: number;
+    unit_price: number;
+    description?: string | null;
+    product?: {
+        product_id: string;
+        product_name: string;
+        product_type: ProductType;
+        unit: string;
+    };
+    service?: {
+        service_id: string;
+        service_name: string;
+        price: number;
+    };
+    income?: {
+        income_id: string;
+        payment_method: "cash" | "transfer" | "credit";
+    } | null;
+    // Derived or manually mapped fields for UI
+    item_type?: string;
+    item_name?: string;
+}
 
 export interface Treatment {
     hospital_number: string;
     treatment_id: string;
     visit_id: string;
     visit_date: string;
+    status: VisitStatus;
     symptom?: string;
     diagnosis?: string;
     note?: string;
+    temperature?: number;
     blood_pressure?: string;
     heart_rate?: number;
     weight?: number;
     height?: number;
+    waistline?: number;
+    smoking_status?: string;
+    drinking_status?: string;
+    smoking_history?: string;
+    drinking_history?: string;
     age_years?: number;
     age_months?: number;
     age_days?: number;
@@ -25,35 +60,38 @@ export interface Treatment {
         citizen_number?: string;
         allergy?: string;
     };
-    visitDetails: {
-        visit_detail_id: string;
-        item_type: "drug" | "service" | "procedure";
-        drug_id?: string;
-        procedure_id?: string;
-        description?: string;
-        quantity: number;
-        unit_price: number;
-    }[];
+    items: TreatmentItem[];
+}
+
+export interface CreateTreatmentItemDTO {
+    item_type: "product" | "service";
+    product_id?: string;
+    service_id?: string;
+    lot_id?: string;
+    quantity: number;
+    unit_price: number;
+    description?: string;
 }
 
 export interface CreateTreatmentDTO {
     patient_id: string;
     visit_date: string;
+    status?: VisitStatus;
     symptom?: string;
     diagnosis?: string;
     note?: string;
-    payment_method: string;
+    temperature?: number;
     blood_pressure?: string;
     heart_rate?: number;
     weight?: number;
     height?: number;
+    waistline?: number;
+    smoking_status?: string;
+    drinking_status?: string;
+    smoking_history?: string;
+    drinking_history?: string;
+    payment_method?: string;
+    receipt_no?: string;
 
-    items: {
-        item_type: ItemType;
-        drug_id?: string;
-        procedure_id?: string;
-        description?: string;
-        quantity: number;
-        unit_price: number;
-    }[];
+    items: CreateTreatmentItemDTO[];
 }

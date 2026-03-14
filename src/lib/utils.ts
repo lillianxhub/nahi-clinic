@@ -27,3 +27,42 @@ export function generateReceiptNo(
     const suffix = index !== undefined ? `-${index}` : "";
     return `${prefix}-${timestamp}${suffix}`;
 }
+
+export function calculateAge(birthDate: Date, visitDate: Date) {
+    let y = visitDate.getFullYear() - birthDate.getFullYear();
+    let m = visitDate.getMonth() - birthDate.getMonth();
+    let d = visitDate.getDate() - birthDate.getDate();
+
+    if (d < 0) {
+        m -= 1;
+        const lastMonth = new Date(
+            visitDate.getFullYear(),
+            visitDate.getMonth(),
+            0,
+        );
+        d += lastMonth.getDate();
+    }
+    if (m < 0) {
+        y -= 1;
+        m += 12;
+    }
+
+    return {
+        years: Math.max(0, y),
+        months: Math.max(0, m),
+        days: Math.max(0, d),
+    };
+}
+
+export function formatAge(years: number, months: number, days: number): string {
+    const parts = [];
+    if (years > 0) parts.push(`${years} ปี`);
+    if (months > 0) parts.push(`${months} เดือน`);
+    if (years === 0 && months === 0 && days >= 0) {
+        parts.push(`${days} วัน`);
+    } else if (days > 0) {
+        parts.push(`${days} วัน`);
+    }
+
+    return parts.length > 0 ? parts.join(" ") : "0 วัน";
+}

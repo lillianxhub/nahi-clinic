@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CreateTreatmentDTO } from "@/interface/treatment";
+import { generateReceiptNo, calculateAge, formatAge } from "@/lib/utils";
 
 type Params = {
     params: Promise<{ treatment_id: string }>;
@@ -26,7 +27,27 @@ export async function GET(_: Request, { params }: Params) {
                         allergy: true,
                     },
                 },
-                visitDetails: true,
+                items: {
+                    where: { is_active: true },
+                    include: {
+                        product: {
+                            select: {
+                                product_id: true,
+                                product_name: true,
+                                category: { select: { product_type: true } },
+                                unit: true,
+                            },
+                        },
+                        service: {
+                            select: {
+                                service_id: true,
+                                service_name: true,
+                                price: true,
+                            },
+                        },
+                        income: true,
+                    },
+                },
             },
         });
 
@@ -37,16 +58,20 @@ export async function GET(_: Request, { params }: Params) {
             );
         }
 
-        let age_formatted = "-";
-        if (visit.age_years !== null) {
-            age_formatted = `${visit.age_years} ปี ${visit.age_months || 0} เดือน ${visit.age_days || 0} วัน`;
-        }
+        const data = {
+            ...visit,
+            age_formatted: formatAge(
+                visit.age_years || 0,
+                visit.age_months || 0,
+                visit.age_days || 0,
+            ),
+        };
 
-        return NextResponse.json({ data: { ...visit, age_formatted } });
-    } catch (error) {
+        return NextResponse.json({ data });
+    } catch (error: any) {
         console.error("Get treatment by id error:", error);
         return NextResponse.json(
-            { message: "Internal server error" },
+            { message: error.message, stack: error.stack },
             { status: 500 },
         );
     }
@@ -56,336 +81,327 @@ export async function PATCH(req: Request, { params }: Params) {
     try {
         const { treatment_id } = await params;
         const body: CreateTreatmentDTO = await req.json();
-        console.log(
-            "PATCH Treatment Request Body:",
-            JSON.stringify(body, null, 2),
-        );
 
-        if (body.heart_rate !== undefined && Number(body.heart_rate) <= 0) {
-            throw new Error("heart rate ไม่ถูกต้อง");
+        const validSmokingStatuses = ["none", "current", "ex", "occasional"];
+        if (body.smoking_status && !validSmokingStatuses.includes(body.smoking_status)) {
+            throw new Error("สถานะการสูบบุหรี่ไม่ถูกต้อง");
         }
 
-        if (body.weight !== undefined && Number(body.weight) <= 0) {
-            throw new Error("น้ำหนักไม่ถูกต้อง");
-        }
-
-        if (body.height !== undefined && Number(body.height) <= 0) {
-            throw new Error("ส่วนสูงไม่ถูกต้อง");
+        const validDrinkingStatuses = ["none", "social", "regular", "heavy", "ex"];
+        if (body.drinking_status && !validDrinkingStatuses.includes(body.drinking_status)) {
+            throw new Error("สถานะการดื่มแอลกอฮอล์ไม่ถูกต้อง");
         }
 
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Check if visit exists and include necessary relations
             const existing = await tx.visit.findFirst({
-                where: {
-                    visit_id: treatment_id,
-                    deleted_at: null,
-                },
+                where: { visit_id: treatment_id, deleted_at: null },
                 include: {
-                    drugUsages: true,
-                    visitDetails: true,
+                    patient: { select: { birth_date: true } },
+                    items: {
+                        where: { is_active: true },
+                        include: { stockUsage: true, income: true },
+                    },
                 },
             });
 
-            if (!existing) {
-                throw new Error("ไม่พบข้อมูลการรักษา");
-            }
+            if (!existing) throw new Error("ไม่พบข้อมูลการรักษา");
+            if (existing.status === "completed")
+                throw new Error("ไม่สามารถแก้ไขรายการที่เสร็จสิ้นแล้วได้");
 
-            // 2. Restore Stock from previous drug usages
-            for (const usage of existing.drugUsages) {
-                await tx.drug_Lot.update({
-                    where: { lot_id: usage.lot_id },
-                    data: {
-                        qty_remaining: { increment: usage.quantity },
-                    },
+            const isTransitioningToCompleted = body.status === "completed";
+
+            // 1. Handle Item Updates
+            let itemsToProcess = [];
+
+            if (body.items && Array.isArray(body.items)) {
+                // Revert existing stock only if we are replacing items
+                for (const item of existing.items) {
+                    for (const usage of item.stockUsage) {
+                        await tx.inventoryLot.update({
+                            where: { lot_id: usage.lot_id },
+                            data: {
+                                qty_remaining: { increment: usage.quantity },
+                            },
+                        });
+                    }
+                    // Delete related records
+                    await tx.stockUsage.deleteMany({
+                        where: { visit_item_id: item.visit_item_id },
+                    });
+                    await tx.income.deleteMany({
+                        where: { visit_item_id: item.visit_item_id },
+                    });
+                }
+                await tx.visitItem.deleteMany({
+                    where: { visit_id: treatment_id },
                 });
+
+                // Create new items
+                for (const item of body.items) {
+                    const qty = Number(item.quantity);
+                    const price = Number(item.unit_price);
+
+                    const visitItem = await tx.visitItem.create({
+                        data: {
+                            visit_id: treatment_id,
+                            item_type: item.item_type,
+                            product_id:
+                                item.item_type === "product"
+                                    ? item.product_id
+                                    : null,
+                            service_id:
+                                item.item_type === "service"
+                                    ? item.service_id
+                                    : null,
+                            quantity: qty,
+                            unit_price: price,
+                            description: item.description || "",
+                        },
+                    });
+                    itemsToProcess.push({
+                        ...item,
+                        visit_item_id: visitItem.visit_item_id,
+                    });
+                }
+            } else {
+                // Use existing items for status transition processing
+                itemsToProcess = existing.items.map((item) => ({
+                    visit_item_id: item.visit_item_id,
+                    item_type: item.item_type,
+                    product_id: item.product_id,
+                    service_id: item.service_id,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    description: item.description,
+                }));
             }
 
-            // 3. Clean up existing details and drug usages
-            await tx.drug_Usage.deleteMany({
-                where: { visit_id: treatment_id },
-            });
-            await tx.visit_Detail.deleteMany({
-                where: { visit_id: treatment_id },
-            });
-
-            const patient = await tx.patient.findUnique({
-                where: { patient_id: existing.patient_id },
-                select: { birth_date: true },
-            });
-
-            let age_years = null,
-                age_months = null,
-                age_days = null;
-
-            if (patient?.birth_date) {
-                const visitDate = new Date(
-                    body.visit_date ? body.visit_date : existing.visit_date,
+            // 2. Update Visit
+            let { age_years, age_months, age_days } = existing;
+            if (existing.patient?.birth_date) {
+                const age = calculateAge(
+                    new Date(existing.patient.birth_date),
+                    body.visit_date
+                        ? new Date(body.visit_date)
+                        : existing.visit_date,
                 );
-                const birthDate = new Date(patient.birth_date);
-                let y = visitDate.getFullYear() - birthDate.getFullYear();
-                let m = visitDate.getMonth() - birthDate.getMonth();
-                let d = visitDate.getDate() - birthDate.getDate();
-
-                if (d < 0) {
-                    m -= 1;
-                    d += new Date(
-                        visitDate.getFullYear(),
-                        visitDate.getMonth(),
-                        0,
-                    ).getDate();
-                }
-                if (m < 0) {
-                    y -= 1;
-                    m += 12;
-                }
-                age_years = Math.max(0, y);
-                age_months = Math.max(0, m);
-                age_days = Math.max(0, d);
+                age_years = age.years;
+                age_months = age.months;
+                age_days = age.days;
             }
 
-            // 4. Update basic visit information
-            const visit = await tx.visit.update({
+            const updatedVisit = await tx.visit.update({
                 where: { visit_id: treatment_id },
                 data: {
                     visit_date: body.visit_date
                         ? new Date(body.visit_date)
                         : undefined,
+                    status: body.status || undefined,
                     symptom: body.symptom,
                     diagnosis: body.diagnosis,
                     note: body.note,
+                    temperature:
+                        body.temperature !== undefined
+                            ? Number(body.temperature)
+                            : undefined,
                     blood_pressure: body.blood_pressure,
-                    heart_rate: body.heart_rate
-                        ? Number(body.heart_rate)
-                        : null,
-                    weight: body.weight ? Number(body.weight) : null,
-                    height: body.height ? Number(body.height) : null,
+                    heart_rate:
+                        body.heart_rate !== undefined
+                            ? Number(body.heart_rate)
+                            : undefined,
+                    weight:
+                        body.weight !== undefined
+                            ? Number(body.weight)
+                            : undefined,
+                    height:
+                        body.height !== undefined
+                            ? Number(body.height)
+                            : undefined,
+                    waistline:
+                        body.waistline !== undefined
+                            ? Number(body.waistline)
+                            : undefined,
+                    smoking_status: body.smoking_status !== undefined
+                        ? (body.smoking_status as any)
+                        : undefined,
+                    drinking_status: body.drinking_status !== undefined
+                        ? (body.drinking_status as any)
+                        : undefined,
+                    smoking_history: body.smoking_history !== undefined
+                        ? (body.smoking_history || null)
+                        : undefined,
+                    drinking_history: body.drinking_history !== undefined
+                        ? (body.drinking_history || null)
+                        : undefined,
                     age_years,
                     age_months,
                     age_days,
+                    updated_at: new Date(),
                 },
             });
 
-            let totalDrugAmount = 0;
-            let totalServiceAmount = 0;
+            // 3. Process Stock and Income if Completed
+            const isCompletedNow = updatedVisit.status === "completed";
+            if (
+                isCompletedNow &&
+                (isTransitioningToCompleted ||
+                    (body.items && Array.isArray(body.items)))
+            ) {
+                for (const item of itemsToProcess) {
+                    const qty = Number(item.quantity);
+                    const price = Number(item.unit_price);
 
-            // 5. Process new Items (Similar to POST logic)
-            if (body.items && body.items.length > 0) {
-                for (const item of body.items) {
-                    // 5.1 Create Visit Detail
-                    await tx.visit_Detail.create({
-                        data: {
-                            visit_id: treatment_id,
-                            item_type: item.item_type,
-                            drug_id: item.drug_id,
-                            procedure_id: item.procedure_id,
-                            description: item.description,
-                            quantity: Number(item.quantity),
-                            unit_price: Number(item.unit_price),
-                        },
-                    });
-
-                    const itemAmount =
-                        Number(item.quantity) * Number(item.unit_price);
-                    if (item.item_type === "drug") {
-                        totalDrugAmount += itemAmount;
-                    } else {
-                        totalServiceAmount += itemAmount;
-                    }
-
-                    // 5.2 If it's a drug, handle FEFO stock deduction
-                    if (item.item_type === "drug" && item.drug_id) {
-                        let remainingToDeduct = Number(item.quantity);
-
-                        const lots = await tx.drug_Lot.findMany({
-                            where: {
-                                drug_id: item.drug_id,
-                                qty_remaining: { gt: 0 },
-                                is_active: true,
-                            },
-                            orderBy: { expire_date: "asc" },
-                        });
-
-                        for (const lot of lots) {
-                            if (remainingToDeduct === 0) break;
-
-                            const deduction = Math.min(
-                                lot.qty_remaining,
-                                remainingToDeduct,
-                            );
-
-                            await tx.drug_Lot.update({
-                                where: { lot_id: lot.lot_id },
-                                data: {
-                                    qty_remaining: { decrement: deduction },
+                    // Create Income
+                    if (qty * price > 0) {
+                        // Determine income type
+                        let incomeType: any = "other";
+                        if (item.item_type === "service") {
+                            incomeType = "service";
+                        } else if (item.product_id) {
+                            const product = await tx.product.findUnique({
+                                where: { product_id: item.product_id },
+                                select: {
+                                    category: {
+                                        select: { product_type: true },
+                                    },
                                 },
                             });
-
-                            await tx.drug_Usage.create({
-                                data: {
-                                    visit_id: treatment_id,
-                                    lot_id: lot.lot_id,
-                                    quantity: deduction,
-                                    used_at: body.visit_date
-                                        ? new Date(body.visit_date)
-                                        : existing.visit_date,
-                                },
-                            });
-
-                            remainingToDeduct -= deduction;
+                            incomeType =
+                                product?.category.product_type || "other";
                         }
 
-                        if (remainingToDeduct > 0) {
-                            throw new Error(
-                                `ยา ${item.description} ในสต็อกไม่เพียงพอ (ขาดอีก ${remainingToDeduct} หน่วย)`,
-                            );
+                        await tx.income.create({
+                            data: {
+                                visit_item_id: item.visit_item_id,
+                                income_type: incomeType,
+                                amount: qty * price,
+                                payment_method:
+                                    (body.payment_method as any) || "cash",
+                                receipt_no:
+                                    body.receipt_no ||
+                                    generateReceiptNo("รักษา"),
+                                income_date: updatedVisit.visit_date,
+                            },
+                        });
+                    }
+
+                    // Deduct Stock
+                    if (item.product_id) {
+                        const product = await tx.product.findUnique({
+                            where: { product_id: item.product_id },
+                            select: {
+                                category: { select: { product_type: true } },
+                            },
+                        });
+
+                        if (
+                            product &&
+                            (product.category.product_type === "drug" ||
+                                product.category.product_type === "supply")
+                        ) {
+                            let remaining = qty;
+                            const lots = await tx.inventoryLot.findMany({
+                                where: {
+                                    product_id: item.product_id,
+                                    qty_remaining: { gt: 0 },
+                                    is_active: true,
+                                    deleted_at: null,
+                                },
+                                orderBy: { expire_date: "asc" },
+                            });
+                            for (const lot of lots) {
+                                if (remaining === 0) break;
+                                const deduction = Math.min(
+                                    lot.qty_remaining,
+                                    remaining,
+                                );
+                                await tx.inventoryLot.update({
+                                    where: { lot_id: lot.lot_id },
+                                    data: {
+                                        qty_remaining: { decrement: deduction },
+                                    },
+                                });
+                                await tx.stockUsage.create({
+                                    data: {
+                                        visit_item_id: item.visit_item_id,
+                                        lot_id: lot.lot_id,
+                                        quantity: deduction,
+                                        used_at: updatedVisit.visit_date,
+                                    },
+                                });
+                                remaining -= deduction;
+                            }
+                            if (remaining > 0)
+                                throw new Error(
+                                    `สินค้า ${item.product_id} ไม่เพียงพอ (เหลือ ${remaining})`,
+                                );
                         }
                     }
                 }
-            } else {
-                // If items are not provided, we should ideally keep the previous total
-                // but since we deleted all details, totalAmount would be 0 if we don't handle this.
-                // However, the frontend always sends the full items list.
             }
-
-            // 6. Update Income records (Split by category)
-            // Delete existing income for this visit first
-            await tx.income.deleteMany({
-                where: { visit_id: treatment_id },
-            });
-
-            const drugCategory = await tx.income_Category.findUnique({
-                where: { category_name: "ค่ายา" },
-            });
-            const serviceCategory = await tx.income_Category.findUnique({
-                where: { category_name: "ค่าบริการ" },
-            });
-
-            let incomeIndex = 1;
-
-            if (totalDrugAmount > 0 && drugCategory) {
-                await tx.income.create({
-                    data: {
-                        visit_id: treatment_id,
-                        category_id: drugCategory.category_id,
-                        income_date: body.visit_date
-                            ? new Date(body.visit_date)
-                            : existing.visit_date,
-                        amount: totalDrugAmount,
-                        payment_method: (body.payment_method || "cash") as any,
-                        receipt_no: `RC-DRG-EDT-${Date.now()}-${incomeIndex++}`,
-                    },
-                });
-            }
-
-            if (totalServiceAmount > 0 && serviceCategory) {
-                await tx.income.create({
-                    data: {
-                        visit_id: treatment_id,
-                        category_id: serviceCategory.category_id,
-                        income_date: body.visit_date
-                            ? new Date(body.visit_date)
-                            : existing.visit_date,
-                        amount: totalServiceAmount,
-                        payment_method: (body.payment_method || "cash") as any,
-                        receipt_no: `RC-SRV-EDT-${Date.now()}-${incomeIndex++}`,
-                    },
-                });
-            }
-
-            return visit;
+            return updatedVisit;
         });
 
         return NextResponse.json({ data: result });
     } catch (error: any) {
         console.error("Patch treatment error:", error);
         return NextResponse.json(
-            { message: error.message || "Internal server error" },
+            { message: error.message, stack: error.stack },
             { status: 500 },
         );
     }
 }
 
-export async function DELETE(req: Request, { params }: Params) {
+export async function DELETE(_: Request, { params }: Params) {
     try {
         const { treatment_id } = await params;
+        const result = await prisma.$transaction(async (tx) => {
+            const existing = await tx.visit.findFirst({
+                where: { visit_id: treatment_id, deleted_at: null },
+                include: { items: { include: { stockUsage: true } } },
+            });
+            if (!existing) throw new Error("ไม่พบข้อมูลการรักษา");
+            if (existing.status === "completed")
+                throw new Error("ไม่สามารถลบรายการที่เสร็จสิ้นแล้วได้");
 
-        const existing = await prisma.visit.findFirst({
-            where: {
-                visit_id: treatment_id,
-                deleted_at: null,
-            },
-        });
+            for (const item of existing.items) {
+                for (const usage of item.stockUsage) {
+                    await tx.inventoryLot.update({
+                        where: { lot_id: usage.lot_id },
+                        data: { qty_remaining: { increment: usage.quantity } },
+                    });
+                }
+            }
 
-        if (!existing) {
-            return NextResponse.json(
-                { message: "ไม่พบข้อมูลการรักษา" },
-                { status: 404 },
-            );
-        }
-
-        const visit = await prisma.$transaction(async (tx) => {
-            // 1. Get all drug usages for this visit
-            const usages = await tx.drug_Usage.findMany({
+            const now = new Date();
+            await tx.visit.update({
                 where: { visit_id: treatment_id },
+                data: { deleted_at: now, is_active: false },
+            });
+            await tx.visitItem.updateMany({
+                where: { visit_id: treatment_id },
+                data: { deleted_at: now, is_active: false },
             });
 
-            // 2. Revert stock for each usage
-            for (const usage of usages) {
-                await tx.drug_Lot.update({
-                    where: { lot_id: usage.lot_id },
-                    data: {
-                        qty_remaining: { increment: usage.quantity },
-                    },
+            const itemIds = existing.items.map((i) => i.visit_item_id);
+            if (itemIds.length > 0) {
+                await tx.stockUsage.updateMany({
+                    where: { visit_item_id: { in: itemIds } },
+                    data: { deleted_at: now },
+                });
+                await tx.income.updateMany({
+                    where: { visit_item_id: { in: itemIds } },
+                    data: { deleted_at: now },
                 });
             }
 
-            // 3. Soft delete everything related
-            const now = new Date();
-
-            // Soft delete Visit
-            const updatedVisit = await tx.visit.update({
-                where: { visit_id: treatment_id },
-                data: {
-                    deleted_at: now,
-                    is_active: false,
-                },
-            });
-
-            // Soft delete Related Incomes
-            await tx.income.updateMany({
-                where: { visit_id: treatment_id },
-                data: {
-                    deleted_at: now,
-                    is_active: false,
-                },
-            });
-
-            // Soft delete Visit Details
-            await tx.visit_Detail.updateMany({
-                where: { visit_id: treatment_id },
-                data: {
-                    deleted_at: now,
-                    is_active: false,
-                },
-            });
-
-            // Soft delete Drug Usages
-            await tx.drug_Usage.updateMany({
-                where: { visit_id: treatment_id },
-                data: {
-                    deleted_at: now,
-                    is_active: false,
-                },
-            });
-
-            return updatedVisit;
+            return { success: true };
         });
-
-        return NextResponse.json({ data: visit });
-    } catch (error) {
+        return NextResponse.json({ data: result });
+    } catch (error: any) {
         console.error("Delete treatment error:", error);
         return NextResponse.json(
-            { message: "Internal server error" },
+            { message: error.message, stack: error.stack },
             { status: 500 },
         );
     }
