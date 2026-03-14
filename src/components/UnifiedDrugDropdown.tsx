@@ -72,7 +72,7 @@ export default function UnifiedDrugDropdown({
                 </div>
             ) : (
                 <div className="p-4 text-center text-muted text-sm">
-                    ไม่พบข้อมูลยา/บริการ
+                    ไม่พบข้อมูลสินค้า
                 </div>
             )}
         </div>

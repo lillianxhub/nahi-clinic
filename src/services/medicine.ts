@@ -9,6 +9,15 @@ import {
 import { ResponseData } from "@/interface/response";
 
 export const medicineService = {
+    async getProduct(
+        params?: QueryParams,
+    ): Promise<ResponseData<Medicine[], MedicineSummary>> {
+        const query = buildQuery(params);
+        return apiClient.get<ResponseData<Medicine[], MedicineSummary>>(
+            `/api/products${query}`,
+        );
+    },
+
     async getMedicines(
         params?: QueryParams,
     ): Promise<ResponseData<Medicine[], MedicineSummary>> {
@@ -117,9 +126,9 @@ export const medicineService = {
         supplier_name: string,
         contact?: string,
     ): Promise<{ data: any }> {
-        return apiClient.post<{ data: any }, { supplier_name: string; contact?: string }>(
-            "/api/suppliers",
-            { supplier_name, contact },
-        );
+        return apiClient.post<
+            { data: any },
+            { supplier_name: string; contact?: string }
+        >("/api/suppliers", { supplier_name, contact });
     },
 };

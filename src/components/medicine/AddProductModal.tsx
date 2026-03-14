@@ -42,7 +42,7 @@ interface ProductFormData {
     received_date: string;
     expiry_date: string;
     lot_no: string;
-    supplier_id: string;      // Added supplier fields
+    supplier_id: string; // Added supplier fields
     supplier_name: string;
     category_name?: string; // For display
 }
@@ -110,13 +110,13 @@ export default function AddProductModal({
             ) {
                 try {
                     setSearchingMedicines(true);
-                    const res = await medicineService.getMedicines({
+                    const res = await medicineService.getProduct({
                         pageSize: 10,
                         activeStatus: "active",
                     });
                     setMedicines(res.data);
                 } catch (error) {
-                    console.error("ดึงข้อมูลยาล้มเหลว", error);
+                    console.error("ดึงข้อมูลสินค้าล้มเหลว", error);
                 } finally {
                     setSearchingMedicines(false);
                 }
@@ -125,14 +125,14 @@ export default function AddProductModal({
 
             try {
                 setSearchingMedicines(true);
-                const res = await medicineService.getMedicines({
+                const res = await medicineService.getProduct({
                     q: debouncedMedicineSearch,
                     pageSize: 5,
                     activeStatus: "active",
                 });
                 setMedicines(res.data);
             } catch (error) {
-                console.error("ค้นหายาล้มเหลว", error);
+                console.error("ค้นหาสินค้าล้มเหลว", error);
             } finally {
                 setSearchingMedicines(false);
             }
@@ -409,8 +409,15 @@ export default function AddProductModal({
                                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                                             value={supplierSearchTerm}
                                             onChange={(e) => {
-                                                setSupplierSearchTerm(e.target.value);
-                                                setFormData(prev => ({ ...prev, supplier_id: "", supplier_name: e.target.value }));
+                                                setSupplierSearchTerm(
+                                                    e.target.value,
+                                                );
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    supplier_id: "",
+                                                    supplier_name:
+                                                        e.target.value,
+                                                }));
                                                 setShowSupplierDropdown(true);
                                             }}
                                             onFocus={() =>
@@ -429,9 +436,12 @@ export default function AddProductModal({
                                                 setFormData((prev) => ({
                                                     ...prev,
                                                     supplier_id: s.supplier_id,
-                                                    supplier_name: s.supplier_name,
+                                                    supplier_name:
+                                                        s.supplier_name,
                                                 }));
-                                                setSupplierSearchTerm(s.supplier_name);
+                                                setSupplierSearchTerm(
+                                                    s.supplier_name,
+                                                );
                                                 setShowSupplierDropdown(false);
                                             }}
                                             onAddNew={() => {
@@ -492,7 +502,6 @@ export default function AddProductModal({
                                     />
                                 </div>
                             </div>
-
 
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Product Type */}
@@ -743,112 +752,155 @@ export default function AddProductModal({
                             ) : (
                                 <div className="space-y-6">
                                     {/* Group products by supplier */}
-                                    {Array.from(new Set(products.map((p) => p.supplier_name))).map(
-                                        (supplierName) => (
-                                            <div key={supplierName} className="mb-4 bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm">
-                                                <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 text-sm font-semibold text-gray-700 flex items-center justify-between">
-                                                    <span>ซัพพลายเออร์: {supplierName || "ไม่ระบุ"}</span>
-                                                    <span className="text-xs font-normal text-muted-foreground">
-                                                        {products.filter((p) => p.supplier_name === supplierName).length} รายการ
-                                                    </span>
-                                                </div>
-                                                <ul className="divide-y divide-gray-100">
-                                                    {products
-                                                        .map((item, index) => ({ item, index }))
-                                                        .filter((data) => data.item.supplier_name === supplierName)
-                                                        .map(({ item, index }) => (
-                                                            <li
-                                                                key={index}
-                                                                className="p-4 hover:bg-gray-50/50 transition-colors"
-                                                            >
-                                                                <div className="flex justify-between items-start gap-4">
-                                                                    <div className="space-y-1 min-w-0">
-                                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                                            <span className="font-medium text-gray-900 truncate">
-                                                                                {item.medicine_name}
-                                                                            </span>
-                                                                            <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary whitespace-nowrap">
-                                                                                {item.product_type ===
-                                                                                    "supply"
-                                                                                    ? "เวชภัณฑ์"
-                                                                                    : "ยา"}
-                                                                            </span>
-                                                                            <span className="text-xs text-gray-500 whitespace-nowrap">
-                                                                                {item.category_name}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex gap-4 text-sm flex-wrap text-gray-600 mt-1">
-                                                                            <span>
-                                                                                Lot:{" "}
-                                                                                <span className="text-gray-800">
-                                                                                    {item.lot_no}
-                                                                                </span>
-                                                                            </span>
-                                                                            <span>
-                                                                                จำนวนที่ซื้อ:{" "}
-                                                                                <span className="text-gray-800">
-                                                                                    {item.quantity}{" "}
-                                                                                    {item.buy_unit}
-                                                                                </span>
-                                                                            </span>
-                                                                            <span>
-                                                                                รวมทั้งสิ้น:{" "}
-                                                                                <span className="text-gray-800">
-                                                                                    {Number(
-                                                                                        item.quantity,
-                                                                                    ) *
-                                                                                        Number(
-                                                                                            item.conversion_factor,
-                                                                                        )}{" "}
-                                                                                    {item.unit}
-                                                                                </span>
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex gap-4 text-sm flex-wrap text-gray-600">
-                                                                            <span>
-                                                                                ทุน:{" "}
-                                                                                <span className="text-gray-800">
-                                                                                    ฿
-                                                                                    {Number(
-                                                                                        item.buy_price,
-                                                                                    ).toLocaleString()}
-                                                                                </span>
-                                                                            </span>
-                                                                            <span>
-                                                                                ขาย:{" "}
-                                                                                <span className="text-gray-800">
-                                                                                    ฿
-                                                                                    {Number(
-                                                                                        item.sell_price,
-                                                                                    ).toLocaleString()}
-                                                                                </span>
-                                                                            </span>
-                                                                            <span className="text-orange-600">
-                                                                                หมดอายุ:{" "}
-                                                                                {new Date(
-                                                                                    item.expiry_date,
-                                                                                ).toLocaleDateString(
-                                                                                    "th-TH",
-                                                                                )}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            removeProduct(index)
-                                                                        }
-                                                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
-                                                                        title="ลบรายการ"
-                                                                    >
-                                                                        <Trash2 size={18} />
-                                                                    </button>
-                                                                </div>
-                                                            </li>
-                                                        ))}
-                                                </ul>
-                                            </div>
+                                    {Array.from(
+                                        new Set(
+                                            products.map(
+                                                (p) => p.supplier_name,
+                                            ),
                                         ),
-                                    )}
+                                    ).map((supplierName) => (
+                                        <div
+                                            key={supplierName}
+                                            className="mb-4 bg-white border border-gray-100 rounded-lg overflow-hidden shadow-sm"
+                                        >
+                                            <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 text-sm font-semibold text-gray-700 flex items-center justify-between">
+                                                <span>
+                                                    ซัพพลายเออร์:{" "}
+                                                    {supplierName || "ไม่ระบุ"}
+                                                </span>
+                                                <span className="text-xs font-normal text-muted-foreground">
+                                                    {
+                                                        products.filter(
+                                                            (p) =>
+                                                                p.supplier_name ===
+                                                                supplierName,
+                                                        ).length
+                                                    }{" "}
+                                                    รายการ
+                                                </span>
+                                            </div>
+                                            <ul className="divide-y divide-gray-100">
+                                                {products
+                                                    .map((item, index) => ({
+                                                        item,
+                                                        index,
+                                                    }))
+                                                    .filter(
+                                                        (data) =>
+                                                            data.item
+                                                                .supplier_name ===
+                                                            supplierName,
+                                                    )
+                                                    .map(({ item, index }) => (
+                                                        <li
+                                                            key={index}
+                                                            className="p-4 hover:bg-gray-50/50 transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-start gap-4">
+                                                                <div className="space-y-1 min-w-0">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="font-medium text-gray-900 truncate">
+                                                                            {
+                                                                                item.medicine_name
+                                                                            }
+                                                                        </span>
+                                                                        <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary whitespace-nowrap">
+                                                                            {item.product_type ===
+                                                                            "supply"
+                                                                                ? "เวชภัณฑ์"
+                                                                                : "ยา"}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                                                                            {
+                                                                                item.category_name
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex gap-4 text-sm flex-wrap text-gray-600 mt-1">
+                                                                        <span>
+                                                                            Lot:{" "}
+                                                                            <span className="text-gray-800">
+                                                                                {
+                                                                                    item.lot_no
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                        <span>
+                                                                            จำนวนที่ซื้อ:{" "}
+                                                                            <span className="text-gray-800">
+                                                                                {
+                                                                                    item.quantity
+                                                                                }{" "}
+                                                                                {
+                                                                                    item.buy_unit
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                        <span>
+                                                                            รวมทั้งสิ้น:{" "}
+                                                                            <span className="text-gray-800">
+                                                                                {Number(
+                                                                                    item.quantity,
+                                                                                ) *
+                                                                                    Number(
+                                                                                        item.conversion_factor,
+                                                                                    )}{" "}
+                                                                                {
+                                                                                    item.unit
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex gap-4 text-sm flex-wrap text-gray-600">
+                                                                        <span>
+                                                                            ทุน:{" "}
+                                                                            <span className="text-gray-800">
+                                                                                ฿
+                                                                                {Number(
+                                                                                    item.buy_price,
+                                                                                ).toLocaleString()}
+                                                                            </span>
+                                                                        </span>
+                                                                        <span>
+                                                                            ขาย:{" "}
+                                                                            <span className="text-gray-800">
+                                                                                ฿
+                                                                                {Number(
+                                                                                    item.sell_price,
+                                                                                ).toLocaleString()}
+                                                                            </span>
+                                                                        </span>
+                                                                        <span className="text-orange-600">
+                                                                            หมดอายุ:{" "}
+                                                                            {new Date(
+                                                                                item.expiry_date,
+                                                                            ).toLocaleDateString(
+                                                                                "th-TH",
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        removeProduct(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                                                                    title="ลบรายการ"
+                                                                >
+                                                                    <Trash2
+                                                                        size={
+                                                                            18
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                            </ul>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
