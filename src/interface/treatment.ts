@@ -19,6 +19,10 @@ export interface TreatmentItem {
         service_name: string;
         price: number;
     };
+    income?: {
+        income_id: string;
+        payment_method: "cash" | "transfer" | "credit";
+    } | null;
     // Derived or manually mapped fields for UI
     item_type?: string;
     item_name?: string;
