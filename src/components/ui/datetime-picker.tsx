@@ -19,12 +19,14 @@ interface DateTimePickerProps {
     setDate: (date: Date | undefined) => void;
     className?: string;
     label?: string;
+    disabled?: boolean;
 }
 
 export function DateTimePicker24hour({
     date,
     setDate,
     className,
+    disabled,
 }: DateTimePickerProps) {
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -75,14 +77,16 @@ export function DateTimePicker24hour({
                     <CalendarIcon size={14} className="text-primary/60" />
                     วันที่
                 </label> */}
-                <Popover open={isOpen} onOpenChange={setIsOpen}>
+                <Popover open={disabled ? false : isOpen} onOpenChange={setIsOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             variant="outline"
+                            disabled={disabled}
                             className={cn(
                                 "w-full justify-between text-left font-normal h-10 bg-card border-gray-200 hover:border-primary/30 transition-colors",
                                 (!date || isNaN(date.getTime())) &&
                                     "text-muted-foreground",
+                                disabled && "opacity-50 cursor-not-allowed bg-gray-50",
                             )}
                         >
                             <div className="flex items-center">
@@ -121,7 +125,11 @@ export function DateTimePicker24hour({
                         type="time"
                         value={timeString}
                         onChange={handleTimeChange}
-                        className="h-10 bg-white border-gray-200 focus:ring-primary/20 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer pl-3 pr-10"
+                        disabled={disabled}
+                        className={cn(
+                            "h-10 bg-white border-gray-200 focus:ring-primary/20 appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer pl-3 pr-10",
+                            disabled && "opacity-50 cursor-not-allowed bg-gray-50",
+                        )}
                     />
                     <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-40 pointer-events-none" />
                 </div>
