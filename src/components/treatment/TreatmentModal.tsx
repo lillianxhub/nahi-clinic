@@ -841,6 +841,7 @@ export default function TreatmentModal({
                                     <span className="text-danger">*</span>
                                 </label>
                                 <DateTimePicker24hour
+                                    disabled={true}
                                     date={
                                         new Date(
                                             `${formData.visit_date}T${formData.hour}:${formData.minute}:00`,
