@@ -21,12 +21,14 @@ export default function EditMedicineModal({
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<DrugCategory[]>([]);
     const [formData, setFormData] = useState({
-        drug_name: "",
+        product_name: "",
+        product_type: "drug",
         category_id: "",
         unit: "",
         sell_price: "",
         min_stock: "",
-        status: "active" as "active" | "inactive",
+        // status: "active" as "active" | "inactive",
+        is_active: true,
     });
 
     useEffect(() => {
@@ -34,12 +36,13 @@ export default function EditMedicineModal({
             fetchCategories();
             if (medicine) {
                 setFormData({
-                    drug_name: medicine.drug_name,
+                    product_name: medicine.product_name,
+                    product_type: medicine.product_type || "drug",
                     category_id: medicine.category?.category_id || "",
                     unit: medicine.unit,
                     sell_price: String(medicine.sell_price),
                     min_stock: String(medicine.min_stock || 0),
-                    status: medicine.status || "active",
+                    is_active: medicine.is_active,
                 });
             }
         }
@@ -60,7 +63,7 @@ export default function EditMedicineModal({
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: name === "is_active" ? value === "true" : value,
         }));
     };
 
@@ -71,13 +74,14 @@ export default function EditMedicineModal({
         try {
             setLoading(true);
 
-            await medicineService.updateMedicine(medicine.drug_id, {
-                drug_name: formData.drug_name,
+            await medicineService.updateMedicine(medicine.product_id, {
+                product_name: formData.product_name,
+                product_type: formData.product_type,
                 category_id: formData.category_id,
                 unit: formData.unit,
                 sell_price: Number(formData.sell_price),
                 min_stock: Number(formData.min_stock),
-                status: formData.status,
+                is_active: formData.is_active,
             });
 
             onSuccess();
@@ -93,10 +97,10 @@ export default function EditMedicineModal({
     if (!open) return null;
 
     const isFormValid =
-        formData.drug_name.trim() &&
+        formData.product_name.trim() &&
         formData.category_id &&
         formData.unit.trim() &&
-        formData.sell_price;
+        Number(formData.sell_price) > 0;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -140,10 +144,10 @@ export default function EditMedicineModal({
                         </label>
                         <input
                             type="text"
-                            name="drug_name"
+                            name="product_name"
                             placeholder="กรอกชื่อยา"
                             className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            value={formData.drug_name}
+                            value={formData.product_name}
                             onChange={handleChange}
                             required
                         />
@@ -175,6 +179,27 @@ export default function EditMedicineModal({
                             </select>
                         </div>
 
+                        {/* Product Type */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                <Package size={16} className="text-primary" />
+                                ประเภทสินค้า <span className="text-danger">*</span>
+                            </label>
+                            <select
+                                name="product_type"
+                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
+                                value={formData.product_type}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="drug">ยา</option>
+                                <option value="supply">เวชภัณฑ์</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         {/* Unit */}
                         <div className="space-y-1.5">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -246,9 +271,9 @@ export default function EditMedicineModal({
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="radio"
-                                    name="status"
-                                    value="active"
-                                    checked={formData.status === "active"}
+                                    name="is_active"
+                                    value="true"
+                                    checked={formData.is_active === true}
                                     onChange={handleChange}
                                     className="w-4 h-4 text-primary focus:ring-primary"
                                 />
@@ -257,9 +282,9 @@ export default function EditMedicineModal({
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="radio"
-                                    name="status"
-                                    value="inactive"
-                                    checked={formData.status === "inactive"}
+                                    name="is_active"
+                                    value="false"
+                                    checked={formData.is_active === false}
                                     onChange={handleChange}
                                     className="w-4 h-4 text-primary focus:ring-primary"
                                 />

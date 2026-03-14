@@ -72,13 +72,13 @@ const getColumns = (
                 >
                     <Pencil size={18} />
                 </button>
-                <button
+                {/* <button
                     onClick={() => onDelete(row)}
                     className="cursor-pointer text-red-600 hover:opacity-70"
                     title="ลบผู้ป่วย"
                 >
                     <Trash2 size={18} />
-                </button>
+                </button> */}
             </div>
         ),
     },

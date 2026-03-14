@@ -37,8 +37,11 @@ export default function LoginPage() {
                     type: "error",
                 });
             } else if (res?.ok) {
-                router.push("/dashboard");
-                router.refresh();
+                setLoading(true);
+                setTimeout(() => {
+                    router.push("/dashboard");
+                    router.refresh();
+                }, 1000);
             }
         } catch (error: unknown) {
             setToast({

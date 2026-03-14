@@ -10,9 +10,8 @@ import { treatmentService } from "@/services/treatment";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import AddTreatmentModal from "@/components/treatment/AddTreatmentModal";
+import TreatmentModal from "@/components/treatment/TreatmentModal";
 import ViewTreatmentModal from "@/components/treatment/ViewTreatmentModal";
-import EditTreatmentModal from "@/components/treatment/EditTreatmentModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -27,14 +26,18 @@ export default function TreatmentsPage() {
     const [treatments, setTreatments] = useState<Treatment[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [openAdd, setOpenAdd] = useState(false);
     const [openView, setOpenView] = useState(false);
-    const [openEdit, setOpenEdit] = useState(false);
+    // const [openAdd, setOpenAdd] = useState(false);
+    // const [openEdit, setOpenEdit] = useState(false);
+
     const [selectedTreatmentId, setSelectedTreatmentId] = useState<
         string | null
     >(null);
     const [selectedTreatment, setSelectedTreatment] =
         useState<Treatment | null>(null);
+
+    const [modalMode, setModalMode] = useState<"add" | "edit">("add");
+    const [openModal, setOpenModal] = useState(false);
 
     const fetchTreatments = async () => {
         try {
@@ -100,6 +103,22 @@ export default function TreatmentsPage() {
             header: "การวินิจฉัย",
         },
         {
+            key: "status",
+            header: "สถานะ",
+            align: "center",
+            render: (row) => (
+                <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        row.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                    }`}
+                >
+                    {row.status === "completed" ? "เสร็จสิ้น" : "ร่าง"}
+                </span>
+            ),
+        },
+        {
             key: "action",
             header: "จัดการ",
             align: "center",
@@ -115,27 +134,41 @@ export default function TreatmentsPage() {
                     >
                         <Eye size={18} />
                     </button>
-                    <button
-                        onClick={() => {
-                            setSelectedTreatment(row);
-                            setOpenEdit(true);
-                        }}
-                        className="text-blue-600 hover:opacity-70"
-                        title="แก้ไข"
-                    >
-                        <Pencil size={18} />
-                    </button>
-                    <button
-                        onClick={() => handleDelete(row)}
-                        className="text-red-600 hover:opacity-70"
-                        title="ลบ"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => {
+                                setModalMode("edit");
+                                setOpenModal(true);
+                                setSelectedTreatment(row);
+                                console.log(row.visit_id);
+                            }}
+                            className="text-blue-600 hover:opacity-70"
+                            title="แก้ไข"
+                        >
+                            <Pencil size={18} />
+                        </button>
+                    )}
+                    {row.status === "draft" && (
+                        <button
+                            onClick={() => handleDelete(row)}
+                            className="text-red-600 hover:opacity-70"
+                            title="ลบ"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
                 </div>
             ),
         },
     ];
+
+    const handleTreatmentSuccess = (visitId?: string) => {
+        if (visitId) {
+            setSelectedTreatmentId(visitId);
+            setOpenView(true);
+        }
+        fetchTreatments();
+    };
 
     const handleDelete = async (treatment: Treatment) => {
         const result = await Swal.fire({
@@ -187,38 +220,29 @@ export default function TreatmentsPage() {
 
                 {/* Add Button */}
                 <Button
-                    onClick={() => setOpenAdd(true)}
+                    onClick={() => {
+                        setModalMode("add");
+                        setOpenModal(true);
+                        setSelectedTreatment(null);
+                    }}
                     className="cursor-pointer"
                 >
                     <Plus size={18} />
                     บันทึกการรักษา
                 </Button>
             </div>
-
             {/* Table */}
             <DataTable
                 columns={columns}
                 data={treatments}
                 rowKey={(row) => row.visit_id}
             />
-
             {/* Pagination */}
             <Pagination
                 page={page}
                 totalPages={totalPages}
                 onChange={setPage}
             />
-
-            {/* Add Treatment Modal */}
-            <AddTreatmentModal
-                open={openAdd}
-                onClose={() => setOpenAdd(false)}
-                onSuccess={() => {
-                    setPage(1);
-                    fetchTreatments();
-                }}
-            />
-
             {/* View Treatment Modal */}
             <ViewTreatmentModal
                 open={openView}
@@ -227,18 +251,48 @@ export default function TreatmentsPage() {
                 onEdit={(treatment) => {
                     setOpenView(false);
                     setSelectedTreatment(treatment);
-                    setOpenEdit(true);
+                    setOpenModal(true);
+                    setModalMode("edit");
                 }}
-            />
-
-            {/* Edit Treatment Modal */}
-            <EditTreatmentModal
-                open={openEdit}
-                onClose={() => setOpenEdit(false)}
-                treatment={selectedTreatment}
                 onSuccess={() => {
                     fetchTreatments();
                 }}
+            />
+            {/* Add Treatment Modal */}
+            {/* <TreatmentModal
+                open={openAdd}
+                onClose={() => setOpenAdd(false)}
+                mode="add"
+                onSuccess={(visitId) => {
+                    setPage(1);
+                    fetchTreatments();
+                    if (visitId) {
+                        setSelectedTreatmentId(visitId);
+                        setOpenView(true);
+                    }
+                }}
+            /> */}
+            {/* Edit Treatment Modal */}
+            {/* <TreatmentModal
+                open={openEdit}
+                onClose={() => setOpenEdit(false)}
+                mode="edit"
+                treatment={selectedTreatment}
+                onSuccess={(visitId) => {
+                    setPage(1);
+                    fetchTreatments();
+                    if (visitId) {
+                        setSelectedTreatmentId(visitId);
+                        setOpenView(true);
+                    }
+                }}
+            /> */}
+            <TreatmentModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                mode={modalMode}
+                treatment={selectedTreatment}
+                onSuccess={handleTreatmentSuccess}
             />
         </div>
     );

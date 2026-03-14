@@ -3,7 +3,7 @@ services:
         image: postgres:15-alpine
         restart: always
         env_file:
-            - .env.development
+            - .env.dev
         ports:
             - "5432:5432"
         volumes:
@@ -19,9 +19,10 @@ services:
             - /app/node_modules
             - /app/.next
         env_file:
-            - .env.development
+            - .env.dev
         restart: always
         environment:
+            TZ: Asia/Bangkok
             DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-nahi_clinic}?schema=public
             NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
             NEXTAUTH_TRUST_HOST: "true"

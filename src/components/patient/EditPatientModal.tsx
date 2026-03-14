@@ -79,6 +79,13 @@ export default function EditPatientModal({
         }
     };
 
+    const isCitizenIdValid = (id: string) => /^\d{13}$/.test(id);
+
+    const isFormValid =
+        formData.first_name?.trim() !== "" &&
+        formData.last_name?.trim() !== "" &&
+        isCitizenIdValid(formData.citizen_number || "");
+
     if (!open) return null;
 
     return (
@@ -180,16 +187,30 @@ export default function EditPatientModal({
                             </div>
                         </div>
 
-                        {/* Citizen Number */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-foreground">
-                                เลขบัตรประชาชน
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                                เลขบัตรประชาชน{" "}
+                                <span className="text-danger">*</span>
+                                {formData.citizen_number &&
+                                    !isCitizenIdValid(
+                                        formData.citizen_number,
+                                    ) && (
+                                        <span className="text-xs text-danger font-normal">
+                                            (ต้องมี 13 หลัก)
+                                        </span>
+                                    )}
                             </label>
                             <input
                                 type="text"
                                 required
                                 name="citizen_number"
-                                className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                maxLength={13}
+                                className={`w-full border rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 transition-all ${
+                                    formData.citizen_number &&
+                                    !isCitizenIdValid(formData.citizen_number)
+                                        ? "border-danger focus:ring-danger/20"
+                                        : "border-gray-300 focus:ring-primary focus:border-transparent"
+                                }`}
                                 value={formData.citizen_number}
                                 onChange={handleChange}
                             />
@@ -254,7 +275,7 @@ export default function EditPatientModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !isFormValid}
                             className="px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-primary/30"
                         >
                             {loading ? (

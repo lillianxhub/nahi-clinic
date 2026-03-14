@@ -11,21 +11,21 @@ export const dashboardService = {
         filter?: string,
     ): Promise<{ data: RevenueExpenseChartData[] }> {
         return apiClient.get<{ data: RevenueExpenseChartData[] }>(
-            `/api/dashboard/revenueExpense-chart${filter ? `?filter=${filter}` : ""}`,
+            `/api/reports/dashboard/revenueExpense-chart${filter ? `?filter=${filter}` : ""}`,
         );
     },
 
     async getStats(): Promise<{ data: DashboardStats }> {
-        return apiClient.get<{ data: DashboardStats }>("/api/dashboard/stats");
+        return apiClient.get<{ data: DashboardStats }>("/api/reports/dashboard/stats");
     },
 
     async getLowStockTable(): Promise<{ data: LowStockItem[] }> {
-        return apiClient.get<{ data: LowStockItem[] }>("/api/dashboard/table");
+        return apiClient.get<{ data: LowStockItem[] }>("/api/reports/dashboard/table");
     },
 
     async getPatientChart(): Promise<{ data: PatientChartData[] }> {
         return apiClient.get<{ data: PatientChartData[] }>(
-            "/api/dashboard/patient-chart",
+            "/api/reports/dashboard/patient-chart",
         );
     },
 };
