@@ -64,6 +64,14 @@ export default function ViewTreatmentModal({
                         : item.product?.product_name || "ไม่มีชื่อรายการ",
                     description: item.description || "",
                 }));
+
+                // Get payment method from first item with income
+                if (data.status === "completed") {
+                    const itemWithIncome = data.items.find((i: any) => i.income);
+                    if (itemWithIncome?.income?.payment_method) {
+                        setPaymentMethod(itemWithIncome.income.payment_method);
+                    }
+                }
             }
 
             setTreatment(data);
@@ -215,12 +223,12 @@ export default function ViewTreatmentModal({
                                         <p className="text-foreground font-medium">
                                             {treatment?.visit_date
                                                 ? format(
-                                                      new Date(
-                                                          treatment.visit_date,
-                                                      ),
-                                                      "d MMMM yyyy HH:mm น.",
-                                                      { locale: th },
-                                                  )
+                                                    new Date(
+                                                        treatment.visit_date,
+                                                    ),
+                                                    "d MMMM yyyy HH:mm น.",
+                                                    { locale: th },
+                                                )
                                                 : "-"}
                                         </p>
                                     </div>
@@ -344,108 +352,180 @@ export default function ViewTreatmentModal({
                                         {treatment?.items?.some(
                                             (i) => i.item_type === "service",
                                         ) && (
-                                            <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                                                    <Activity size={14} />{" "}
-                                                    รายการบริการ
-                                                </h4>
-                                                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                                                    <table className="w-full text-sm">
-                                                        <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
-                                                            <tr>
-                                                                <th className="px-4 py-2.5 text-left">
-                                                                    รายการบริการ
-                                                                </th>
-                                                                <th className="px-4 py-2.5 text-right w-24">
-                                                                    ราคา
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-100 bg-white">
-                                                            {treatment.items.map(
-                                                                (item, idx) =>
-                                                                    item.item_type ===
+                                                <div className="space-y-3">
+                                                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                        <Activity size={14} />{" "}
+                                                        รายการบริการ
+                                                    </h4>
+                                                    <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                                        <table className="w-full text-sm">
+                                                            <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
+                                                                <tr>
+                                                                    <th className="px-4 py-2.5 text-left">
+                                                                        รายการบริการ
+                                                                    </th>
+                                                                    <th className="px-4 py-2.5 text-right w-24">
+                                                                        ราคา
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-gray-100 bg-white">
+                                                                {treatment.items.map(
+                                                                    (item, idx) =>
+                                                                        item.item_type ===
                                                                         "service" && (
-                                                                        <tr
-                                                                            key={
-                                                                                idx
-                                                                            }
-                                                                            className="hover:bg-gray-50/30 transition-colors"
-                                                                        >
-                                                                            <td className="px-4 py-3 font-medium text-gray-800">
-                                                                                {
-                                                                                    item.item_name
+                                                                            <tr
+                                                                                key={
+                                                                                    idx
                                                                                 }
-                                                                                {item.description && (
-                                                                                    <div className="text-xs text-muted font-normal mt-0.5 whitespace-pre-wrap">
-                                                                                        {
-                                                                                            item.description
-                                                                                        }
-                                                                                    </div>
-                                                                                )}
-                                                                            </td>
-                                                                            <td className="px-4 py-3 text-right text-gray-600">
-                                                                                ฿
-                                                                                {Number(
-                                                                                    item.unit_price,
-                                                                                ).toLocaleString()}
-                                                                            </td>
-                                                                        </tr>
-                                                                    ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
+                                                                                className="hover:bg-gray-50/30 transition-colors"
+                                                                            >
+                                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                                    {
+                                                                                        item.item_name
+                                                                                    }
+                                                                                    {item.description && (
+                                                                                        <div className="text-xs text-muted font-normal mt-0.5 whitespace-pre-wrap">
+                                                                                            {
+                                                                                                item.description
+                                                                                            }
+                                                                                        </div>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-right text-gray-600">
+                                                                                    ฿
+                                                                                    {Number(
+                                                                                        item.unit_price,
+                                                                                    ).toLocaleString()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
                                         {/* Section B: Supplies */}
                                         {treatment?.items?.some(
                                             (i) => i.item_type === "supply",
                                         ) && (
-                                            <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                                                    <Package size={14} />{" "}
-                                                    รายการเวชภัณฑ์
-                                                </h4>
-                                                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                                                    <table className="w-full text-sm">
-                                                        <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
-                                                            <tr>
-                                                                <th className="px-4 py-2.5 text-left">
-                                                                    รายการเวชภัณฑ์
-                                                                </th>
-                                                                <th className="px-4 py-2.5 text-center w-24">
-                                                                    จำนวน
-                                                                </th>
-                                                                <th className="px-4 py-2.5 text-right w-24">
-                                                                    ราคา
-                                                                </th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-gray-100 bg-white">
-                                                            {treatment.items.map(
-                                                                (item, idx) =>
-                                                                    item.item_type ===
+                                                <div className="space-y-3">
+                                                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                        <Package size={14} />{" "}
+                                                        รายการเวชภัณฑ์
+                                                    </h4>
+                                                    <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                                        <table className="w-full text-sm">
+                                                            <thead className="bg-gray-50/50 text-muted font-medium border-b border-gray-100">
+                                                                <tr>
+                                                                    <th className="px-4 py-2.5 text-left">
+                                                                        รายการเวชภัณฑ์
+                                                                    </th>
+                                                                    <th className="px-4 py-2.5 text-center w-24">
+                                                                        จำนวน
+                                                                    </th>
+                                                                    <th className="px-4 py-2.5 text-right w-24">
+                                                                        ราคา
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-gray-100 bg-white">
+                                                                {treatment.items.map(
+                                                                    (item, idx) =>
+                                                                        item.item_type ===
                                                                         "supply" && (
-                                                                        <tr
-                                                                            key={
-                                                                                idx
-                                                                            }
-                                                                            className="hover:bg-gray-50/30 transition-colors"
-                                                                        >
-                                                                            <td className="px-4 py-3 font-medium text-gray-800">
+                                                                            <tr
+                                                                                key={
+                                                                                    idx
+                                                                                }
+                                                                                className="hover:bg-gray-50/30 transition-colors"
+                                                                            >
+                                                                                <td className="px-4 py-3 font-medium text-gray-800">
+                                                                                    {
+                                                                                        item.item_name
+                                                                                    }
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-center text-gray-600">
+                                                                                    {
+                                                                                        item.quantity
+                                                                                    }
+                                                                                </td>
+                                                                                <td className="px-4 py-3 text-right text-gray-600">
+                                                                                    ฿
+                                                                                    {(
+                                                                                        Number(
+                                                                                            item.quantity,
+                                                                                        ) *
+                                                                                        Number(
+                                                                                            item.unit_price,
+                                                                                        )
+                                                                                    ).toLocaleString()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        ),
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        {/* Section C: Medications */}
+                                        {treatment?.items?.some(
+                                            (i) => i.item_type === "drug",
+                                        ) && (
+                                                <div className="space-y-3">
+                                                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                                        <Pill size={14} /> รายการยา
+                                                    </h4>
+                                                    <div className="grid gap-3">
+                                                        {treatment.items.map(
+                                                            (item, idx) => {
+                                                                if (
+                                                                    item.item_type !==
+                                                                    "drug"
+                                                                )
+                                                                    return null;
+
+                                                                return (
+                                                                    <div
+                                                                        key={idx}
+                                                                        className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm flex justify-between items-start"
+                                                                    >
+                                                                        <div className="space-y-1">
+                                                                            <p className="font-bold text-gray-800">
                                                                                 {
                                                                                     item.item_name
                                                                                 }
-                                                                            </td>
-                                                                            <td className="px-4 py-3 text-center text-gray-600">
+                                                                            </p>
+                                                                            {item.description && (
+                                                                                <div className="inline-flex items-center gap-1.5 bg-primary/5 text-primary px-2.5 py-1 rounded-lg text-xs font-semibold border border-primary/10">
+                                                                                    <FileText
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    {
+                                                                                        item.description
+                                                                                    }
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="text-xs font-bold text-gray-500 uppercase">
+                                                                                รวม
+                                                                            </p>
+                                                                            <p className="font-bold text-gray-900">
                                                                                 {
                                                                                     item.quantity
-                                                                                }
-                                                                            </td>
-                                                                            <td className="px-4 py-3 text-right text-gray-600">
-                                                                                ฿
+                                                                                }{" "}
+                                                                                × ฿
+                                                                                {Number(
+                                                                                    item.unit_price,
+                                                                                ).toLocaleString()}{" "}
+                                                                                = ฿
                                                                                 {(
                                                                                     Number(
                                                                                         item.quantity,
@@ -454,87 +534,15 @@ export default function ViewTreatmentModal({
                                                                                         item.unit_price,
                                                                                     )
                                                                                 ).toLocaleString()}
-                                                                            </td>
-                                                                        </tr>
-                                                                    ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Section C: Medications */}
-                                        {treatment?.items?.some(
-                                            (i) => i.item_type === "drug",
-                                        ) && (
-                                            <div className="space-y-3">
-                                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
-                                                    <Pill size={14} /> รายการยา
-                                                </h4>
-                                                <div className="grid gap-3">
-                                                    {treatment.items.map(
-                                                        (item, idx) => {
-                                                            if (
-                                                                item.item_type !==
-                                                                "drug"
-                                                            )
-                                                                return null;
-
-                                                            return (
-                                                                <div
-                                                                    key={idx}
-                                                                    className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm flex justify-between items-start"
-                                                                >
-                                                                    <div className="space-y-1">
-                                                                        <p className="font-bold text-gray-800">
-                                                                            {
-                                                                                item.item_name
-                                                                            }
-                                                                        </p>
-                                                                        {item.description && (
-                                                                            <div className="inline-flex items-center gap-1.5 bg-primary/5 text-primary px-2.5 py-1 rounded-lg text-xs font-semibold border border-primary/10">
-                                                                                <FileText
-                                                                                    size={
-                                                                                        12
-                                                                                    }
-                                                                                />
-                                                                                {
-                                                                                    item.description
-                                                                                }
-                                                                            </div>
-                                                                        )}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-right">
-                                                                        <p className="text-xs font-bold text-gray-500 uppercase">
-                                                                            รวม
-                                                                        </p>
-                                                                        <p className="font-bold text-gray-900">
-                                                                            {
-                                                                                item.quantity
-                                                                            }{" "}
-                                                                            × ฿
-                                                                            {Number(
-                                                                                item.unit_price,
-                                                                            ).toLocaleString()}{" "}
-                                                                            = ฿
-                                                                            {(
-                                                                                Number(
-                                                                                    item.quantity,
-                                                                                ) *
-                                                                                Number(
-                                                                                    item.unit_price,
-                                                                                )
-                                                                            ).toLocaleString()}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        },
-                                                    )}
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
                                         {/* Total Summary */}
                                         <div className="bg-gray-900 text-white p-5 rounded-2xl shadow-xl flex justify-between items-center mt-6 ring-4 ring-gray-100">
@@ -556,9 +564,9 @@ export default function ViewTreatmentModal({
                                                                 Number(
                                                                     item.quantity,
                                                                 ) *
-                                                                    Number(
-                                                                        item.unit_price,
-                                                                    ),
+                                                                Number(
+                                                                    item.unit_price,
+                                                                ),
                                                             0,
                                                         )
                                                         .toLocaleString()}
@@ -592,32 +600,36 @@ export default function ViewTreatmentModal({
                                         />
                                         ช่องทางการชำระเงิน
                                     </h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() =>
-                                                setPaymentMethod("cash")
-                                            }
-                                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${
-                                                paymentMethod === "cash"
-                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
-                                                    : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
-                                            }`}
-                                        >
-                                            เงินสด
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                setPaymentMethod("transfer")
-                                            }
-                                            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${
-                                                paymentMethod === "transfer"
-                                                    ? "border-primary bg-primary/5 text-primary shadow-sm"
-                                                    : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
-                                            }`}
-                                        >
-                                            เงินโอน
-                                        </button>
-                                    </div>
+                                    {treatment?.status === "completed" ? (
+                                        <div className="flex flex-wrap gap-3">
+                                            <div
+                                                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary bg-primary/5 text-primary shadow-sm font-bold"
+                                            >
+                                                {paymentMethod === "transfer" ? "เงินโอน" : "เงินสด"}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                onClick={() => setPaymentMethod("cash")}
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${paymentMethod === "cash"
+                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                        : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
+                                                    }`}
+                                            >
+                                                เงินสด
+                                            </button>
+                                            <button
+                                                onClick={() => setPaymentMethod("transfer")}
+                                                className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all font-bold ${paymentMethod === "transfer"
+                                                        ? "border-primary bg-primary/5 text-primary shadow-sm"
+                                                        : "border-gray-100 bg-gray-50/50 text-muted hover:border-gray-200"
+                                                    }`}
+                                            >
+                                                เงินโอน
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
