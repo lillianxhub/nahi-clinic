@@ -8,10 +8,14 @@ export async function GET() {
                 is_active: true,
                 category: { is: { product_type: "drug" } },
             },
-            select: {
-                product_id: true,
-                product_name: true,
-                min_stock: true,
+            include: {
+                _count: {
+                    select: {
+                        lots: {
+                            where: { is_active: true, deleted_at: null },
+                        },
+                    },
+                },
                 lots: {
                     where: { is_active: true, deleted_at: null },
                     select: { qty_remaining: true },
@@ -26,7 +30,7 @@ export async function GET() {
                     0,
                 );
 
-                if (stock >= product.min_stock) return null;
+                if (stock > product.min_stock) return null;
 
                 return {
                     id: product.product_id,

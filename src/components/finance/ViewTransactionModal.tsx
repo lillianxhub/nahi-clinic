@@ -11,6 +11,7 @@ import {
     Clock,
     Activity,
     Pill,
+    Banknote,
 } from "lucide-react";
 import { TransactionItem } from "@/interface/finance";
 
@@ -41,6 +42,10 @@ export default function ViewTransactionModal({
     const displayCategory = isIncome
         ? incomeTypeLabels[transaction.category] || transaction.category
         : transaction.category;
+
+    const displayPaymentMethod = isIncome
+        ? transaction.payment_method
+        : transaction.payment_method;
 
     return (
         <div
@@ -137,6 +142,18 @@ export default function ViewTransactionModal({
                                 </p>
                             </div>
                         </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs text-muted font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                <Banknote size={12} className="text-primary" />
+                                วิธีการชำระเงิน
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <p className="text-foreground font-medium">
+                                    {displayPaymentMethod}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="pt-4 border-t border-gray-100">
@@ -216,19 +233,21 @@ export default function ViewTransactionModal({
                                                             item.product_type ===
                                                                 "service" && (
                                                                 <tr
-                                                                    key={
-                                                                        idx
-                                                                    }
+                                                                    key={idx}
                                                                     className="hover:bg-gray-50/50 transition-colors"
                                                                 >
                                                                     <td className="px-3 py-2 text-foreground font-medium">
-                                                                        {
-                                                                            item.product_name || item.description
-                                                                        }
+                                                                        {item.product_name ||
+                                                                            item.description}
                                                                     </td>
                                                                     <td className="px-3 py-2 text-right font-semibold">
                                                                         ฿
-                                                                        {item.total_price ? item.total_price.toLocaleString() : (item.quantity * item.unit_price).toLocaleString()}
+                                                                        {item.total_price
+                                                                            ? item.total_price.toLocaleString()
+                                                                            : (
+                                                                                  item.quantity *
+                                                                                  item.unit_price
+                                                                              ).toLocaleString()}
                                                                     </td>
                                                                 </tr>
                                                             ),
@@ -241,7 +260,9 @@ export default function ViewTransactionModal({
 
                                 {/* Section B: Medications/Supplies */}
                                 {transaction.visit.items?.some(
-                                    (i) => i.product_type === "drug" || i.product_type === "supply",
+                                    (i) =>
+                                        i.product_type === "drug" ||
+                                        i.product_type === "supply",
                                 ) && (
                                     <div className="space-y-2 mt-4">
                                         <label className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
@@ -252,12 +273,17 @@ export default function ViewTransactionModal({
                                             {transaction.visit.items.map(
                                                 (item, idx) => {
                                                     if (
-                                                        item.product_type !== "drug" && 
-                                                        item.product_type !== "supply"
+                                                        item.product_type !==
+                                                            "drug" &&
+                                                        item.product_type !==
+                                                            "supply"
                                                     )
                                                         return null;
 
-                                                    let description = item.product_name || item.description || "";
+                                                    let description =
+                                                        item.product_name ||
+                                                        item.description ||
+                                                        "";
                                                     let instruction = "";
                                                     if (
                                                         description.includes(
@@ -268,8 +294,7 @@ export default function ViewTransactionModal({
                                                             description.split(
                                                                 " : ",
                                                             );
-                                                        description =
-                                                            parts[0];
+                                                        description = parts[0];
                                                         instruction = parts
                                                             .slice(1)
                                                             .join(" : ");
@@ -309,7 +334,12 @@ export default function ViewTransactionModal({
                                                                 </p>
                                                                 <p className="text-[10px] text-muted font-bold">
                                                                     ฿
-                                                                    {item.total_price ? item.total_price.toLocaleString() : (item.quantity * item.unit_price).toLocaleString()}
+                                                                    {item.total_price
+                                                                        ? item.total_price.toLocaleString()
+                                                                        : (
+                                                                              item.quantity *
+                                                                              item.unit_price
+                                                                          ).toLocaleString()}
                                                                 </p>
                                                             </div>
                                                         </div>

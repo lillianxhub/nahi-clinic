@@ -106,6 +106,7 @@ export interface TransactionItem {
     description: string;
     amount: number;
     status: string;
+    payment_method: PaymentMethod;
     visit?: {
         symptom?: string;
         diagnosis?: string;

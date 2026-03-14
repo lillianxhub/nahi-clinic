@@ -119,6 +119,14 @@ export async function GET(request: Request) {
             });
         }
 
+        const translatePaymentMethod = (method: string) => {
+            const map: Record<string, string> = {
+                cash: "เงินสด",
+                transfer: "โอนเงิน",
+            };
+            return map[method] || method;
+        };
+
         const incomeGroups: Record<string, any> = {};
 
         incomes.forEach((item) => {
@@ -139,6 +147,7 @@ export async function GET(request: Request) {
                 unit_price: Number(visitItem.unit_price),
                 total_price:
                     Number(visitItem.quantity) * Number(visitItem.unit_price),
+                payment_method: translatePaymentMethod(item.payment_method),
             };
 
             if (!incomeGroups[visitId]) {
@@ -158,6 +167,7 @@ export async function GET(request: Request) {
                         hour12: false,
                     }),
                     type: "income",
+                    payment_method: translatePaymentMethod(item.payment_method),
                     category: "ค่าตรวจรักษา",
                     description: visit.patient
                         ? `ผู้ป่วย: ${visit.patient.first_name} ${visit.patient.last_name}`
@@ -218,6 +228,7 @@ export async function GET(request: Request) {
                     hour12: false,
                 }),
                 type: "expense",
+                paymenet_method: "เงินสด",
                 category: categoryTH,
                 description: item.description || "-",
                 amount: -Number(item.amount),
