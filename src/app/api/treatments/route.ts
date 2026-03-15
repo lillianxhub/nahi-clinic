@@ -129,6 +129,10 @@ export async function POST(req: Request) {
             throw new Error("heart rate ไม่ถูกต้อง");
         }
 
+        if (body.temperature !== undefined && Number(body.temperature) <= 0) {
+            throw new Error("อุณหภูมิไม่ถูกต้อง");
+        }
+
         if (body.weight !== undefined && Number(body.weight) <= 0) {
             throw new Error("น้ำหนักไม่ถูกต้อง");
         }
@@ -138,12 +142,24 @@ export async function POST(req: Request) {
         }
 
         const validSmokingStatuses = ["none", "current", "ex", "occasional"];
-        if (body.smoking_status && !validSmokingStatuses.includes(body.smoking_status)) {
+        if (
+            body.smoking_status &&
+            !validSmokingStatuses.includes(body.smoking_status)
+        ) {
             throw new Error("สถานะการสูบบุหรี่ไม่ถูกต้อง");
         }
 
-        const validDrinkingStatuses = ["none", "social", "regular", "heavy", "ex"];
-        if (body.drinking_status && !validDrinkingStatuses.includes(body.drinking_status)) {
+        const validDrinkingStatuses = [
+            "none",
+            "social",
+            "regular",
+            "heavy",
+            "ex",
+        ];
+        if (
+            body.drinking_status &&
+            !validDrinkingStatuses.includes(body.drinking_status)
+        ) {
             throw new Error("สถานะการดื่มแอลกอฮอล์ไม่ถูกต้อง");
         }
 
