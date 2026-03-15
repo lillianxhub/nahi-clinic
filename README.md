@@ -121,11 +121,9 @@ cp .env.example .env
 | :----------------------- | :---------------------------------------------------- |
 | `npm run db:migrate:dev` | รัน Migration สำหรับ Development (`.env.development`) |
 | `npm run db:push:dev`    | Push schema เข้าฐานข้อมูล Development โดยตรง          |
-| `npm run db:push:prod`   | Push schema เข้าฐานข้อมูล Production                  |
 | `npm run db:seed:dev`    | Seed ข้อมูลลงฐานข้อมูล Development                    |
-| `npm run db:seed:prod`   | Seed ข้อมูลลงฐานข้อมูล Production                     |
 | `npm run db:studio:dev`  | เปิด Prisma Studio สำหรับส่องข้อมูลใน Dev DB          |
-| `npm run db:studio:prod` | เปิด Prisma Studio สำหรับส่องข้อมูลใน Prod DB         |
+
 
 ---
 
