@@ -213,7 +213,7 @@ export async function POST(req: Request) {
 
                 const isCompleted = visit.status === "completed";
 
-                // 2.3 Bulk Fetch Products (Optimization: ดึงทีเดียวแทนการวนลูป findUnique)
+                // 2.3 Bulk Fetch Products
                 const productIds = body.items
                     .map((i) => i.product_id)
                     .filter(Boolean) as string[];
