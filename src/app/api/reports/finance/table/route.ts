@@ -221,7 +221,8 @@ export async function GET(request: Request) {
 
         const formattedExpenses = expenses.map((item) => {
             let categoryTH = "ค่าใช้จ่ายทั่วไป";
-            if (item.expense_type === "drug") categoryTH = "ค่ายา/เวชภัณฑ์";
+            if (item.expense_type === "drug" || item.expense_type === "supply")
+                categoryTH = "ค่ายา/เวชภัณฑ์";
             if (item.expense_type === "utility")
                 categoryTH = "ค่าเช่า/สาธารณูปโภค";
             if (item.expense_type === "equipment_supply")
