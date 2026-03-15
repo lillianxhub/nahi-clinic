@@ -9,6 +9,15 @@ import {
 import { ResponseData } from "@/interface/response";
 
 export const medicineService = {
+    async getProduct(
+        params?: QueryParams,
+    ): Promise<ResponseData<Medicine[], MedicineSummary>> {
+        const query = buildQuery(params);
+        return apiClient.get<ResponseData<Medicine[], MedicineSummary>>(
+            `/api/products${query}`,
+        );
+    },
+
     async getMedicines(
         params?: QueryParams,
     ): Promise<ResponseData<Medicine[], MedicineSummary>> {
@@ -50,11 +59,12 @@ export const medicineService = {
 
     async createCategory(
         category_name: string,
+        product_type: string = "drug",
     ): Promise<{ data: DrugCategory }> {
         return apiClient.post<
             { data: DrugCategory },
-            { category_name: string }
-        >("/api/products/categories", { category_name });
+            { category_name: string; product_type: string }
+        >("/api/products/categories", { category_name, product_type });
     },
 
     async getMedicineDetail(product_id: string): Promise<{ data: Medicine }> {
@@ -117,9 +127,9 @@ export const medicineService = {
         supplier_name: string,
         contact?: string,
     ): Promise<{ data: any }> {
-        return apiClient.post<{ data: any }, { supplier_name: string; contact?: string }>(
-            "/api/suppliers",
-            { supplier_name, contact },
-        );
+        return apiClient.post<
+            { data: any },
+            { supplier_name: string; contact?: string }
+        >("/api/suppliers", { supplier_name, contact });
     },
 };

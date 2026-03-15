@@ -8,6 +8,7 @@ export interface MedicineStock {
 export interface DrugCategory {
     category_id: string;
     category_name: string;
+    product_type?: string;
 }
 
 export interface DrugLot {

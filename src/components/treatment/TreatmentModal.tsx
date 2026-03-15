@@ -954,7 +954,9 @@ export default function TreatmentModal({
                                         name="temperature"
                                         placeholder="เช่น 36.8"
                                         step="0.1"
-                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+                                        className="w-full border border-gray-300 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                        value={formData.temperature}
+                                        onChange={handleChange}
                                     />
                                 </div>
 

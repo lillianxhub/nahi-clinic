@@ -10,12 +10,14 @@ interface AddCategoryModalProps {
     open: boolean;
     onClose: () => void;
     onSuccess: (category: DrugCategory) => void;
+    productType?: string;
 }
 
 export default function AddCategoryModal({
     open,
     onClose,
     onSuccess,
+    productType = "drug",
 }: AddCategoryModalProps) {
     const [categoryName, setCategoryName] = useState("");
     const [loading, setLoading] = useState(false);
@@ -43,6 +45,7 @@ export default function AddCategoryModal({
             setError("");
             const res = await medicineService.createCategory(
                 categoryName.trim(),
+                productType,
             );
             setCategoryName("");
             onSuccess(res.data);
