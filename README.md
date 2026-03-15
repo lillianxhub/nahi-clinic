@@ -73,6 +73,7 @@ cp .env.example .env
 2. **เตรียมฐานข้อมูล (ทำครั้งแรก)**:
     ```bash
     docker compose exec app npx prisma migrate deploy
+    docker compose exec app npx prisma generate
     docker compose exec app npx prisma db seed
     ```
 
