@@ -224,11 +224,13 @@ async function main() {
                         category_id: categories.find(
                             (c) => c.category_name === p.cat,
                         )!.category_id,
+                        product_type: p.type,
                     },
                 },
                 lots: {
                     create: {
                         supplier_id: supplier.supplier_id,
+                        lot_no: `LOT-start-${randomInt(10, 99)}`,
                         buy_unit: p.buy_unit,
                         conversion_factor: p.conversion_factor,
                         buy_price: p.price * 0.4,
@@ -339,7 +341,7 @@ async function main() {
         "สุขภาพปกติ",
     ];
 
-    for (let day = TOTAL_DAYS; day >= 0; day--) {
+    /*     for (let day = TOTAL_DAYS; day >= 0; day--) {
         const date = daysAgo(day);
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
@@ -566,7 +568,7 @@ async function main() {
 
         if (day % 30 === 0)
             console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
-    }
+    } */
 
     console.log("✅ Seed ข้อมูลเสร็จสิ้น!");
 }

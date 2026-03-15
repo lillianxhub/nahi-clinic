@@ -56,7 +56,11 @@ export default function UnifiedDrugDropdown({
                                         </>
                                     ) : (
                                         <>
-                                            หมวดหมู่:{" "}
+                                            ประเภท:{" "}
+                                            {m.product_type === "supply"
+                                                ? "เวชภัณฑ์"
+                                                : "ยา"}{" "}
+                                            {" | "} หมวดหมู่:{" "}
                                             {m.category?.category_name || "-"} |
                                             หน่วย: {m.unit}
                                         </>
@@ -72,7 +76,7 @@ export default function UnifiedDrugDropdown({
                 </div>
             ) : (
                 <div className="p-4 text-center text-muted text-sm">
-                    ไม่พบข้อมูลยา/บริการ
+                    ไม่พบข้อมูลสินค้า
                 </div>
             )}
         </div>
