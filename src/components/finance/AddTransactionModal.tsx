@@ -747,9 +747,9 @@ export default function AddTransactionModal({
                                     </>
                                 ) : (
                                     <>
-                                        <option value="เงินเดือนพนักงาน">
+                                        {/* <option value="เงินเดือนพนักงาน">
                                             เงินเดือนพนักงาน
-                                        </option>
+                                        </option> */}
                                         <option value="ค่าเช่า/สาธารณูปโภค">
                                             ค่าเช่า/สาธารณูปโภค
                                         </option>
@@ -1064,7 +1064,7 @@ export default function AddTransactionModal({
                             >
                                 <option value="cash">เงินสด</option>
                                 <option value="transfer">เงินโอน</option>
-                                <option value="credit">บัตรเครดิต</option>
+                                {/* <option value="credit">บัตรเครดิต</option> */}
                             </select>
                         </div>
                     )}
