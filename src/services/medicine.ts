@@ -59,11 +59,12 @@ export const medicineService = {
 
     async createCategory(
         category_name: string,
+        product_type: string = "drug",
     ): Promise<{ data: DrugCategory }> {
         return apiClient.post<
             { data: DrugCategory },
-            { category_name: string }
-        >("/api/products/categories", { category_name });
+            { category_name: string; product_type: string }
+        >("/api/products/categories", { category_name, product_type });
     },
 
     async getMedicineDetail(product_id: string): Promise<{ data: Medicine }> {

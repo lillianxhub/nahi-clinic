@@ -958,6 +958,7 @@ export default function AddProductModal({
                     setFormData({ ...formData, category_id: "" });
                 }}
                 onSuccess={() => fetchCategories(formData.product_type)}
+                productType={formData.product_type}
             />
             <AddSupplierModal
                 open={showAddSupplier}
