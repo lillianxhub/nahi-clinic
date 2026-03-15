@@ -12,7 +12,7 @@ import {
 import bcrypt from "bcrypt";
 import { calculateAge } from "@/lib/utils";
 
-const TOTAL_DAYS = 365;
+const TOTAL_DAYS = 1095;
 
 function daysAgo(days: number) {
     const d = new Date();
@@ -341,7 +341,7 @@ async function main() {
         "สุขภาพปกติ",
     ];
 
-    /*     for (let day = TOTAL_DAYS; day >= 0; day--) {
+    for (let day = TOTAL_DAYS; day >= 0; day--) {
         const date = daysAgo(day);
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
@@ -360,7 +360,7 @@ async function main() {
                         },
                         {
                             created_at: date,
-                            expense_type: ExpenseType.general,
+                            expense_type: ExpenseType.utility,
                             description: "ค่าเช่าสถานที่",
                             amount: 15000,
                             receipt_no: `RNT-${date.getTime()}`,
@@ -568,7 +568,7 @@ async function main() {
 
         if (day % 30 === 0)
             console.log(`...ดำเนินการย้อนหลัง เหลืออีก ${day} วัน`);
-    } */
+    }
 
     console.log("✅ Seed ข้อมูลเสร็จสิ้น!");
 }
