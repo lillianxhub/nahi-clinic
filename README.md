@@ -18,7 +18,7 @@
 1.  **Clone โปรเจกต์**
 
     ```bash
-    git clone <repo_url>
+    git clone https://github.com/lillianxhub/nahi-clinic.git
     cd nahi-clinic
     ```
 
