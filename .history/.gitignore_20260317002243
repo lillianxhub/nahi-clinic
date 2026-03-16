@@ -45,4 +45,3 @@ src/generated/*
 
 .env.dev
 .env.prod
-.env

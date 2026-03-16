@@ -43,6 +43,3 @@ next-env.d.ts
 
 src/generated/*
 
-.env.dev
-.env.prod
-.env
