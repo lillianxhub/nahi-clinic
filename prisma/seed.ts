@@ -12,7 +12,7 @@ import {
 import bcrypt from "bcrypt";
 import { calculateAge } from "@/lib/utils";
 
-const TOTAL_DAYS = 1095;
+const TOTAL_DAYS = 365;
 
 function daysAgo(days: number) {
     const d = new Date();
