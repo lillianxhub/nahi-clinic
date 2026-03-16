@@ -1,13 +1,16 @@
-# Nahi Clinic - Dockerized Demo
+# Nahi Clinic
 
-โปรเจกต์นี้เป็นการสาธิตระบบ Nahi Clinic ที่ใช้ Next.js, Prisma, และ PostgreSQL โดยสามารถรันผ่าน Docker ได้อย่างง่ายดาย
+Branch นี้จะเป็นการสาธิต ระบบจัดการคลินิกสถานพยาบาลเบื้องต้น โดยการใช้ Next.js, Prisma, และ PostgreSQL และ สามารถรันทุกอย่างผ่าน Docker
+- [เอกสารโครงงาน](https://docs.google.com/document/d/1ipNyGYTvvmIGfxef5B1M9oZee3zKOdYhZN6kn0UvYIs/edit?usp=sharing)
 
 ## ความต้องการของระบบ
 
 ก่อนเริ่มต้น ตรวจสอบให้แน่ใจว่าเครื่องของมีการติดตั้ง:
+[Docker installation](https://docs.docker.com/compose/install/)
 
 - **Docker**
 - **Docker Compose**
+
 
 ไม่จำเป็นต้องมี Node.js หรือ PostgreSQL ติดตั้งอยู่ในเครื่อง เพราะทุกอย่างจะทำงานภายใน Docker containers
 
@@ -43,3 +46,12 @@
 เมื่อรันสคริปต์เสร็จสมบูรณ์ สามารถเข้าใช้งานแอปพลิเคชันได้ที่:
 
 [http://localhost:3000](http://localhost:3000)
+
+## ผู้จัดทำ
+
+- นายก้องภพ 		โชควิริยะ 		673380030-5
+- นายถิรวัฒน์ 		    อุจินา			673380039-7
+- นายกรมภัฏ 		    พิริยะ			673380262-4
+- นายณพวิทย์ 		วงษ์ประเสริฐ 		673380266-6
+- นายรัฐภูมิ 		    เกิดพระจีน		673380057-5
+- นายเพชรภิญโญ 	    ธนศิรินรากร  		673380073-7
