@@ -30,7 +30,7 @@
 หากคุณมี Docker ติดตั้งอยู่แล้ว สามารถเริ่มใช้งานได้ทันทีด้วยคำสั่งเดียว:
 
 ```bash
-cp .env.example .env && docker compose up --build -d
+cp .env.example .env.dev && docker compose up --build -d
 ```
 
 ---
@@ -50,7 +50,7 @@ cp .env.example .env && docker compose up --build -d
 - `.env.production` สำหรับ production
 
 ```bash
-cp .env.example .env
+cp .env.example .env.dev
 ```
 
 #### ค่าสำคัญที่ต้องระบุ:
